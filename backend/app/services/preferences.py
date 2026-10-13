@@ -195,6 +195,35 @@ def get_minute_sync_segment_days() -> int:
     """
     return max(5, min(30, load().get("minute_sync_segment_days", 20)))
 
+
+# ===== 盘中分钟同步 (Pro+ 可用, 走 kline.minute.batch) =====
+#
+# 区别于 Expert 专有的 MinuteRefreshService (intraday.universe)：
+# Pro 档下没有 intraday.universe, 但有 kline.minute.batch (rpm=30, batch=100),
+# 全市场 ~5500 只 / batch 100 ≈ 55 批, 限速 30 rpm ≈ 110s 最小往返; 加上网络+写盘,
+# 现实节奏落在 2~3 min/轮。这里把 daily_pipeline.sync_minute 拆成「盘中多次」,
+# 通过 IntervalTrigger 复用同一 sync_and_persist_minute 边界,
+# _run_slot 互斥避免与全管道 / 手动同步并发打同一个 date= 分区。
+# 默认 3 分钟; 范围 [1, 15] — 下限 1 分钟 (KLINE_MINUTE_BATCH rpm=30 实际最小),
+# 上限避免 "间隔大于一轮完成" 触发缺口的常见误配。
+_MINUTE_SYNC_INTRADAY_INTERVAL_MIN = 1
+_MINUTE_SYNC_INTRADAY_INTERVAL_MAX = 15
+
+
+def get_minute_sync_intraday_interval_minutes() -> int:
+    """盘中分钟同步轮询间隔(分钟)。范围 [1, 15], 默认 3。
+
+    复用 minute_sync_enabled 作为总开关 (与 daily_pipeline.sync_minute 同源同契约),
+    关闭时本函数返回值无效, 调度器不下发任务。
+    """
+    return max(
+        _MINUTE_SYNC_INTRADAY_INTERVAL_MIN,
+        min(
+            _MINUTE_SYNC_INTRADAY_INTERVAL_MAX,
+            int(load().get("minute_sync_intraday_interval_minutes", 3)),
+        ),
+    )
+
 # ===== 盘中分钟增量刷新 (Expert 专有) =====
 
 # 稳态轮为 intraday.universe 单请求增量, 无脉冲并发, 间隔可低至 3s;

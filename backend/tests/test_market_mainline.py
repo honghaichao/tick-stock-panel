@@ -138,6 +138,45 @@ class TestComputeMainline:
         assert sw["max_boards"] == 3
 
 
+    def test_singleton_day_rank_is_null_and_filtered_out(self, tmp_path, monkeypatch):
+        """单 member 日 (>=_MIN_LIMIT_UP=3 涨停): rank=1 无意义, 修复后应被设为 NULL.
+
+        场景: 某日 industry/concept 实际只有 1 个 member 当日 ≥3 家涨停, 其它成员该日 0 涨停被剔除.
+        按旧公式它自动 rank=1, top1_days 虚增; 修复后该日 rank=NULL 被 `_TOP_PER_DAY` 过滤剔除.
+        配套断言: 多 member 日的 rank=1 仍然正常出现, 验证修复没误伤多成员日.
+        """
+        d_single = date(2024, 6, 17)
+        d_multi = date(2024, 6, 18)
+        # 3 个 stock 都属于同一概念 LONE → 触发 _MIN_LIMIT_UP=3 的聚合
+        rows = _mk_rows(d_single, [("S1.SH", 1, 1e8), ("S2.SH", 1, 1e8), ("S3.SH", 1, 1e8)])
+        # 多 member 日: 同一个 LONE 概念 + 第二个概念 MULTI 也都有 3 个涨停 → 2 个 member 应都被排名
+        rows += _mk_rows(d_multi, [("M1.SH", 2, 1e8), ("M2.SH", 1, 1e8), ("M3.SH", 1, 1e8),
+                                 ("S1.SH", 1, 1e8), ("S2.SH", 1, 1e8), ("S3.SH", 1, 1e8)])
+        _write_enriched(tmp_path, rows)
+        # 全 map: LONE 概念 3 stocks, MULTI 概念 3 stocks
+        monkeypatch.setattr(market_mainline, "_load_concept_map_df",
+            lambda repo, k="concept": (
+                pl.DataFrame({"_sym_up": ["S1.SH","S2.SH","S3.SH","M1.SH","M2.SH","M3.SH"],
+                              "concept": ["LONE","LONE","LONE","MULTI","MULTI","MULTI"]},
+                             schema={"_sym_up": pl.Utf8, "concept": pl.Utf8}),
+                6,
+            ))
+        repo = _fake_repo(tmp_path)
+        out = market_mainline.compute_mainline_range(
+            repo, tmp_path, d_single, d_multi, kind="concept",
+            filter_cfg={"min_members": 1, "max_members": 500, "blacklist": []},
+        )
+        # d_single 单 member 日: 应被 rank=NULL 过滤剔除, 0 rows
+        single_rows = out.filter(pl.col("date") == d_single)
+        assert single_rows.is_empty(),             f"singleton day should produce no rows (rank=NULL filtered), got {single_rows.height}"
+        # d_multi 多 member 日: LONE 与 MULTI 都应进入 result, 各 rank=1/2 (按 score desc 排序)
+        multi_rows = out.filter(pl.col("date") == d_multi).sort("rank")
+        assert multi_rows.height == 2, f"multi-day should produce 2 rows, got {multi_rows.height}"
+        assert set(multi_rows["member"].to_list()) == {"LONE", "MULTI"}
+        assert multi_rows["rank"].to_list() == [1, 2], f"ranks should be [1, 2], got {multi_rows['rank'].to_list()}"
+
+
+
 class TestMainlineFilterPreferences:
     def test_blacklist_string_parsing_and_clamp(self, tmp_path, monkeypatch):
         path = tmp_path / "preferences.json"

@@ -1,0 +1,122 @@
+{
+  "ran_at": "20261012_212957",
+  "year": 2025,
+  "universe": "top_500_by_avg_amount",
+  "params": {
+    "stock_num": 5,
+    "top_dividend_pct": 0.25,
+    "min_continuous_year": 3,
+    "high_price_threshold": 9.0
+  },
+  "calibration": {
+    "fee_pct": 0.0003,
+    "stamp_tax_pct": 0.001,
+    "slippage_bps": 5,
+    "hold_days_hard_limit": 30
+  },
+  "variants": {
+    "0_no_fee_rebalance_5d": {
+      "total_return": 0.7313174358643277,
+      "max_drawdown": 0.44971191366932084,
+      "sharpe": 3.6987102870673665,
+      "n_buys": 144,
+      "n_sells": 143
+    },
+    "1_fee_only_rebalance_5d": {
+      "total_return": 0.6846313872763459,
+      "max_drawdown": 0.4359160033739693,
+      "sharpe": 3.4874816529034223,
+      "n_buys": 144,
+      "n_sells": 143
+    },
+    "2_fee_slip_rebalance_5d": {
+      "total_return": 0.6556609693593769,
+      "max_drawdown": 0.42744235554660204,
+      "sharpe": 3.3534454680049652,
+      "n_buys": 144,
+      "n_sells": 143
+    },
+    "3_fee_slip_real_rebalance": {
+      "total_return": 0.6108888791285217,
+      "max_drawdown": 0.4096030130947454,
+      "sharpe": 3.209983969460505,
+      "n_buys": 60,
+      "n_sells": 59
+    }
+  },
+  "final": {
+    "initial_cash": 1000000.0,
+    "final_equity": 1610888.8791285218,
+    "total_return": 0.6108888791285217,
+    "max_drawdown": 0.4096030130947454,
+    "sharpe": 3.209983969460505,
+    "n_buys": 60,
+    "n_sells": 59,
+    "monthly_returns": [
+      {
+        "month": "2025-01",
+        "return": -0.0007982295447373763,
+        "equity": 999201.7704552626
+      },
+      {
+        "month": "2025-02",
+        "return": 0.020021990276014992,
+        "equity": 1019207.7785870949
+      },
+      {
+        "month": "2025-03",
+        "return": 0.10239224809052622,
+        "equity": 1123566.7543079788
+      },
+      {
+        "month": "2025-04",
+        "return": 0.14450745344032356,
+        "equity": 1285930.5247432345
+      },
+      {
+        "month": "2025-05",
+        "return": 0.0748078990117737,
+        "equity": 1382128.2855743836
+      },
+      {
+        "month": "2025-06",
+        "return": 0.08197961020705913,
+        "equity": 1495434.6236819224
+      },
+      {
+        "month": "2025-07",
+        "return": 0.019350934811714307,
+        "equity": 1524372.6815999718
+      },
+      {
+        "month": "2025-08",
+        "return": 0.01390417331232254,
+        "equity": 1545567.8235575077
+      },
+      {
+        "month": "2025-09",
+        "return": 0.03336106055085963,
+        "equity": 1597129.60530467
+      },
+      {
+        "month": "2025-10",
+        "return": 0.017880338122656818,
+        "equity": 1625686.822673223
+      },
+      {
+        "month": "2025-11",
+        "return": -0.002878693086647957,
+        "equity": 1621006.969255739
+      },
+      {
+        "month": "2025-12",
+        "return": -0.0003940570514082744,
+        "equity": 1620368.2000291217
+      }
+    ]
+  },
+  "artifacts": {
+    "equity_curve_png": "/Volumes/quant-ssd/projects/tickflow-stock-panel/docs/reports/live-trading-backtest-20261012_212957/equity_curve.png",
+    "monthly_csv": "/Volumes/quant-ssd/projects/tickflow-stock-panel/docs/reports/live-trading-backtest-20261012_212957/monthly_returns.csv"
+  }
+}

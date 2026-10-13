@@ -932,6 +932,8 @@ function StockPoolPicker({ value, onChange, assetType = 'stock' }: { value: stri
   )
 }
 
+import { SyncToLiveButton } from '@/components/screener/SyncToLiveButton'
+
 export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
   /** 候选方案「载入复测」: 回填保存的回测配置 (消费后由父组件清空) */
   loadCandidate?: ResearchCandidate | null
@@ -2252,7 +2254,14 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
               </div>
             )}
 
-            <div className="text-[11px] text-muted">run_id: {result.run_id}</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] text-muted">run_id: {result.run_id}</div>
+              <SyncToLiveButton
+                strategyId={result.strategy_info?.id ?? result.config?.strategy_id ?? ''}
+                verifyRunId={result.run_id}
+                size="sm"
+              />
+            </div>
           </motion.div>
         )}
 

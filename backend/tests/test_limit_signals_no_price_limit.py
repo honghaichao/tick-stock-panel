@@ -233,3 +233,38 @@ def test_realtime_path_listing_date_window_without_sentinel():
 
     for signal in SIGNALS:
         assert realtime[signal] is False, signal
+
+
+def test_prev_raw_close_uses_raw_not_adjusted_close():
+    """S2 修复 (2026-10-10): `_prev_raw_close` 必须用 raw_close.shift(1), 不能用 close.shift(1).
+
+    历史回填路径 (compute_limit_signals) 之前在 _adj_changed 时把 close.shift(1) 当作
+    "除权日昨收" 使用; 而 `close` 列已是后复权 (远小于 raw_close, 因历史送转股), 导致
+    _theoretical_limit_up 算出极小数, raw_close >= 它永远 True, 每天 +1 连板, 单调
+    累加数年 → 1300+ 板的伪数据. 修法: 直接 raw_close.shift(1).over("symbol").
+    回归测试: 同一只股, 用 raw_close 当 prev + close ≠ raw 的 HFQ 缩放, 应正常只
+    在真实涨停日判 limit_up.
+    """
+    from app.indicators import pipeline
+
+    # 昨天 raw=100, 后复权后 close=0.1 (模拟 1000:1 大比例送转 XD, HFQ 把历史压平)
+    today = date(2026, 1, 5)
+    yesterday = date(2026, 1, 4)
+    rows = [
+        {"symbol": "601999.SH", "date": yesterday, "open": 100.0, "high": 100.0,
+         "low": 100.0, "close": 100.0, "raw_close": 100.0, "raw_high": 100.0,
+         "raw_low": 100.0, "volume": 1000.0},
+        # 今天 raw_close=100 (即 +0%, 未涨停). 后复权 close=0.1 (HFQ 1000:1 缩放).
+        {"symbol": "601999.SH", "date": today, "open": 100.0, "high": 100.0,
+         "low": 100.0, "close": 0.1, "raw_close": 100.0, "raw_high": 100.0,
+         "raw_low": 100.0, "volume": 1000.0},
+    ]
+    df = pl.DataFrame(rows)
+    inst = pl.DataFrame({"symbol": ["601999.SH"], "name": ["测试股"]})
+    out = pipeline.compute_limit_signals(df, inst)
+    # 修复后: prev_raw_close = 昨天 raw_close = 100.0
+    # _theoretical_limit_up = 100 × 1.1 = 110
+    # raw_close(100) < 110 → signal_limit_up = False
+    row = out.row(1, named=True)
+    assert row["signal_limit_up"] in (False, None),         f"raw_close=100 不应判涨停 (_prev_raw_close 走错路才会判); row={row}"
+    assert row["consecutive_limit_ups"] == 0,         f"不应有连板; row={row}"

@@ -246,13 +246,27 @@ def _math_half_up(expr: pl.Expr, decimals: int = 2) -> pl.Expr:
 def _apply_adj_factor(raw: pl.DataFrame, factors: pl.DataFrame) -> pl.DataFrame:
     """对 raw K 线应用前复权 (forward adjustment)。
 
-    adj_factor 结构: symbol, trade_date, ex_factor
-    ex_factor 含义: 每次除权事件的 pre/post 比值(个股级,非累积)。
+    adj_factor 数据契约 (Tushare / TickFlow SDK 透传, 混合形态):
+      - 多数行: 自 IPO 起的累积复权因子, 跨无事件日保持常数, 事件后单调递增
+      - 少数行: 除权事件当日的 per-event 比率 (≈ 1.0), 单日单行
+      实测 000001.SZ 等: 109-139 的累积行 与 1.007-1.07 的事件行交错存在。
 
-    前复权原理:
-      - 保持最新价格不变,将历史价格向下调整以消除除权缺口
-      - adjusted = raw × cumprod_at_D / total_cumprod
-      - 等价于: adjusted = raw / (该日期之后所有事件的 ex_factor 乘积)
+    处理:
+      1. 过滤 per-event 噪声行 (ex_factor < PER_EVENT_THRESHOLD, A 股典型事件 < 1.1,
+         无 reverse split); 若过滤后整支 symbol 都为空, 用原金额(无事件股)
+      2. 每个 symbol 的 total_factor = 最后一个累积因子 = 该 symbol 当前累积值
+      3. ratio = ex_factor(D) / total_factor
+      4. ratio < 1 → 历史价格被向下除权调降;ratio = 1 → 当日价格不变
+
+    退化路径: 任一侧为 inf / NaN / null 时 ratio 兜底 1.0, OHLC 保持原值不前复权
+    (与旧 fallback 行为兼容, 防止下游写入 null)。
+
+    Fuyao provider 的 per-event 输出接入前, 需在 _normalize_adj_factor 阶段先转为
+    累积形态 (per_event[t] = cum[t] / cum[t-1], 以 IPO cum=1.0 为基)。
+
+    历史 issue (2026-10-12): 旧实现对累积数据 cum_prod 在第 ~500 行溢出到 inf,
+    触发 ratio=1.0 fallback 静默丢失前复权 → 1468 支股票 OHLC 未除权。
+    PER_EVENT_THRESHOLD = 2.0  # A 股事件典型 < 1.1; reverse split 在 A 股非法
     """
     if factors.is_empty():
         return raw
@@ -266,29 +280,44 @@ def _apply_adj_factor(raw: pl.DataFrame, factors: pl.DataFrame) -> pl.DataFrame:
     if factors.is_empty():
         return raw
 
-    # 去重 + 排序 + 累积乘积 (一趟完成)
+    # 去重 + 排序
     factors_sorted = (
         factors.sort(["symbol", "trade_date"])
         .unique(subset=["symbol", "trade_date"])
         .sort(["symbol", "trade_date"])
-        .with_columns(
-            pl.col("ex_factor").cum_prod().over("symbol").alias("cum_factor"),
-        )
     )
 
-    # 每个 symbol 的总累积因子
-    total_factors = (
+    # 过滤 per-event 噪声行 (ex_factor < 2.0): 逐 symbol 判断而非全局.
+    # 原因: 全局 filter 会被高 cum symbol (如 600519.SH cum~8) 让 cum_only 非空,
+    # 进而丢弃低 cum symbol (如 300750.SZ 所有 ex_factor < 2) 的全部数据, 走 fallback ratio=1.0
+    # → 整支股票前复权丢失. 正确做法: per-symbol 决定是否过滤 per-event 行.
+    symbols_with_cum = (
         factors_sorted
+        .filter(pl.col("ex_factor") >= 2.0)
+        .select("symbol")
+        .unique()
+    )
+    factors_marked = factors_sorted.join(
+        symbols_with_cum.with_columns(pl.lit(True).alias("_has_cum")),
+        on="symbol", how="left",
+    ).with_columns(pl.col("_has_cum").fill_null(False))
+    factors_used = factors_marked.filter(
+        (~pl.col("_has_cum")) | (pl.col("ex_factor") >= 2.0)
+    ).drop("_has_cum")
+
+    # 每个 symbol 的"今天"因子 = 最后一个 trade_date 的 ex_factor (即累积因子当前值)
+    total_factors = (
+        factors_used
         .group_by("symbol")
-        .agg(pl.col("cum_factor").last().alias("total_factor"))
+        .agg(pl.col("ex_factor").last().alias("total_factor"))
     )
 
     raw_sorted = raw.sort(["symbol", "date"])
 
-    # join_asof backward: 每根 K 线取 <= 其 date 的最新累积因子
+    # join_asof backward: 每根 K 线取 <= 其 date 的最新因子 (逐 symbol 已过滤掉 per-event 噪声)
     # 同时带 trade_date 列用于判断除权日标记
     df = raw_sorted.join_asof(
-        factors_sorted.select("symbol", "trade_date", "cum_factor"),
+        factors_used.select("symbol", "trade_date", "ex_factor"),
         left_on="date",
         right_on="trade_date",
         by="symbol",
@@ -299,7 +328,13 @@ def _apply_adj_factor(raw: pl.DataFrame, factors: pl.DataFrame) -> pl.DataFrame:
     df = df.join(total_factors, on="symbol", how="left")
 
     is_ex = pl.col("trade_date") == pl.col("date")
-    ratio = pl.col("cum_factor").fill_null(1.0) / pl.col("total_factor").fill_null(1.0)
+    # ratio = ex_factor(D) / ex_factor(today)
+    # 任一边非有限 (inf/NaN/null) → fallback 1.0, OHLC 不前复权
+    ratio = pl.when(
+        pl.col("ex_factor").is_finite() & pl.col("total_factor").is_finite()
+    ).then(
+        pl.col("ex_factor") / pl.col("total_factor")
+    ).otherwise(1.0)
     price_cols = [c for c in ("open", "high", "low", "close") if c in df.columns]
 
     df = df.with_columns(
@@ -307,7 +342,7 @@ def _apply_adj_factor(raw: pl.DataFrame, factors: pl.DataFrame) -> pl.DataFrame:
         + [
             is_ex.alias("ex_rights"),
         ]
-    ).drop(["trade_date", "cum_factor", "total_factor"])
+    ).drop(["trade_date", "ex_factor", "total_factor"])
 
     return df
 
@@ -815,14 +850,21 @@ def compute_limit_signals(
         cleanup = [c for c in ("name", "float_shares", "limit_up", "limit_down", "listing_date") if c in df.columns]
         return df.drop(cleanup)
 
-    _adj_today = pl.col("close") / pl.col("raw_close")
-    _adj_yesterday = pl.col("close").shift(1).over("symbol") / pl.col("raw_close").shift(1).over("symbol")
-    _adj_changed = (_adj_today - _adj_yesterday).abs() > 1e-6
+    # 仅使用 raw_close.shift(1) (昨天原始未复权收盘价), 与实时路径
+    # `_compute_limit_signals_today` 用 _prev_close_raw / close_right / raw_close
+    # 回退链的回退末端对齐. 历史 backfill 路径之前有 `_adj_changed` 分支, 把
+    # close.shift(1) 当作「除权日昨收」使用; 但凡有 HFQ 微调的股, HFQ
+    # close (远比 raw_close 小) 被当 yesterday raw prev, _theoretical_limit_up ≈ 0.05,
+    # raw_close >= 0.05 永远 True → 每个 stock 的 consecutive_limit_ups 单调
+    # 累加若干年, 最大可达 1300+ 板 (用户报告 S2 决策: 仅修新算, 历史不动).
+    # 注: `close` 列已是后复权价格 (远小于 raw_close), 不应用作 prev_raw.
     df = df.with_columns(
-        pl.when(_adj_changed)
-        .then(pl.col("close").shift(1).over("symbol"))   # 除权: 使用前复权昨收
-        .otherwise(pl.col("raw_close").shift(1).over("symbol"))  # 正常: 使用原始昨收
-        .alias("_prev_raw_close")
+        pl.col("raw_close").shift(1).over("symbol").alias("_prev_raw_close")
+    )
+    # 新股上市首日 / 停牌日后首日的 shift(1) 是 NaN, 兜底: forward-fill (同 symbol) -> 0
+    # 含 limit_signals 链路里的 polars_limit_price 在 cast Int64 时 NaN 会抛错
+    df = df.with_columns(
+        pl.col("_prev_raw_close").fill_null(strategy="forward").fill_null(0).alias("_prev_raw_close")
     )
 
     is_risk_warning = pl.col("_is_st") if "_is_st" in df.columns else pl.lit(False)
@@ -1555,7 +1597,9 @@ def _compute_storage_batches(
 def run_pipeline(data_dir: Path | None = None,
                  symbols: list[str] | None = None,
                  new_dates_only: bool = False,
-                 on_batch_done: Callable[[int, int], None] | None = None) -> int:
+                 on_batch_done: Callable[[int, int], None] | None = None,
+                 start_date: "date | None" = None,
+                 end_date: "date | None" = None) -> int:
     """运行盘后管道:读 kline_daily + adj_factor → 前复权 + 计算存储列 → 写 enriched。
 
     enriched 表仅存储 14 列基础行情窄表 (OHLCV + raw_close/high/low + turnover_rate + 连板数)。
@@ -1572,6 +1616,12 @@ def run_pipeline(data_dir: Path | None = None,
       - 除权因子增量 (symbols 指定, new_dates_only=False):
           只对指定 symbol 做局部重算并合并回已有 enriched。
           用于无新日K数据、仅除权因子变更的场景。
+
+    日期范围过滤 (start_date / end_date, 仅增量模式生效):
+      - 只处理 daily 中 [start_date, end_date] 内、且 enriched 未有的日期.
+      - 用于"往前补历史"场景: 已有 2020-2026 enriched 不动, 只算 2005-2019.
+      - date 类型, 含两端; None = 不限制.
+      - 全量模式不支持 (会被已有"覆盖完整性"守卫拒绝).
     返回写入的行数。
     """
     import time as _t
@@ -1616,6 +1666,23 @@ def run_pipeline(data_dir: Path | None = None,
             p for p in daily_dir.glob("date=*")
             if p.stem.split("=")[1] not in enriched_dates
         )
+        # start_date / end_date 过滤: 增量模式下只算指定窗口内的新日期
+        if start_date is not None or end_date is not None:
+            from datetime import date as _date
+            def _in_range(p: Path) -> bool:
+                ds = p.stem.split("=")[1]
+                try:
+                    d = _date.fromisoformat(ds)
+                except ValueError:
+                    return False
+                if start_date is not None and d < start_date:
+                    return False
+                if end_date is not None and d > end_date:
+                    return False
+                return True
+            new_date_dirs = [p for p in new_date_dirs if _in_range(p)]
+            logger.info("增量模式: 日期范围 %s..%s 过滤后剩 %d 个新日期",
+                        start_date, end_date, len(new_date_dirs))
         if not new_date_dirs and not symbols:
             logger.info("增量模式: 无新日期, 无需重算")
             return 0
@@ -1729,6 +1796,8 @@ def run_pipeline(data_dir: Path | None = None,
     # ── 按 symbol 分批处理: 指标全部 over("symbol") 分组, 分批不改变结果 ──
     # 文件列表只收集一次, 批间复用 (避免每批重新展开 glob)
     daily_files = sorted(str(p) for p in daily_dir.rglob("*.parquet"))
+    # 注: 全量模式 (symbols=None, new_dates_only=False) 故意不支持 start_date/end_date —
+    # 已有 "全量重建结果缺少已有日期分区" 守卫拒绝部分覆盖, 用户要么全算要么删窗口外 enriched.
     lf_all = scan_daily_parquet(daily_files, cast_options=_cast)
     if symbols:
         sym_set = set(symbols)

@@ -8,7 +8,7 @@ tickflow 戳的 OR 语义与开盘缓冲窗、失败/无权限 → None、TTL �
 
 from __future__ import annotations
 
-from datetime import date, datetime, time as dt_time, timezone, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -232,8 +232,8 @@ def test_minute_refresh_gate_passes_when_trading(monkeypatch):
 # ---- fuyao 日历解析 ----
 
 def test_fuyao_provider_trading_days_conversion(monkeypatch):
-    from app.plugins.fuyao.provider import FuyaoProvider
     from app.plugins.fuyao import provider as fp
+    from app.plugins.fuyao.provider import FuyaoProvider
 
     class _CalClient:
         def trading_days(self):

@@ -1,0 +1,3 @@
+# Tushare provider 编辑中产生的临时备份不提交
+*.bak
+*.bak.*

@@ -189,6 +189,20 @@ export function useQuoteStream(
         qc.invalidateQueries({ queryKey: ['screener-cached'] })
       })
 
+      es.addEventListener('trading_event', (e: MessageEvent) => {
+        // 实盘事件 (委托/成交/撮合 tick): 由后端 trading 引擎发出。
+        // 统一失效 'trading' 前缀下的所有 query, 与 SSE_INVALIDATE_PREFIXES 一致;
+        // 不解析 payload 类型, 撮合节拍由后端控制, 前端不必做 diff。
+        // 仅在实盘页打开且当前用户在其实盘偏好页面停留时才需要实时刷新;
+        // 全局触发, 后端会自动跳过非订阅状态, 这里由 React Query 缓存层兜底。
+        try {
+          JSON.parse(e.data)
+          qc.invalidateQueries({ queryKey: ['trading'] })
+        } catch {
+          // 忽略解析错误
+        }
+      })
+
       es.addEventListener('depth_updated', () => {
         // 五档修正完成: 刷新连板梯队 + 看板封单数据。
         // 不受实时行情开关限制 — 修正轮询独立于行情轮询, 用户开了修正就想看实时封单。

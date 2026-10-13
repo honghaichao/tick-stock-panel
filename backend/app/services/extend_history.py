@@ -19,11 +19,15 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from app.services import kline_sync
 from app.services.pipeline_jobs import job_store
 from app.tickflow.capabilities import Cap, CapabilitySet
-from app.tickflow.repository import KlineRepository
+from app.tickflow.repository import (
+    KlineRepository,
+    _kline_minute_glob_list,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,17 +75,22 @@ def _refresh_single_view(repo: KlineRepository, name: str) -> None:
     paths = {
         "kline_daily": f"{d}/kline_daily/**/*.parquet",
         "kline_enriched": f"{d}/kline_daily_enriched/**/*.parquet",
-        "kline_minute": f"{d}/kline_minute/**/*.parquet",
+        # kline_minute: consolidation 后用 date=*/part.parquet (单文件布局);
+        # 旧 nested 布局 (date=X/symbol=Y/part.parquet) 自动检测存在才加。
+        # DuckDB read_parquet list 模式要求每个 glob 都至少匹配 1 个文件,
+        # 否则 0 匹配即报错 (会重启失败), 因此动态构建。
+        "kline_minute": _kline_minute_glob_list(Path(d)),
         "adj_factor": f"{d}/adj_factor/**/*.parquet",
         "instruments": f"{d}/instruments/**/*.parquet",
     }
     path = paths.get(name)
     if not path:
         return
+    path_arg = f"'{path}'" if isinstance(path, str) else str(path)
     try:
         repo.db.execute(
             f"CREATE OR REPLACE VIEW {name} AS "
-            f"SELECT * FROM read_parquet('{path}', union_by_name=true)"
+            f"SELECT * FROM read_parquet({path_arg}, union_by_name=true)"
         )
     except Exception as e:
         logger.warning("refresh view %s failed: %s", name, e)

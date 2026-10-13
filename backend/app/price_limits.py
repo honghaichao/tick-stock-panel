@@ -161,8 +161,9 @@ def polars_is_risk_warning_name(name: pl.Expr) -> pl.Expr:
 def polars_limit_price(previous: pl.Expr, limit_pct: pl.Expr, *, up: bool) -> pl.Expr:
     """Calculate exchange half-up prices with integer-cent arithmetic."""
     sign = 1 if up else -1
-    numerator = ((1 + sign * limit_pct) * 100).round(0).cast(pl.Int64)
-    cents = (previous * 100 + 0.5).floor().cast(pl.Int64)
+    # strict=False 让 NaN 自动转 null int 而非抛错, 沿链自然传播
+    numerator = ((1 + sign * limit_pct) * 100).round(0).cast(pl.Int64, strict=False)
+    cents = (previous.fill_null(0) * 100 + 0.5).floor().cast(pl.Int64, strict=False)
     return ((cents * numerator + 50) // 100) / 100
 
 

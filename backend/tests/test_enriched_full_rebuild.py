@@ -195,3 +195,55 @@ def test_history_window_batched_equals_direct(tmp_path):
         df_hist.clone(), tmp_path, sym_batch=2
     )
     assert batched.sort(["symbol", "date"]).equals(direct.sort(["symbol", "date"]))
+
+
+# ================================================================
+# 日期范围过滤 (start_date / end_date, 仅增量模式生效) #issue-2025
+# ================================================================
+
+def test_incremental_with_start_end_filters_new_dates(tmp_path, monkeypatch):
+    """增量模式 + start_date/end_date: 只算指定窗口内、enriched 还没有的日期.
+
+    已落盘 enriched 在窗口外的日期不被重算. 用于"往前补历史"场景: 已有 2020-2026
+    enriched 不动, 只算 2005-2019 的新增日期.
+    """
+    symbols = ["600000.SH"]
+    # daily: 2005~2020 (5 dates)
+    for ds in ["2005-01-03", "2005-01-04", "2010-06-01", "2019-12-30", "2020-01-02"]:
+        _write_daily(tmp_path, ds, 10.0)
+    # enriched: 已有 2020-01-02 (落在窗口外, 不该被重算)
+    _write_existing(tmp_path, "2020-01-02", 10.0)
+    monkeypatch.setattr(pipeline, "compute_enriched", _fake_compute_enriched)
+
+    written = pipeline.run_pipeline(
+        data_dir=tmp_path,
+        new_dates_only=True,
+        start_date=date(2005, 1, 1),
+        end_date=date(2019, 12, 31),
+    )
+    # 期望只算 4 个新日期 (2005-01-03, 2005-01-04, 2010-06-01, 2019-12-30)
+    # 2020-01-02 已 enriched, 不重算
+    assert written == 4 * len(symbols)
+    enriched_dates = sorted(
+        p.name[5:] for p in (tmp_path / "kline_daily_enriched").iterdir()
+        if p.name.startswith("date=") and p.is_dir()
+    )
+    assert "2020-01-02" in enriched_dates  # 原有
+    assert "2019-12-30" in enriched_dates  # 新增
+    assert "2010-06-01" in enriched_dates
+    assert "2005-01-04" in enriched_dates
+    assert "2005-01-03" in enriched_dates
+
+
+def test_incremental_without_date_range_processes_all_missing(tmp_path, monkeypatch):
+    """start_date/end_date 都 None → 不过滤, 增量模式按现有逻辑算所有缺失日期.
+
+    防 start_date/end_date 参数的默认值回归.
+    """
+    symbols = ["600000.SH"]
+    for ds in ["2005-01-03", "2010-06-01", "2019-12-30"]:
+        _write_daily(tmp_path, ds, 10.0)
+    monkeypatch.setattr(pipeline, "compute_enriched", _fake_compute_enriched)
+
+    written = pipeline.run_pipeline(data_dir=tmp_path, new_dates_only=True)
+    assert written == 3 * len(symbols)

@@ -40,6 +40,7 @@ dependencies = [
     # Watchlist screenshot OCR (Tesseract)
     "pytesseract>=0.3.10",
     "Pillow>=10.0",
+    "matplotlib",
 ]
 
 [project.optional-dependencies]

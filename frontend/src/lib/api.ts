@@ -1031,6 +1031,191 @@ export interface Lot {
   created_at?: string
 }
 
+// ===== Trading (实盘交易, /api/trading/*) =====
+export type OrderSide = 'buy' | 'sell'
+export type OrderType = 'limit' | 'market'
+export type OrderStatusApi = 'new' | 'partial' | 'filled' | 'canceled' | 'rejected'
+
+export interface OrderApi {
+  id: string
+  symbol: string
+  side: OrderSide
+  order_type: OrderType
+  qty: number
+  limit_price: number | null
+  status: OrderStatusApi
+  filled_qty: number
+  avg_fill_price: number | null
+  created_at: string
+  submitted_at: string | null
+  filled_at: string | null
+  canceled_at: string | null
+  reject_reason: string | null
+  note: string | null
+}
+
+export interface OrderDraftApi {
+  symbol: string
+  side: OrderSide
+  order_type?: OrderType
+  qty: number
+  limit_price?: number | null
+  note?: string | null
+}
+
+export interface FillApi {
+  id: string
+  order_id: string
+  symbol: string
+  side: OrderSide
+  qty: number
+  price: number
+  fee: number
+  tax: number
+  amount: number
+  filled_at: string
+  trade_date: string
+}
+
+export interface PositionApi {
+  symbol: string
+  qty: number
+  avg_cost: number
+  last_price: number | null
+  prev_close: number | null
+  market_value: number | null
+  total_pnl: number | null
+  total_pnl_pct: number | null
+  accumulated_pnl: number | null
+  accumulated_pnl_pct: number | null
+  first_buy_date: string | null
+  last_buy_date: string | null
+  holding_days: number | null
+}
+
+export interface AccountApi {
+  initial_cash: number
+  cash: number
+  market_value: number
+  total_equity: number
+  realized_pnl: number
+  unrealized_pnl: number
+  total_pnl: number
+}
+
+export interface EngineStatusApi {
+  enabled: boolean
+  running: boolean
+  broker: string
+  initial_cash: number
+  pending_order_count: number
+  filled_order_count: number
+  matcher_last_ts: string | null
+  matcher_interval_seconds: number
+  pending: OrderApi[]
+}
+
+export interface TradeLogApi {
+  id: string
+  kind: 'submit' | 'accept' | 'fill' | 'cancel' | 'reject' | 'matcher_tick'
+  ts: string
+  symbol: string | null
+  order_id: string | null
+  fill_id: string | null
+  message: string
+  details: Record<string, unknown> | null
+}
+
+export interface PnLSnapshotApi {
+  ts: string
+  trade_date: string
+  total_equity: number
+  cash: number
+  market_value: number
+  realized_pnl: number
+  unrealized_pnl: number
+  total_pnl: number
+  trigger: string
+}
+
+export interface PnLMetricsApi {
+  total_pnl: number
+  total_pnl_pct: number
+  today_pnl: number
+  today_pnl_pct: number
+  realized_pnl: number
+  unrealized_pnl: number
+  initial_cash: number
+  current_equity: number
+  max_drawdown: number
+  max_drawdown_peak: number
+  max_drawdown_trough: number
+  max_drawdown_date: string | null
+  total_trades: number
+  winning_trades: number
+  losing_trades: number
+  win_rate: number
+  avg_pnl_per_trade: number
+}
+
+export interface StrategyScheduleApi {
+  name: string
+  hour: number
+  minute: number
+  enabled: boolean
+  day_of_week?: string
+  kind?: 'daily' | 'weekly' | 'monthly' | 'manual'
+}
+
+export interface LiveStrategySummaryApi {
+  total_pnl: number
+  total_pnl_pct: number
+  annual_return: number | null  // null when history < 30 days; UI 显示 "—"
+  today_pnl: number
+  today_pnl_pct: number
+  max_drawdown: number
+  max_drawdown_date: string
+}
+
+export interface LiveStrategyApi {
+  id: string
+  name: string
+  enabled_default: boolean
+  schedules: StrategyScheduleApi[]
+  next_run: string | null
+  // PR-2 暂以 optional 存在, 等 PR-1 (live-trading-strategy-summary.md) 后端上线后填值.
+  started_at?: string | null
+  notify_wechat?: boolean
+  summary?: LiveStrategySummaryApi | null
+}
+
+export interface StrategyRunReportApi {
+  strategy_id: string
+  event: string
+  started_at: string
+  finished_at: string
+  duration_ms: number
+  trigger: string
+  status: 'success' | 'error' | 'running' | 'no_target'
+  target: Record<string, number>
+  universe: string[] | null
+  submitted: string[]
+  skipped: Record<string, unknown>[]
+  error: string
+}
+
+export interface TradingPreferencesApi {
+  trading_enabled: boolean
+  trading_initial_cash: number
+  trading_max_order_amount: number
+  trading_max_position_count: number
+  trading_max_position_pct: number
+  trading_match_interval_seconds: number
+  trading_fee_rate: number
+  trading_fee_min: number
+  trading_stamp_tax_rate: number
+}
+
 export interface VDBasicFilter {
   price_min?: number | null                 // 股价下限 (元)
   price_max?: number | null                 // 股价上限 (元)
@@ -2626,9 +2811,9 @@ export const api = {
       timeoutMs: COMPUTE_REQUEST_TIMEOUT_MS,
       body: JSON.stringify({ conditions, order_by: orderBy, limit, pool, ext_columns: extColumns || null, asset_type: assetType }),
     }),
-  screenerRunAll: (asOf?: string, strategyIds?: string[], assetType: 'stock' | 'etf' = 'stock') =>
+  screenerRunAll: (asOf?: string, strategyIds?: string[], assetType: 'stock' | 'etf' = 'stock', timeframe: '1d' | '1m' = '1d') =>
     request<ScreenerRunAllSummary>(
-      '/api/screener/run_all', { method: 'POST', timeoutMs: COMPUTE_REQUEST_TIMEOUT_MS, body: JSON.stringify({ as_of: asOf ?? null, strategy_ids: strategyIds ?? null, asset_type: assetType, timeframe: '1d', summary_only: true }) },
+      '/api/screener/run_all', { method: 'POST', timeoutMs: COMPUTE_REQUEST_TIMEOUT_MS, body: JSON.stringify({ as_of: asOf ?? null, strategy_ids: strategyIds ?? null, asset_type: assetType, timeframe, summary_only: true }) },
     ),
   screenerCachedSummary: () =>
     request<ScreenerCachedSummary>('/api/screener/cached-summary'),
@@ -3571,6 +3756,222 @@ export const api = {
 
   lotDelete: (id: string) =>
     request<{ ok: boolean }>(`/api/lots/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  // ===== Trading (实盘) =====
+  tradingStatus: () =>
+    request<EngineStatusApi>('/api/trading/status'),
+
+  tradingAccount: () =>
+    request<AccountApi>('/api/trading/account'),
+
+  tradingPositions: (params?: { strategy_id?: string }) => {
+    const sp = new URLSearchParams()
+    if (params?.strategy_id) sp.set('strategy_id', params.strategy_id)
+    const qs = sp.toString()
+    return request<{ positions: PositionApi[] }>(`/api/trading/positions${qs ? '?' + qs : ''}`)
+  },
+
+  tradingOrders: (params?: { status?: OrderStatusApi[]; symbol?: string; strategy_id?: string; limit?: number }) => {
+    const sp = new URLSearchParams()
+    if (params?.symbol) sp.set('symbol', params.symbol)
+    if (params?.strategy_id) sp.set('strategy_id', params.strategy_id)
+    if (params?.limit != null) sp.set('limit', String(params.limit))
+    for (const s of params?.status ?? []) sp.append('status', s)
+    const qs = sp.toString()
+    return request<{ orders: OrderApi[] }>(`/api/trading/orders${qs ? '?' + qs : ''}`)
+  },
+
+  tradingOrderSubmit: (draft: OrderDraftApi) =>
+    request<{ order: OrderApi }>('/api/trading/orders', {
+      method: 'POST',
+      body: JSON.stringify(draft),
+    }),
+
+  tradingOrderCancel: (id: string) =>
+    request<{ order: OrderApi }>(`/api/trading/orders/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  tradingTrades: (params?: { symbol?: string; strategy_id?: string; limit?: number }) => {
+    const sp = new URLSearchParams()
+    if (params?.symbol) sp.set('symbol', params.symbol)
+    if (params?.strategy_id) sp.set('strategy_id', params.strategy_id)
+    if (params?.limit != null) sp.set('limit', String(params.limit))
+    const qs = sp.toString()
+    return request<{ trades: FillApi[] }>(`/api/trading/trades${qs ? '?' + qs : ''}`)
+  },
+
+  tradingLogs: (params?: { kind?: string; strategy_id?: string; limit?: number }) => {
+    const sp = new URLSearchParams()
+    if (params?.kind) sp.set('kind', params.kind)
+    if (params?.strategy_id) sp.set('strategy_id', params.strategy_id)
+    if (params?.limit != null) sp.set('limit', String(params.limit))
+    const qs = sp.toString()
+    return request<{ logs: TradeLogApi[] }>(`/api/trading/logs${qs ? '?' + qs : ''}`)
+  },
+
+  tradingPreferences: () =>
+    request<TradingPreferencesApi>('/api/trading/preferences'),
+
+  tradingUpdatePreferences: (patch: Partial<TradingPreferencesApi>) =>
+    request<TradingPreferencesApi>('/api/trading/preferences', {
+      method: 'POST',
+      body: JSON.stringify(patch),
+    }),
+
+  tradingNotifyList: (params?: { limit?: number; kind?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set("limit", String(params.limit));
+    if (params?.kind) sp.set("kind", params.kind);
+    const qs = sp.toString() ? `?${sp.toString()}` : "";
+    return request<{ items: any[]; total: number }>(`/api/trading/notify${qs}`);
+  },
+  tradingNotifyPost: (body: { kind: string; text: string; source?: string; extra?: any }) =>
+    request<{ status: string; entry: any }>("/api/trading/notify", {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  tradingRiskMetrics: (params?: { window?: number }) => {
+    const qs = params?.window ? `?window=${params.window}` : ''
+    return request<{ series: any[]; summary: { alpha: number | null; beta: number | null; sharpe: number | null; sortino: number | null; info_ratio: number | null; volatility: number | null } }>(`/api/trading/pnl/risk_metrics${qs}`)
+  },
+  tradingStrategyCode: (strategyId: string) =>
+    request<{ strategy_id: string; content: string; size: number }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/code`),
+  tradingStrategyCodePut: (strategyId: string, body: { content: string; note?: string; run_after?: boolean }) =>
+    request<{ status: string; entry: any; size: number }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/code`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  tradingStrategyCodeChangelog: (strategyId: string, params?: { limit?: number }) => {
+    const qs = params?.limit ? `?limit=${params.limit}` : ''
+    return request<{ strategy_id: string; entries: any[]; total: number }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/code/changelog${qs}`)
+  },
+  // F1-3 (2026-10-13): verify 报告列表
+  tradingStrategyVerifyList: (strategyId: string) =>
+    request<{ reports: any[] }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/verify/list`),
+  // F1-3: dry_run 同步 → 返 SyncPlan (含 confirm_token)
+  tradingStrategySyncFromVerify: (strategyId: string, verifyRunId: string, dryRun: boolean = true, confirmToken?: string) =>
+    request<{
+      verify_run_id: string
+      as_of: string
+      code_version_match: boolean
+      target_count: number
+      would_submit_orders: any[]
+      drop_reasons: Record<string, string>
+      warnings: string[]
+      audit_id: string
+      confirm_token?: string
+    }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/sync-from-verify`, {
+      method: 'POST',
+      body: JSON.stringify({ verify_run_id: verifyRunId, dry_run: dryRun, ...(confirmToken ? { confirm_token: confirmToken } : {}) }),
+    }),
+  // F1-4: drift 检测
+  tradingStrategyDrift: (strategyId: string, windowDays: number = 7) =>
+    request<{
+      strategy_id: string
+      window_days: number
+      live_symbols: string[]
+      verify_symbols: string[]
+      overlap: string[]
+      only_live: string[]
+      only_verify: string[]
+      overlap_pct: number
+      fill_count: number
+      verify_run_id: string | null
+      as_of: string
+    }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/drift?window_days=${windowDays}`),
+  // F1-5: 快照 / diff / 回滚
+  tradingStrategyCodeHistory: (strategyId: string) =>
+    request<{ strategy_id: string; history: any[]; max: number }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/code/history`),
+  tradingStrategyCodeDiff: (strategyId: string, ts: string) =>
+    request<{
+      strategy_id: string
+      ts: string
+      snapshot_size: number
+      current_size: number
+      diff: string[]
+      snapshot_content: string | null
+    }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/code/diff?ts=${encodeURIComponent(ts)}`),
+  tradingStrategyCodeRollback: (strategyId: string, ts: string) =>
+    request<{ strategy_id: string; rolled_back_to: any; schedules_disabled: boolean }>(
+      `/api/trading/strategies/${encodeURIComponent(strategyId)}/code/rollback`,
+      { method: 'POST', body: JSON.stringify({ ts }) },
+    ),
+  // F1-1: 策略晋级 (ai/custom → live)
+  tradingPromoteStrategyToLive: (strategyId: string, source: 'ai' | 'custom', opts: { verify?: boolean; overwrite?: boolean } = {}) =>
+    request<{
+      strategy_id: string
+      source: string
+      target_path: string
+      registered_count: number
+    }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/promote-to-live`, {
+      method: 'POST',
+      body: JSON.stringify({ source, verify: opts.verify ?? true, overwrite: opts.overwrite ?? false }),
+    }),
+  tradingPnlHistory: (params?: { start?: string; end?: string; trigger?: string; limit?: number }) => {
+    const sp = new URLSearchParams()
+    if (params?.start) sp.set('start', params.start)
+    if (params?.end) sp.set('end', params.end)
+    if (params?.trigger) sp.set('trigger', params.trigger)
+    if (params?.limit != null) sp.set('limit', String(params.limit))
+    const qs = sp.toString()
+    return request<{ snapshots: PnLSnapshotApi[] }>(`/api/trading/pnl/history${qs ? '?' + qs : ''}`)
+  },
+
+  tradingPnlMetrics: (params?: { strategy_id?: string }) => {
+    const sp = new URLSearchParams()
+    if (params?.strategy_id) sp.set('strategy_id', params.strategy_id)
+    const qs = sp.toString()
+    if (qs) {
+      return request<PnLMetricsApi>(`/api/trading/strategies/${encodeURIComponent(params!.strategy_id!)}/pnl/metrics`)
+    }
+    return request<PnLMetricsApi>('/api/trading/pnl/metrics')
+  },
+  tradingPnlHistoryStrategy: (strategyId: string, params?: { start?: string; end?: string; trigger?: string; limit?: number }) => {
+    const sp = new URLSearchParams()
+    if (params?.start) sp.set('start', params.start)
+    if (params?.end) sp.set('end', params.end)
+    if (params?.trigger) sp.set('trigger', params.trigger)
+    if (params?.limit != null) sp.set('limit', String(params.limit))
+    const qs = sp.toString()
+    return request<{ snapshots: PnLSnapshotApi[] }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/pnl/history${qs ? '?' + qs : ''}`)
+  },
+
+  tradingStrategies: () =>
+    request<{ strategies: LiveStrategyApi[] }>('/api/trading/strategies'),
+
+  tradingUpdateStrategySchedule: (strategyId: string, event: string, patch: {
+    enabled?: boolean; hour?: number; minute?: number
+  }) =>
+    request<{ strategy_id: string; event: string; schedules: StrategyScheduleApi[] }>(
+      `/api/trading/strategies/${encodeURIComponent(strategyId)}/schedules/${encodeURIComponent(event)}`,
+      { method: 'POST', body: JSON.stringify(patch) },
+    ),
+
+  tradingPutStrategySchedules: (strategyId: string, schedules: StrategyScheduleApi[]) =>
+    request<{ strategy_id: string; schedules: StrategyScheduleApi[] }>(
+      `/api/trading/strategies/${encodeURIComponent(strategyId)}/schedules`,
+      { method: 'PUT', body: JSON.stringify({ schedules }) },
+    ),
+
+  tradingRunStrategyNow: (strategyId: string, event?: string) =>
+    request<StrategyRunReportApi>(
+      `/api/trading/strategies/${encodeURIComponent(strategyId)}/run-now`,
+      { method: 'POST', body: JSON.stringify(event ? { event } : {}) },
+    ),
+
+  // ── PR-2 列表页用: DELETE / POST notify (后端 PR-1 上线前会 404, 前端 fallback 软删 / read-only).
+  tradingDeleteStrategy: (strategyId: string) =>
+    request<{ deleted: boolean; kept_source_file: boolean; running_runs?: string[] }>(
+      `/api/trading/strategies/${encodeURIComponent(strategyId)}`,
+      { method: 'DELETE' },
+    ),
+
+  tradingSetStrategyNotify: (strategyId: string, enabled: boolean) =>
+    request<{ notify_wechat: boolean }>(
+      `/api/trading/strategies/${encodeURIComponent(strategyId)}/notify`,
+      { method: 'POST', body: JSON.stringify({ enabled }) },
+    ),
+
+  tradingStrategyRuns: (strategyId: string, limit = 20) =>
+    request<{ runs: StrategyRunReportApi[] }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/runs?limit=${limit}`),
 
   /** 模拟触发 ladder 封单监控 (Dev 调试, 不落盘不推送) */
   monitorRuleTestLadder: () =>

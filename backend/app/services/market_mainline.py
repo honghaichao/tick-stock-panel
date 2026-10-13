@@ -236,6 +236,13 @@ def compute_mainline_range(repo, data_dir: Path, start: date, end: date,
     agg = agg.with_columns(
         pl.col("score").rank(method="ordinal", descending=True).over("date").alias("rank")
     )
+    # 单 member 日的 rank=1 含义是"它就是唯一成员", 与 score 正常分布时不可比;
+    # 强写 NULL, 让 `_TOP_PER_DAY` 过滤自然剔除非可比 rank=1。
+    # 影响: 9.8% industry 单 member 日 (155/1584) 不再参与 top1_days 计数.
+    agg = agg.with_columns(
+        pl.when(pl.len().over("date") <= 1).then(None)
+          .otherwise(pl.col("rank")).alias("rank")
+    )
     result = (
         agg.filter(pl.col("rank") <= _TOP_PER_DAY)
         .drop([f"_{col}_r" for col in _SCORE_WEIGHTS])

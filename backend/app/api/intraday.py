@@ -186,6 +186,17 @@ async def quote_stream(request: Request):
                             "ts": int(time.time() * 1000),
                         }),
                     }
+
+                # 实盘事件 — trading 引擎广播 (委托提交/成交/撮合 tick).
+                # 前端 useQuoteStream 监听后 invalidate ['trading'] 前缀 query.
+                for tev in data.get("trading_events", []):
+                    yield {
+                        "event": "trading_event",
+                        "data": json.dumps({
+                            "ts": int(time.time() * 1000),
+                            "payload": tev,
+                        }, ensure_ascii=False),
+                    }
         finally:
             qs.unsubscribe(sub)
 

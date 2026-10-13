@@ -25,6 +25,7 @@ class ProviderCapabilities:
     realtime: bool = False
     depth5: bool = False
     financial: bool = False
+    dividend: bool = False       # 现金分红事件 (pro.dividend 之类); 补 Tushare/Fuyao 未暴露的 dataset
 
 
 class MarketDataProvider(Protocol):
@@ -77,3 +78,19 @@ class MarketDataProvider(Protocol):
 
     def get_depth_batch(self, symbols: list[str]) -> dict[str, dict]:
         """Return five-level order books keyed by symbol."""
+
+    def get_dividends(
+        self,
+        symbols: list[str],
+        start_time: datetime | None,
+        end_time: datetime | None,
+        asset_type: AssetType = "stock",
+    ) -> pl.DataFrame:
+        """Return normalized cash-dividend events: symbol/ex_date/bonus_per_share.
+
+        单一时间窗口 (含两端). 不实现时返空 df; 调用方应 fallback 到 CSV / cache.
+        Tushare 返回的 cash_div 是 "10股派 X元" (X 元/10股), 这里统一成 元/股.
+        """
+
+        # 默认实现: 不支持 dividend dataset 的 provider 直接返空
+        return pl.DataFrame()

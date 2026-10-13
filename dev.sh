@@ -175,11 +175,21 @@ echo
 
 (
   cd "$BACKEND_DIR"
+  # uvicorn --reload 用 watchfiles 监视文件改动, 触发 worker SIGTERM 重启。
+  # 注意: --reload-include 单独使用远比搭配多个 --reload-exclude 快 (实测 1s vs >60s
+  # 不响应), 因为 watchfiles 在第一次 baseline scan 时会按 glob 模式求值, 模式多
+  # 显著拉慢启动。下面只列出"会触发 reload 的文件"白名单 (app/**/*.py),
+  # 等价于"不修改 app/*.py 不 reload"。
+  RELOAD_INCLUDE=(
+    "--reload-include" "app/**/*.py"
+  )
   # --no-sync: 跳过依赖解析, 直接用已安装的 .venv。
   # 比 --frozen 更彻底: 不校验 lockfile, 避免镜像源 403/网络抖动导致后端起不来。
   # python -m uvicorn: 强制用 venv 的解释器和 uvicorn 模块, 防止 PATH 里
   # 其他 Python(如 /usr/local/bin/uvicorn) 抢先, 导致用错误版本启动后端。
-  uv run --no-sync python -m uvicorn app.main:app ${UVICORN_ENV_ARGS[@]+"${UVICORN_ENV_ARGS[@]}"} --reload \
+  uv run --no-sync python -m uvicorn app.main:app \
+    ${UVICORN_ENV_ARGS[@]+"${UVICORN_ENV_ARGS[@]}"} --reload \
+    "${RELOAD_INCLUDE[@]}" \
     --host "$BACKEND_HOST" --port "$BACKEND_PORT" 2>&1 \
     | prefix_awk "$(printf "${BLUE}[backend ]${NC} ")"
 ) &

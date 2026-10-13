@@ -228,10 +228,15 @@ export function Lots() {
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-1 text-[11px] text-muted">
-            生成的止盈止损 / 到期提醒规则已同步至监控中心
+          <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
+            <span>生成的止盈止损 / 到期提醒规则已同步至监控中心</span>
             <button onClick={() => navigate('/monitor')} className="inline-flex items-center gap-0.5 text-accent hover:text-accent/80 cursor-pointer">
               去查看 <ArrowUpRight className="h-3 w-3" />
+            </button>
+            <span className="text-border">·</span>
+            <span>实盘持仓与批次可在同一页对照</span>
+            <button onClick={() => navigate('/live-trading')} className="inline-flex items-center gap-0.5 text-accent hover:text-accent/80 cursor-pointer">
+              去实盘 <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
         </div>

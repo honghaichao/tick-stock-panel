@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertTriangle, RadioTower, Plus, Trash2, Settings2, Zap, Bell, ListChecks, BellRing, TrendingUp, TrendingDown, Flame, Tags } from 'lucide-react'
+import { AlertTriangle, RadioTower, Plus, Trash2, Settings2, Zap, Bell, ListChecks, BellRing, TrendingUp, TrendingDown, Flame, Tags, Activity } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Skeleton } from '@/components/data/Skeleton'
@@ -166,6 +166,11 @@ export function Monitor() {
 
   // 规则个数
   const rulesQuery = useQuery({ queryKey: QK.monitorRules, queryFn: api.monitorRulesList })
+  const notifyQuery = useQuery({
+    queryKey: ['trading', 'notify'],
+    queryFn: () => api.tradingNotifyList({ limit: 50 }),
+    refetchInterval: 10000,
+  })
   const rulesCount = rulesQuery.data?.rules.length ?? 0
 
   // 清除全部规则 (逐条删除)
@@ -261,6 +266,37 @@ export function Monitor() {
           {/* 右栏: 监控规则 */}
           <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-xl border border-border bg-surface/40 shadow-lg shadow-black/5 lg:w-[400px] lg:shrink-0">
             <div className="flex items-center gap-3 border-b border-border/60 bg-surface/60 px-4 py-2.5">
+              {/* 实盘事件: 委托/成交/拒单/17:00 清算/send_message 统一展示 */}
+              <SectionHeader icon={Activity} title="实盘事件" />
+              <div className="flex-1 min-h-0 overflow-y-auto px-4 py-2">
+                {notifyQuery.isLoading ? (
+                  <div className="text-center text-xs text-muted py-4">加载中…</div>
+                ) : !notifyQuery.data?.items?.length ? (
+                  <div className="text-center text-xs text-muted py-4">暂无实盘事件</div>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {notifyQuery.data.items.slice(0, 30).map((n: any) => {
+                      const kindCls =
+                        n.kind === 'error' || n.kind === 'order_rejected' || n.kind === 'retry' ? 'text-danger' :
+                        n.kind === 'warn' ? 'text-warning' :
+                        n.kind === 'order_filled' || n.kind === 'success' ? 'text-bull' :
+                        'text-secondary'
+                      return (
+                        <li key={n.ts + n.kind} className="rounded border border-border/40 bg-surface/30 px-2 py-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className={cn('rounded px-1 py-0.5 text-[10px] font-medium border', kindCls,
+                              'border-current/30 bg-current/5')}>{n.kind}</span>
+                            <span className="text-[10px] text-muted">{n.ts?.replace('T', ' ').slice(0, 19)}</span>
+                            <span className="ml-auto text-[10px] text-muted">{n.source}</span>
+                          </div>
+                          <div className="mt-1 text-xs text-foreground/90">{n.text}</div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+
               <SectionHeader icon={ListChecks} title="监控规则" />
               <span className="rounded-md bg-elevated/50 px-1.5 py-0.5 text-[10px] font-medium text-muted">{rulesCount}</span>
               <div className="ml-auto flex items-center gap-1">

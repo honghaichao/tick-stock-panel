@@ -106,6 +106,28 @@ class DataStore:
         self.data_dir = Path(data_dir or settings.data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
+        # 启动守护: kline_minute 目录若积累 > N 个 parquet, 极可能是 minute_refresh
+        # 把每个 (date, symbol) 单独落盘成文件, 让 read_parquet('**/*.parquet') glob 几
+        # 分钟才能跑完, 整个 lifespan 卡顿。threshold 与 daily/enriched 数量级对齐
+        # (目前 113 个 consolidated; daily 目录 1637 个)。
+        # 超过即 fail-fast, 提示跑 backend/scripts/consolidate_kline_minute.py 合并。
+        # (2026-09-30: 188,899 个文件 → startup 3-5 min; 合并后 113 个 → 0.7s。)
+        _KLINE_MINUTE_FILE_BUDGET = 5000
+        _km_dir = self.data_dir / "kline_minute"
+        if _km_dir.is_dir():
+            _km_files = sum(
+                1 for _ in _km_dir.rglob("*.parquet")
+                if not _.name.startswith(".")
+            )
+            if _km_files > _KLINE_MINUTE_FILE_BUDGET:
+                raise RuntimeError(
+                    f"kline_minute 下有 {_km_files} 个 parquet 文件 (上限 {_KLINE_MINUTE_FILE_BUDGET}); "
+                    "这通常是 minute_refresh 把每个 (date, symbol) 单独落盘成文件, "
+                    "导致 DuckDB/Polars 的 '**/*.parquet' glob 启动时极慢。\n"
+                    "修复: 跑 `uv run python backend/scripts/consolidate_kline_minute.py` "
+                    "把每个 date=X/symbol=*/* 合并回 date=X/part.parquet。"
+                )
+
         # 一次性数据迁移: 旧桌面版把数据放在 exe 同级的兄弟目录 TickFlowStockPanel_Data/,
         # 新版改为 {app}/data/。老用户首次启动时自动把旧数据搬过来, 无感升级。
         self._migrate_legacy_data_dir()
@@ -221,8 +243,12 @@ class DataStore:
                 SELECT * FROM read_parquet('{d}/kline_etf_enriched/**/*.parquet', union_by_name=true)""",
             f"""CREATE OR REPLACE VIEW kline_etf_minute AS
                 SELECT * FROM read_parquet('{d}/kline_etf_minute/**/*.parquet', union_by_name=true)""",
-            f"""CREATE OR REPLACE VIEW kline_minute AS
-                SELECT * FROM read_parquet('{d}/kline_minute/**/*.parquet', union_by_name=true)""",
+            (
+                "CREATE OR REPLACE VIEW kline_minute AS "
+                "SELECT * FROM read_parquet("
+                + "ARRAY[" + ", ".join("'" + g.replace("'", "''") + "'" for g in _kline_minute_glob_list(self.data_dir)) + "]"
+                + ", union_by_name=true)"
+            ),
             f"""CREATE OR REPLACE VIEW adj_factor AS
                 SELECT * FROM read_parquet('{d}/adj_factor/**/*.parquet', union_by_name=true)""",
             f"""CREATE OR REPLACE VIEW adj_factor_etf AS
@@ -345,6 +371,23 @@ class DataStore:
                 self.db.execute(f"CREATE OR REPLACE VIEW {name} AS " + " UNION ALL BY NAME ".join(parts))
             except Exception as e:  # noqa: BLE001
                 logger.debug("unified view %s skipped: %s", name, e)
+
+
+def _kline_minute_glob_list(data_dir) -> list[str]:
+    """kline_minute DuckDB read_parquet 接受的 glob 列表。
+
+    consolidation 后用 date=*/part.parquet (单文件布局); 未 consolidation 时
+    还要并上 date=*/*/part.parquet 兼容 nested 布局。
+    DuckDB list 模式严格要求每个 glob 都至少匹配 1 个文件, 否则 0 匹配即报错,
+    所以动态检查 nested 目录是否真有文件再决定要不要加第二个 glob。
+    """
+    from pathlib import Path
+    base = Path(data_dir) / "kline_minute"
+    globs = [str(base / "date=*" / "part.parquet")]
+    nested = base / "date=*" / "*" / "part.parquet"
+    if any(base.glob("date=*/*/part.parquet")):
+        globs.append(str(nested))
+    return globs
 
 
 class KlineRepository:
@@ -1632,7 +1675,7 @@ class KlineRepository:
         """分钟K查询 — Polars scan_parquet + predicate pushdown。"""
         try:
             df = guarded_collect(
-                pl.scan_parquet(self._minute_glob_for(asset_type)).filter(
+                pl.scan_parquet(self._minute_glob_for(asset_type), extra_columns="ignore", missing_columns="insert").filter(
                     (pl.col("symbol") == symbol)
                     & (pl.col("datetime").dt.date() == trade_date)
                 ).sort("datetime")
@@ -1657,7 +1700,7 @@ class KlineRepository:
             return pl.DataFrame()
         try:
             df = guarded_collect(
-                pl.scan_parquet(self._minute_glob_for(asset_type)).filter(
+                pl.scan_parquet(self._minute_glob_for(asset_type), extra_columns="ignore", missing_columns="insert").filter(
                     pl.col("symbol").is_in(symbols)
                     & (pl.col("datetime").dt.date() == trade_date)
                 ).sort(["symbol", "datetime"])
@@ -1682,7 +1725,7 @@ class KlineRepository:
         if not symbols:
             return pl.DataFrame()
         try:
-            lf = pl.scan_parquet(self._minute_glob_for(asset_type))
+            lf = pl.scan_parquet(self._minute_glob_for(asset_type), extra_columns="ignore", missing_columns="insert")
             available = set(lf.collect_schema().names())
             select_cols = [c for c in ["symbol", "datetime", "open", "high", "low", "close", "volume", "amount"] if c in available]
             df = guarded_collect(
@@ -2178,7 +2221,7 @@ class KlineRepository:
             "kline_etf_daily": f"{d}/kline_etf_daily/**/*.parquet",
             "kline_etf_enriched": f"{d}/kline_etf_enriched/**/*.parquet",
             "kline_etf_minute": f"{d}/kline_etf_minute/**/*.parquet",
-            "kline_minute": f"{d}/kline_minute/**/*.parquet",
+            "kline_minute": _kline_minute_glob_list(self.store.data_dir),
             "adj_factor": f"{d}/adj_factor/**/*.parquet",
             "adj_factor_etf": f"{d}/adj_factor_etf/**/*.parquet",
             "instruments": f"{d}/instruments/**/*.parquet",
@@ -2187,10 +2230,14 @@ class KlineRepository:
         }
         for name, path in views.items():
             try:
+                # path 可能是 str (单 glob) 或 list[str] (多 glob, 用于 kline_minute
+                # 同时覆盖 consolidation 后的单 part.parquet 与未 consolidation 的
+                # date=X/symbol=Y/part.parquet)。read_parquet 对 list 同样接受。
+                path_arg = f"'{path}'" if isinstance(path, str) else str(path)
                 with self._lock:
                     self.db.execute(
                         f"CREATE OR REPLACE VIEW {name} AS "
-                        f"SELECT * FROM read_parquet('{path}', union_by_name=true)"
+                        f"SELECT * FROM read_parquet({path_arg}, union_by_name=true)"
                     )
             except Exception as e:  # noqa: BLE001
                 logger.warning("rebuild view %s failed: %s", name, e)

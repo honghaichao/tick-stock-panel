@@ -35,7 +35,10 @@ def default_probe(write_lock: threading.Lock | None = None) -> None:
     """
     guarded_collect(pl.LazyFrame({"probe": [1]}).sum())
     if write_lock is not None:
-        acquired = write_lock.acquire(timeout=1.0)
+        # acquire 超时从 1.0s 提到 30.0s: 后端长写 (分钟 K 全量回填 / 盘后管道) 可
+        # 持锁几十秒, 旧 1s 阈值让看门狗把"忙"当"僵死"直接自杀, 自愈变成自毁。
+        # 30s 仍能在真死锁 (collect 闸 / 写锁永久挂起) 触发, 兜底不变。
+        acquired = write_lock.acquire(timeout=30.0)
         if not acquired:
             raise TimeoutError("repository write lock unavailable")
         write_lock.release()

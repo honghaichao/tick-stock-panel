@@ -104,6 +104,24 @@ export const QK = {
   monitorRuleOptions:   ['monitor-rule-options'] as const,
   lots:                 ['lots'] as const,
   lotsKline:            (symbols: string) => ['lots-kline', symbols] as const,
+
+  // Trading (实盘: 委托/持仓/成交/账户/日志, 走 /api/trading/*).
+  // SSE 前缀用 'trading' 单前缀, 撮合 tick + fill + order_submitted 都会触发整组失效,
+  // 与 useQuoteStream 的 quotes_updated 处理模式一致 (避免每事件单独加前缀)。
+  tradingStatus:        ['trading', 'status'] as const,
+  tradingAccount:       ['trading', 'account'] as const,
+  // Per-strategy 视图 (详情页用, strategyId=null 表示全局账户视图)
+  tradingPositions:     (strategyId: string | null) => ['trading', 'positions', strategyId ?? 'all'] as const,
+  tradingOrders:        (strategyId: string | null) => ['trading', 'orders', strategyId ?? 'all'] as const,
+  tradingTrades:        (strategyId: string | null) => ['trading', 'trades', strategyId ?? 'all'] as const,
+  tradingLogs:          (strategyId: string | null) => ['trading', 'logs', strategyId ?? 'all'] as const,
+  tradingPreferences:   ['trading', 'preferences'] as const,
+
+  // 实盘 PnL 历史 (曲线) + 指标 + 策略
+  tradingPnlHistory:     (strategyId: string | null, rangeKey: string) => ['trading', 'pnl-history', strategyId ?? 'all', rangeKey] as const,
+  tradingPnlMetrics:     (strategyId: string | null) => ['trading', 'pnl-metrics', strategyId ?? 'all'] as const,
+  tradingStrategies:     ['trading', 'strategies'] as const,
+  tradingStrategyRuns:   (strategyId: string) => ['trading', 'strategy-runs', strategyId] as const,
   alerts:               (source?: string) => ['alerts', source ?? ''] as const,
 
   // AI 大盘复盘
@@ -147,4 +165,5 @@ export const SSE_INVALIDATE_PREFIXES = [
   'index-quotes',
   'overview-market',
   'limit-ladder',
+  'trading',
 ] as const

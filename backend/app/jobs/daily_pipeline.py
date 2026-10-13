@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from app.config import settings
 from app.indicators.pipeline import filter_halt_days, run_pipeline
+from app.market_time import cn_today
 from app.services import index_sync, instrument_sync, kline_sync
 from app.services import preferences as _prefs
 from app.tickflow.capabilities import Cap, CapabilitySet
@@ -227,7 +229,9 @@ def run_now(
     #   无任何数据 → batch K-line API 拉首次 1 年
     from datetime import date as _date, timedelta as _td, datetime as _dt
     latest_daily = repo.latest_daily_date()
-    today = _date.today()
+    # 管道「今天」必须是北京日期: 美西主机 15:35 北京时间仍是本地昨天,
+    # date.today() 会把昨日日K当成已齐, 当日官方收盘价永远拉不进来。
+    today = cn_today()
     today_exists = latest_daily and latest_daily >= today
     new_daily_days = 0
 
@@ -610,7 +614,10 @@ def run_now(
                     d.name[5:] for d in etf_dir.glob("date=*")
                     if d.is_dir() and d.name.startswith("date=")
                 ) if etf_dir.exists() else []
-                etf_start = _date.fromisoformat(etf_dates[-1]) if etf_dates else today - _td(days=365)
+                if override_start_date:
+                    etf_start = override_start_date
+                else:
+                    etf_start = _date.fromisoformat(etf_dates[-1]) if etf_dates else today - _td(days=365)
                 # 同指数: 完整性修复时把 ETF 起点提前到最早坏日
                 if etf_stale_day is not None and etf_start > etf_stale_day:
                     etf_start = etf_stale_day
@@ -787,6 +794,16 @@ def _refresh_views(repo: KlineRepository) -> None:
     repo.rebuild_views()
 
 
+def _daily_pipeline_km_globs(d: Path) -> list[str]:
+    """daily_pipeline 用的 kline_minute glob 列表。"""
+    base = d / "kline_minute"
+    globs = [str(base / "date=*" / "part.parquet")]
+    nested = base / "date=*" / "*" / "part.parquet"
+    if any(base.glob("date=*/*/part.parquet")):
+        globs.append(str(nested))
+    return globs
+
+
 def _refresh_single_view(repo: KlineRepository, name: str) -> None:
     """刷新单个 DuckDB 视图。"""
     d = repo.store.data_dir.as_posix()
@@ -798,7 +815,8 @@ def _refresh_single_view(repo: KlineRepository, name: str) -> None:
         "kline_etf_daily": f"{d}/kline_etf_daily/**/*.parquet",
         "kline_etf_enriched": f"{d}/kline_etf_enriched/**/*.parquet",
         "kline_etf_minute": f"{d}/kline_etf_minute/**/*.parquet",
-        "kline_minute": f"{d}/kline_minute/**/*.parquet",
+        # kline_minute: 动态 glob list (见 repository._kline_minute_glob_list 注释)
+        "kline_minute": _daily_pipeline_km_globs(Path(d)),
         "adj_factor": f"{d}/adj_factor/**/*.parquet",
         "adj_factor_etf": f"{d}/adj_factor_etf/**/*.parquet",
         "instruments": f"{d}/instruments/**/*.parquet",
@@ -808,10 +826,11 @@ def _refresh_single_view(repo: KlineRepository, name: str) -> None:
     path = paths.get(name)
     if not path:
         return
+    path_arg = f"'{path}'" if isinstance(path, str) else str(path)
     try:
         repo.db.execute(
             f"CREATE OR REPLACE VIEW {name} AS "
-            f"SELECT * FROM read_parquet('{path}', union_by_name=true)"
+            f"SELECT * FROM read_parquet({path_arg}, union_by_name=true)"
         )
     except Exception as e:  # noqa: BLE001
         logger.warning("refresh view %s failed: %s", name, e)
@@ -1123,6 +1142,77 @@ def _maybe_push_review(content: str, meta: dict) -> None:
         logger.warning("review push error: %s", e)
 
 
+# ================================================================
+# 盘中分钟同步 (Pro+ 可用, 走 kline.minute.batch)
+# ================================================================
+# 区别于 Expert 专有 MinuteRefreshService (intraday.universe)：
+# Pro 档下没有 intraday.universe, 但有 kline.minute.batch (rpm=30, batch=100),
+# 全市场 ~5500 只 / batch 100 ≈ 55 批 × 2s/批 ≈ 110s 最小往返, 现实节奏 ~3min。
+# 这里把 daily_pipeline.sync_minute 的 "盘后一次" 拆成 "盘中多次" —— 复用同一
+# sync_and_persist_minute 边界, days=1 触发 _latest_minute_datetime 增量补拉,
+# _write_minute_partition 在 (symbol, datetime) 上幂等, 多次触发天然安全。
+#
+# 互斥:
+#   1) 与 _run_tracked / 手动 /api/kline/sync_minute 共享 _run_slot
+#      (在 daily_pipeline.py:907 附近定义, pipeline_jobs.try_acquire_run_slot);
+#      全管道在跑 (含 15:35 daily_pipeline) 时本任务静默跳过。
+#   2) 与全管道共享同一 capset (app.state.capabilities), 周期重探会热更新它。
+#
+# 启用/禁用: 复用 minute_sync_enabled 总开关 + 分钟同步间隔偏好 (默认 3 min)。
+# 不引入新偏好键, 避免和现有 minute_sync_* 系列割裂 (UI/API/历史配置文件
+# 的偏好口径保持一致)。
+def _intraday_minute_sync() -> None:
+    """盘中分钟增量同步任务。间隔触发, 由 in_continuous_session() 进一步门控非交易时段。
+
+    全部异常吞掉只记日志, 绝不阻塞调度器主循环 (与 MinuteRefreshService 同纪律)。
+    """
+    from app.market_time import in_continuous_session
+    from app.services import preferences as _prefs
+    from app.services.pipeline_jobs import release_run_slot, try_acquire_run_slot
+    from app.tickflow.capabilities import Cap
+
+    if not _prefs.get_minute_sync_enabled():
+        return
+    if not in_continuous_session():
+        return
+    app_state = _get_app_state()
+    if app_state is None:
+        return
+    capset_live = getattr(app_state, "capabilities", None)
+    if capset_live is None or not capset_live.has(Cap.KLINE_MINUTE_BATCH):
+        return
+
+    # 槽所有权 token 用时间戳确保每轮独立, 避免僵尸线程 finally 里误释放
+    # 下一轮的持有者 (与 pipeline_jobs.reap_stale 强释放逻辑保持一致)。
+    slot_owner = f"intraday_minute_sync:{int(time.time() * 1000)}"
+    if not try_acquire_run_slot(slot_owner):
+        logger.info(
+            "盘中分钟同步 跳过: 重任务执行槽被占用(可能在跑全管道 / 手动同步)"
+        )
+        return
+    try:
+        repo = getattr(app_state, "repo", None)
+        if repo is None:
+            return
+        symbols = _resolve_minute_symbols(capset_live, repo)
+        if not symbols:
+            return
+        # days=1: 首次运行回溯 1 个自然日 (含当日), 后续 _latest_minute_datetime
+        # 自动从本地最新时间增量补到 now, 不重拉历史。
+        written = kline_sync.sync_and_persist_minute(
+            symbols, repo, capset_live, days=1,
+        )
+        logger.info(
+            "盘中分钟同步完成: %d 只标的, %d 行 (provider=%s)",
+            len(symbols), written,
+            _prefs.get_minute_data_provider(),
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("盘中分钟同步失败: %s", e)
+    finally:
+        release_run_slot(slot_owner)
+
+
 def _register_review_job(scheduler, repo, hour: int, minute: int) -> None:
     """注册/更新定时复盘 job(工作日 mon-fri, Asia/Shanghai)。
 
@@ -1255,6 +1345,23 @@ def start_scheduler(repo: KlineRepository, capset: CapabilitySet) -> AsyncIOSche
         id="reprobe_capabilities",
         misfire_grace_time=600,
         replace_existing=True,
+    )
+
+    # 盘中分钟增量同步 (Pro+ 可用, 走 kline.minute.batch): 默认 3 分钟一轮,
+    # 间隔由偏好 minute_sync_intraday_interval_minutes 控制 (范围 [1, 15]);
+    # 任务内 in_continuous_session() 与 Cap.KLINE_MINUTE_BATCH 双层门控,
+    # _run_slot 与全管道 / 手动同步互斥, 不会与 15:35 终版同源同契约争抢。
+    intraday_min = preferences.get_minute_sync_intraday_interval_minutes()
+    scheduler.add_job(
+        _intraday_minute_sync,
+        trigger=IntervalTrigger(minutes=intraday_min),
+        id="intraday_minute_sync",
+        misfire_grace_time=120,
+        replace_existing=True,
+    )
+    logger.info(
+        "intraday_minute_sync scheduled every %d min (gated by minute_sync_enabled + session + KLINE_MINUTE_BATCH)",
+        intraday_min,
     )
 
     # 定时复盘 (AI 大盘复盘报告): 工作日到点自动生成并归档。

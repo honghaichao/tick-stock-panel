@@ -63,10 +63,16 @@ def _fetch_instruments_via_provider() -> list[dict] | None:
     if not hasattr(provider, "get_instruments"):
         return None
     try:
-        items = provider.get_instruments("stock") or []
+        items = provider.get_instruments("stock")
     except Exception as e:  # noqa: BLE001
         logger.warning("provider %s get_instruments 失败: %s", provider_name, e)
         return None
+    # provider 可能返回 polars.DataFrame() (空) 而非 list, 鸭子类型归一化。
+    # 直接 ``or []`` 在 polars 上会触发 ``ValueError: truth value ambiguous``。
+    if isinstance(items, pl.DataFrame):
+        items = items.to_dicts() if not items.is_empty() else []
+    elif not items:
+        items = []
     rows = _flatten_instruments(items)
     logger.info("instruments via %s: %d stocks", provider_name, len(rows))
     return rows

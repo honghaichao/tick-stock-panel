@@ -595,6 +595,15 @@ def sync_adj_factor(symbols: list[str], repo: KlineRepository,
     if out.exists():
         existing = pl.read_parquet(out)
         before = existing.height
+        # 历史 adj_factor/*.parquet 的 trade_date 物理类型是 String,
+        # 新写入走 SDK/CSV 路径在 Date。vstack vstack 不允许类型混,
+        # 在这里归一到历史 schema, 兼容 "String" 与 "Date" 两种物理存储。
+        if "trade_date" in existing.columns and "trade_date" in new_data.columns:
+            if existing.schema["trade_date"] != new_data.schema["trade_date"]:
+                target = existing.schema["trade_date"]
+                new_data = new_data.with_columns(
+                    pl.col("trade_date").cast(target, strict=False)
+                )
         merged = pl.concat([existing, new_data]).unique(
             subset=["symbol", "trade_date"], keep="last",
         ).sort(["symbol", "trade_date"])
@@ -924,6 +933,13 @@ def _try_custom_minute(
     return (df, False)
 
 
+# TickFlow 历史分钟 K 静默截断: /v1/klines/batch 单请求超 ~60-75 标的会
+# 偷偷截断 (2026-09-28 实测: 100/批 实际回 75, 更早日期回 60 甚至 20)。
+# 强制 cap 在 30/批避免静默丢数据, 损失 ~3x RPM 但换来正确性。
+# 想放开得先实测 TickFlow 实际截断阈值。
+_MINUTE_BATCH_HARD_CAP = 30
+
+
 def sync_minute_batch(
     symbols: list[str],
     start_time: datetime | None = None,
@@ -1005,7 +1021,9 @@ def sync_minute_batch(
         else:
             seg_label = "最新"
         seg_total = len(time_segments)
-        chunks = chunked(symbols, batch_size)
+        # clamp 见文件顶部 _MINUTE_BATCH_HARD_CAP 注释
+        eff_batch = min(batch_size, _MINUTE_BATCH_HARD_CAP) if batch_size else _MINUTE_BATCH_HARD_CAP
+        chunks = chunked(symbols, eff_batch)
         for i, chunk in enumerate(chunks):
             sleep_between_batches(step, rpm)
             step += 1

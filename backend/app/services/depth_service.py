@@ -660,3 +660,4 @@ class DepthService:
         morning = dt_time(9, 30) <= t <= dt_time(11, 30)
         afternoon = dt_time(13, 0) <= t <= dt_time(15, 0)
         return now.weekday() < 5 and (morning or afternoon)
+

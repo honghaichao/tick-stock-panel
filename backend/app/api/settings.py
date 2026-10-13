@@ -406,6 +406,10 @@ class MinuteSyncPrefs(BaseModel):
     minute_sync_days: int = 5
     # 单段大小(交易日),None 表示不修改现有值。范围 [5, 30],默认 20。
     minute_sync_segment_days: int | None = None
+    # 盘中分钟同步间隔(分钟),None 表示不修改现有值。范围 [1, 15],默认 3。
+    # 仅 minute_sync_enabled=True 且 Pro+ 有 kline.minute.batch 时生效;
+    # minute_sync_enabled 关掉时本字段无效 (调度器不下发任务)。
+    minute_sync_intraday_interval_minutes: int | None = None
 
 
 class DataProvidersIn(BaseModel):
@@ -502,6 +506,7 @@ def get_preferences() -> dict:
         "minute_sync_enabled": preferences.get_minute_sync_enabled(),
         "minute_sync_days": preferences.get_minute_sync_days(),
         "minute_sync_segment_days": preferences.get_minute_sync_segment_days(),
+        "minute_sync_intraday_interval_minutes": preferences.get_minute_sync_intraday_interval_minutes(),
         "minute_refresh_enabled": preferences.get_minute_refresh_enabled(),
         "minute_refresh_interval": preferences.get_minute_refresh_interval(),
         "daily_data_provider": preferences.get_daily_data_provider(),
@@ -910,11 +915,17 @@ def update_minute_sync(req: MinuteSyncPrefs) -> dict:
     }
     if req.minute_sync_segment_days is not None:
         updates["minute_sync_segment_days"] = max(5, min(30, req.minute_sync_segment_days))
+    if req.minute_sync_intraday_interval_minutes is not None:
+        # 与 getter 同 clamp, 防前端传越界值
+        updates["minute_sync_intraday_interval_minutes"] = max(
+            1, min(15, req.minute_sync_intraday_interval_minutes)
+        )
     preferences.save(updates)
     return {
         "minute_sync_enabled": req.minute_sync_enabled,
         "minute_sync_days": days,
         "minute_sync_segment_days": preferences.get_minute_sync_segment_days(),
+        "minute_sync_intraday_interval_minutes": preferences.get_minute_sync_intraday_interval_minutes(),
     }
 
 

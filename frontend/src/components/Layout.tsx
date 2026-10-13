@@ -43,6 +43,7 @@ import {
   Zap,
   Landmark,
   RadioTower,
+  Briefcase,
   CheckCircle2,
   BookOpenCheck,
   ChevronRight,
@@ -86,6 +87,7 @@ type CoreIndex = (typeof CORE_INDEXES)[number]
 const nav = [
   { to: '/',                label: '看板',     icon: LayoutDashboard },
   { to: '/watchlist',  label: '自选',   icon: Star },
+  { to: '/live-trading', label: '实盘交易', icon: Briefcase },
   { to: '/screener',   label: '策略',   icon: ScanSearch },
   { to: '/factors',    label: '因子', icon: Sigma },
   { to: '/backtest',   label: '回测', icon: History },

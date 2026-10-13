@@ -92,8 +92,6 @@ data/strategies/custom/
 backend._recheck*.py
 backend/_verify*.py
 backend/_desktop_run.log
-reports/tickflow_pro_probe/
-.cursor/debug-*.log
 
 # ===== 打包产物 (本地构建的安装包,不入库) =====
 backend/TickFlowStockPanel-win-x64.zip
@@ -108,4 +106,16 @@ packaging/installed_run.log
 TickFlowStockPanel.app/
 TickFlowStockPanel-macos*.dmg
 TickFlowStockPanel-macos*.zip
-reports/cursor_tickflow_pro_rate_limit_p0.bundle
+
+# ===== Local-only junk (project-specific debug/log residue) =====
+.bak_pre_patches/
+.cc-connect/
+.write_probe.bak
+Start Public Tunnel.app/
+Start Public Tunnel.command
+screenlog.0
+test-ssd-read.txt
+
+# ===== Local GUI / dev screenshots (not shipped) =====
+screenshots/
+gui-test-screenshots/

@@ -384,9 +384,22 @@ class StrategyEngine:
         try:
             code = path.read_text(encoding="utf-8")
             from app.strategy.ai_generator import AIStrategyGenerator
+            # live/* 路径 (聚宽式统一 runtime): 允许 logging + 策略数据源相关 import
+            normalized_path_for_safety = str(path).replace("\\", "/")
+            is_live = "/strategies/live/" in normalized_path_for_safety
+            # live/* 是仓库 owner 写的可信代码, 允许任何 import (LiveStrategy 接口必需)
+            # "data" 顶级包: 让 live/* 下的策略可以互相 import (e.g. dividend_lowvol
+            # 引用 dividend_auntie). 风险: builtin 路径下不能用 (会被 _validate_safety 拒绝).
+            live_extra = frozenset({
+                "logging", "typing", "os", "sys", "pathlib", "json", "datetime", "warnings",
+                "data",  # 顶级包, 让 data.user_data.strategies.live.* 都能 import
+                "app.services.trading.live_strategy",
+                "app.services.trading.data_provider",
+                "app.backtest.matrix",
+            }) if is_live else frozenset()
             AIStrategyGenerator._validate_safety(
                 code,
-                extra_allowed_import_modules=dependency_names,
+                extra_allowed_import_modules=dependency_names | live_extra,
             )
             for dependency_path in dependency_paths:
                 AIStrategyGenerator._validate_safety(
@@ -428,6 +441,26 @@ class StrategyEngine:
                     sys.path.remove(inserted_path)
                 except ValueError:
                     pass
+
+        # ── 聚宽式统一 runtime 桥接: live/* 下的 LiveStrategy 也是回测策略 ──
+        # 如果是 live 路径 + mod 有 STRATEGY 实例 + 实例有 compute_signals + META,
+        # 把实例当 MATRIX_STRATEGY 用 (符合 MatrixStrategy Protocol: required_fields/
+        # required_warmup_bars/compute_signals), 让现有回测引擎零改动接受.
+        normalized_path = str(path).replace("\\", "/")
+        if "/strategies/live/" in normalized_path and hasattr(mod, "STRATEGY"):
+            strat_instance = mod.STRATEGY
+            if (
+                hasattr(strat_instance, "compute_signals")
+                and getattr(strat_instance, "META", None)
+            ):
+                # 把 LiveStrategy 实例的 META / EXECUTION_BACKEND / 算子方法挂到 mod
+                mod.META = strat_instance.META
+                mod.EXECUTION_BACKEND = getattr(strat_instance, "EXECUTION_BACKEND", "matrix_native")
+                mod.MATRIX_STRATEGY = strat_instance
+                mod.ENTRY_SIGNALS = getattr(strat_instance, "ENTRY_SIGNALS", [])
+                mod.EXIT_SIGNALS = getattr(strat_instance, "EXIT_SIGNALS", [])
+                mod.STOP_LOSS = getattr(strat_instance, "STOP_LOSS", None)
+                mod.MAX_HOLD_DAYS = getattr(strat_instance, "MAX_HOLD_DAYS", None)
 
         meta = dict(getattr(mod, "META", {}) or {})
         meta.setdefault("id", path.stem)

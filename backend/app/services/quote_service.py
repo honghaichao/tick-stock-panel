@@ -86,16 +86,19 @@ class QuoteSubscriber:
     改为每连接独立订阅者后, 事件对所有客户端广播。
     """
 
-    def __init__(self, max_alerts: int = 1000, max_reviews: int = 200) -> None:
+    def __init__(self, max_alerts: int = 1000, max_reviews: int = 200,
+                 max_trading: int = 500) -> None:
         self._event = threading.Event()
         self._lock = threading.Lock()
         self._max_alerts = max_alerts
         self._max_reviews = max_reviews
+        self._max_trading = max_trading
         self._quote_updated = False
         self._strategy_results_updated = False
         self._depth_updated = False
         self._alerts: list[dict] = []
         self._reviews: list[str] = []
+        self._trading_events: list[dict] = []
 
     # ── 消费侧 (SSE generator 线程) ──────────────────────
     def wait(self, timeout: float = 5.0) -> bool:
@@ -111,12 +114,14 @@ class QuoteSubscriber:
                 "depth_updated": self._depth_updated,
                 "alerts": self._alerts,
                 "reviews": self._reviews,
+                "trading_events": self._trading_events,
             }
             self._quote_updated = False
             self._strategy_results_updated = False
             self._depth_updated = False
             self._alerts = []
             self._reviews = []
+            self._trading_events = []
             self._event.clear()
             return out
 
@@ -143,8 +148,17 @@ class QuoteSubscriber:
                 and not self._strategy_results_updated
                 and not self._depth_updated
                 and not self._reviews
+                and not self._trading_events
             ):
                 self._event.clear()
+
+    def push_trading_event(self, event: dict) -> None:
+        """实盘引擎事件 (委托/成交/撮合 tick)。每订阅者独立队列。"""
+        with self._lock:
+            self._trading_events.append(event)
+            if len(self._trading_events) > self._max_trading:
+                self._trading_events = self._trading_events[-self._max_trading:]
+            self._event.set()
 
     def notify_quote(self) -> None:
         with self._lock:
@@ -290,7 +304,9 @@ class QuoteService:
         if self._thread:
             self._thread.join(timeout=10)
             self._thread = None
-        self._save_enabled(False)
+        # 此处不持久化关闭: lifespan shutdown (容器停止/重启) 也调用 stop,
+        # 持久化 False 会让每次重启后实时行情都变关闭、需手动再开。
+        # 持久化语义归 disable() (用户主动关闭)。
         logger.info("行情服务已停止")
 
     def enable(self) -> bool:
@@ -316,6 +332,7 @@ class QuoteService:
     def disable(self) -> None:
         """关闭自动行情。"""
         self.stop()
+        self._save_enabled(False)
         logger.info("行情服务已关闭")
 
     # ================================================================
@@ -446,6 +463,11 @@ class QuoteService:
     def clear_pending_alerts(self) -> None:
         for sub in self._snapshot_subscribers():
             sub.clear_alerts()
+
+    def push_trading_event(self, event: dict) -> None:
+        """实盘引擎事件广播 — 全订阅者各自入队, 互不吞。"""
+        for sub in self._snapshot_subscribers():
+            sub.push_trading_event(event)
 
     def push_review_event(self, event_json: str) -> None:
         """广播一条复盘进度事件(JSON 字符串), 唤醒所有 SSE generator。
@@ -998,6 +1020,10 @@ class QuoteService:
         ] if c in df.columns]
         if not keep or "symbol" not in keep:
             return pl.DataFrame()
+        # 整列 null = 数据源未提供该字段 (如 fuyao 的 turnover_rate/amplitude 显式置 None),
+        # 必须丢弃: 下游 compute_enriched_today 对这些列是「列存在即直接采用」,
+        # 转发全空列会跳过回退计算, 当日换手/振幅将永远为空且每轮实时覆写自锁
+        keep = [c for c in keep if c == "symbol" or df[c].null_count() < len(df)]
         out = df.select(keep)
         # 实时 API 的 turnover_rate 入口契约为小数制(0.05 = 5%).
         # enriched 内部统一存百分数值(5 = 5%), 后续页面/筛选直接展示和比较。
@@ -1838,3 +1864,8 @@ class QuoteService:
                         mode_label, len(enriched_today), today, elapsed * 1000)
         except Exception as e:  # noqa: BLE001
             logger.warning("enriched 计算失败: %s", e)
+
+
+
+
+
