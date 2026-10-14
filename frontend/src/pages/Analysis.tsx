@@ -137,10 +137,6 @@ export function Analysis() {
             onClick={() => { resetForm(); setShowCreate(v => !v) }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -238,10 +234,6 @@ export function Analysis() {
               <button onClick={() => setShowCreate(false)} className="px-4 py-1.5 rounded-btn bg-elevated text-secondary text-xs">取消</button>
               <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-accent/90 text-base text-xs font-medium disabled:opacity-50">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-accent/90 text-white text-xs font-medium disabled:opacity-50">
                 <Save className="h-3.5 w-3.5" />保存
               </button>

@@ -52,10 +52,6 @@ export function StrategyStoreDialog({ open, onClose }: Props) {
 
               <h3 className="text-base font-semibold text-foreground mb-1.5">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               <h3 className="text-[16px] leading-6 font-semibold text-foreground mb-1.5">
                 不定时更新更多策略
               </h3>

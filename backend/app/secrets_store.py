@@ -39,7 +39,6 @@ def load() -> dict:
             logger.warning("secrets.json malformed: %s", e)
     return {}
 
-# --- THEIR (origin/main) ---
 def file_path() -> Path:
     """secrets.json 绝对路径 (设置页展示用)。
 

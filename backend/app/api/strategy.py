@@ -213,7 +213,6 @@ def _strategy_detail(
         "trailing_take_profit_activate": getattr(s, "trailing_take_profit_activate", None),
         "trailing_take_profit_drawdown": getattr(s, "trailing_take_profit_drawdown", None),
 
-# --- THEIR (origin/main) ---
         # 叠加条件 (每策略 overlay 硬过滤); 无覆盖时空列表
         "overlay_filter": (overrides.get("overlay_filter") if overrides else None) or [],
         "minute_exit_trigger_supported_signals": sorted(MINUTE_EXIT_TRIGGER_SIGNALS),
@@ -354,7 +353,6 @@ def list_strategies(
         result.append(_strategy_detail(s, overrides, engine))
     return {"strategies": result, "load_errors": engine.load_errors()}
 
-# --- THEIR (origin/main) ---
     payload: dict = {"strategies": result, "load_errors": engine.load_errors()}
     # 去内置化一次性迁移摘要 (启动时执行过才有): 前端提示一次后本地记忆
     migration = getattr(request.app.state, "legacy_migration", None)
@@ -373,7 +371,6 @@ def get_strategy(strategy_id: str, request: Request):
 
 # ── 执行选股 ─────────────────────────────────────────────────────────
 
-# --- THEIR (origin/main) ---
 # ── 执行策略 ─────────────────────────────────────────────────────────
 
 
@@ -486,7 +483,6 @@ def save_config(req: SaveConfigRequest, request: Request):
 
     strategy_config.save_override(_data_dir(request), req.strategy_id, overrides)
 
-# --- THEIR (origin/main) ---
     strategy = _get_public_strategy(engine, req.strategy_id)
     data_dir = _data_dir(request)
 
@@ -513,7 +509,6 @@ def patch_config(req: SaveConfigRequest, request: Request):
     overrides.update(req.overrides)
     _validate_scoring_config(overrides)
 
-# --- THEIR (origin/main) ---
     strategy = _get_public_strategy(engine, req.strategy_id)
     data_dir = _data_dir(request)
     overrides = strategy_config.load_override(data_dir, req.strategy_id)
@@ -530,7 +525,6 @@ def patch_config(req: SaveConfigRequest, request: Request):
 
 
 
-# --- THEIR (origin/main) ---
     if _overlay_changed(old_overlay, overrides.get("overlay_filter")):
         _invalidate_strategy_runtime(request)
     return {"ok": True}
@@ -579,7 +573,6 @@ def _validate_scoring_config(overrides: dict) -> None:
         if not isinstance(scoring, dict):
             raise HTTPException(status_code=400, detail="评分权重必须是对象")
 
-# --- THEIR (origin/main) ---
             raise HTTPException(status_code=400, detail="策略权重必须是对象")
         for name, weight in scoring.items():
             if not isinstance(name, str) or not name:
@@ -1298,7 +1291,6 @@ def publish_ai_strategy(strategy_id: str, request: Request):
 def delete_strategy(strategy_id: str, request: Request):
     """删除自定义策略 — 清除源文件、运行时注册和关联状态。内置策略不可删除。"""
 
-# --- THEIR (origin/main) ---
     """删除自定义策略 — 清除源文件、运行时注册和关联状态。"""
 
     engine = _get_engine(request)
@@ -1310,7 +1302,6 @@ def delete_strategy(strategy_id: str, request: Request):
     if s.source == "builtin":
         raise HTTPException(status_code=403, detail="内置策略不可删除")
 
-# --- THEIR (origin/main) ---
     # 研究模板是挖掘功能的内部依赖, 不允许从策略接口删除。
     if s.meta.get("research_only"):
         raise HTTPException(status_code=403, detail="研究模板不可删除")

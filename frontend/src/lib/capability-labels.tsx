@@ -9,10 +9,6 @@ export const CAP_LABELS: Record<string, { name: string; hint: string }> = {
   'kline.daily.by_symbol':   { name: '日 K(按标的)',    hint: '单只股票历史日 K' },
   'kline.daily.batch':       { name: '日 K(批量)',      hint: '一次拿多只股票的日 K — 选股 / 信号扫描 必需' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   'quote.by_symbol':         { name: '自选实时监控', hint: 'Free 可按标的查询实时行情,用于少量自选监控' },
   'quote.batch':             { name: '实时行情(批量)',   hint: '一次拿多只股票的价' },
   'quote.pool':              { name: '标的池查询',        hint: '按沪深300等池子拿行情' },

@@ -383,7 +383,6 @@ def sync_and_persist_etf_daily(
         # ETF 使用复权和通用技术指标；不传 instruments，避免套用 A股涨跌停/连板逻辑。
         enriched = compute_enriched(raw, factors=batch_factors, instruments=None)
 
-# --- THEIR (origin/main) ---
         # 前复权 ratio = cum/total, 新除权事件会改写全部历史价。只用本次拉取
         # 窗口算 enriched 时, 拆分日前的分区停在未复权价, 日K 留下跳空。
         local = _load_local_etf_daily(repo, chunk)
@@ -397,7 +396,6 @@ def sync_and_persist_etf_daily(
             on_chunk_done(i + 1, len(chunks))
         del raw, enriched
 
-# --- THEIR (origin/main) ---
         del raw, enriched, local, hist
         gc.collect()
     repo.refresh_index_views()

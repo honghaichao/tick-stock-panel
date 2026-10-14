@@ -191,7 +191,6 @@ echo
     ${UVICORN_ENV_ARGS[@]+"${UVICORN_ENV_ARGS[@]}"} --reload \
     "${RELOAD_INCLUDE[@]}" \
 
-# --- THEIR (origin/main) ---
   uv run --no-sync python -m uvicorn app.main:app ${UVICORN_ENV_ARGS[@]+"${UVICORN_ENV_ARGS[@]}"} --reload \
     --host "$BACKEND_HOST" --port "$BACKEND_PORT" 2>&1 \
     | prefix_awk "$(printf "${BLUE}[backend ]${NC} ")"

@@ -52,7 +52,6 @@ def test_message_leads_with_hit_signals():
     """OR 规则部分命中: message 只含实际命中的信号, 不再列全量条件。"""
     eng = MonitorRuleEngine()
 
-# --- THEIR (origin/main) ---
     eng = _engine()
     rule = _rule(conditions=[
         {"field": "signal_ma_dead_5_20", "op": "truth"},
@@ -72,7 +71,6 @@ def test_message_falls_back_to_conditions_when_no_truth_hit():
     """纯比较条件规则 (hit_sigs 为空): 保持原条件摘要格式, 行为不变。"""
     eng = MonitorRuleEngine()
 
-# --- THEIR (origin/main) ---
     eng = _engine()
     rule = _rule(type="price",
                  conditions=[{"field": "close", "op": ">=", "value": 2500}])
@@ -92,7 +90,6 @@ def test_message_resolves_custom_signal_cn_name(tmp_path):
 
     eng = MonitorRuleEngine()
 
-# --- THEIR (origin/main) ---
     eng = _engine()
     eng.set_data_dir(tmp_path)
     rule = _rule(conditions=[{"field": "csg_ma_dead_5_10", "op": "truth"}])
@@ -105,7 +102,6 @@ def test_message_and_logic_includes_comparison_conditions():
     """AND 规则 truth+比较混合: 比较条件全部满足, 一并补进 message (信息完整)。"""
     eng = MonitorRuleEngine()
 
-# --- THEIR (origin/main) ---
     eng = _engine()
     rule = _rule(logic="and", conditions=[
         {"field": "signal_macd_dead", "op": "truth"},
@@ -120,7 +116,6 @@ def test_message_or_logic_omits_comparison_conditions():
     """OR 规则 truth+比较混合: 无法判定比较条件是否为真, 不补进 message。"""
     eng = MonitorRuleEngine()
 
-# --- THEIR (origin/main) ---
     eng = _engine()
     rule = _rule(logic="or", conditions=[
         {"field": "signal_macd_dead", "op": "truth"},
@@ -135,7 +130,6 @@ def test_message_custom_signal_fallback_without_data_dir():
     """未注入 data_dir 时 csg_ 名称解析优雅回退为原始列名 (不报错)。"""
     eng = MonitorRuleEngine()
 
-# --- THEIR (origin/main) ---
     eng = _engine()
     rule = _rule(conditions=[{"field": "csg_unknown_sig", "op": "truth"}])
     msg = _fire(eng, rule, _df(csg_unknown_sig=[True]))

@@ -13,7 +13,6 @@ tool_calls 分片, 流结束时统一返回本轮结果, 由 chat_service 决定
   本轮结束; tool_calls 非空表示模型请求工具, 元素形如
   {"id", "name", "arguments"(JSON 字符串)}。
 
-# --- THEIR (origin/main) ---
   {"id", "name", "arguments"(JSON 字符串)}, 上游附带 extra_content 时
   (如 Gemini 的 thought_signature) 另有 "extra_content" 键, 需原样回传。
 """
@@ -129,7 +128,6 @@ async def stream_openai_round(
     calls: dict[int, dict[str, str]] = {}
     order: list[int] = []
 
-# --- THEIR (origin/main) ---
     calls: dict[int, dict[str, Any]] = {}
     ordered: list[dict[str, Any]] = []
 
@@ -162,7 +160,6 @@ async def stream_openai_round(
             if getattr(tc, "id", None):
                 entry["id"] = str(tc.id)
 
-# --- THEIR (origin/main) ---
             tc_id = str(getattr(tc, "id", None) or "")
             entry = calls.get(idx)
             # Gemini 的兼容接口会把并行调用逐个整条下发且 index 相同(或缺省),
@@ -191,7 +188,6 @@ async def stream_openai_round(
     if close is not None:
         await asyncio.to_thread(close)
 
-# --- THEIR (origin/main) ---
     # 让 SDK 流对象尽快释放(部分兼容网关要求显式 close); SDK 2.x 的
     # AsyncStream.close 是协程, 必须区分同步/异步两种签名。
     close = getattr(stream, "close", None)
@@ -206,7 +202,6 @@ async def stream_openai_round(
             "type": "round_end",
             "tool_calls": [calls[i] for i in order],
 
-# --- THEIR (origin/main) ---
             "tool_calls": ordered,
             "finish_reason": finish_reason,
         }

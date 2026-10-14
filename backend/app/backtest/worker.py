@@ -87,7 +87,6 @@ def _strategy_dirs(data_dir: Path) -> list[Path]:
     return [
         app_dir / "strategy" / "builtin",
 
-# --- THEIR (origin/main) ---
         app_dir / "strategy" / "research",
         data_dir / "strategies" / "custom",
         data_dir / "strategies" / "ai",

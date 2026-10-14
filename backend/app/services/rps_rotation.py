@@ -54,7 +54,6 @@ def _latest_enriched_date(repo) -> date | None:
         return None
     return cache["date"].max()
 
-# --- THEIR (origin/main) ---
     latest = cache["date"].max()
     # 盘中实时缓存可能已进入新交易日, 而历史缓存还停在上次重建时
     live_date = getattr(repo, "_enriched_cache_date", None)
@@ -203,7 +202,6 @@ def build_rps_rotation(repo, days: int = 12, kind: str = "concept", level: int |
         start, latest, columns=["symbol", "date", "change_pct"]
     )
 
-# --- THEIR (origin/main) ---
     df = _change_pct_range(repo, start, latest)
     if df is None or df.is_empty():
         return {"dates": [], "columns": {}, "concept_count": 0}

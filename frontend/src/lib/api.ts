@@ -249,10 +249,6 @@ export interface MinuteKlineRow {
   datetime: string
   /** 分钟开盘价; 部分数据源(stock-sdk 历史日)无真实分钟 open, 为 null */
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   /** 分钟开盘价; 部分数据源历史日无真实分钟 open, 为 null */
   open: number | null
   high: number
@@ -803,10 +799,6 @@ export interface StrategyParamDef {
   label: string
   type: 'float' | 'int' | 'select' | 'bool'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   type: 'float' | 'int' | 'select' | 'bool' | 'string'
   default: number | string | boolean
   min?: number
@@ -829,10 +821,6 @@ export interface StrategyDetail {
   tags: string[]
   source: 'builtin' | 'custom' | 'ai' | 'composite'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   source: 'custom' | 'ai' | 'composite'
   research_only?: boolean
   execution_backend: 'polars_expr' | 'matrix_native' | 'python_history_legacy' | 'composite' | 'minute_filter'
@@ -1275,10 +1263,6 @@ export interface TradingPreferencesApi {
   trading_fee_min: number
   trading_stamp_tax_rate: number
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 // ===== Paper (虚拟账户/模拟盘) =====
 /** 多账户: 追加 ?account= 查询参数 (缺省账户由后端 default 兜底)。 */
 function accUrl(base: string, account?: string): string {
@@ -2086,10 +2070,6 @@ export interface SettingsState {
   // AI 配置
   ai_provider: string
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 配置文件位置 (secrets.json: AI 与数据源 Key 统一存放)
   secrets_path?: string
   // AI 配置
@@ -2504,10 +2484,6 @@ export const api = {
   saveAiSettings: (ai: { provider?: string; base_url?: string; api_key?: string; model?: string; reasoning_effort?: string; codex_command?: string; codex_reasoning_effort?: string; user_agent?: string; max_output_tokens?: number; context_window?: number }) =>
     request<{ ok: boolean; ai_provider?: string; ai_model?: string; ai_openai_model?: string; ai_reasoning_effort?: string; ai_codex_model?: string; ai_codex_command?: string; ai_codex_reasoning_effort?: string; ai_configured?: boolean; ai_max_output_tokens?: number; ai_context_window?: number }>('/api/settings/ai', {
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   saveAiSettings: (ai: { provider?: string; base_url?: string; api_key?: string; model?: string; protocol?: string; reasoning_effort?: string; codex_command?: string; codex_reasoning_effort?: string; user_agent?: string; max_output_tokens?: number; context_window?: number; round_checkpoint?: number }) =>
     request<{ ok: boolean; ai_provider?: string; ai_protocol?: string; ai_model?: string; ai_openai_model?: string; ai_reasoning_effort?: string; ai_codex_model?: string; ai_codex_command?: string; ai_codex_reasoning_effort?: string; ai_configured?: boolean; ai_max_output_tokens?: number; ai_context_window?: number; ai_round_checkpoint?: number }>('/api/settings/ai', {
       method: 'POST',
@@ -2581,10 +2557,6 @@ export const api = {
       signal: controller.signal,
     }).finally(() => clearTimeout(timer))
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     // 先探后存: 后端用候选 Key 实探一次。HTTP 型源秒级; 子进程实探型源(如 TdxQuant
     // 冷启动 DLL + 预热 + 实探)实测 ~35s, 超时给到 75s 兼顾最坏情况, 报错可读。
     return request<PluginKeyResult>('/api/settings/plugin-key', {
@@ -3131,10 +3103,6 @@ export const api = {
   watchlistEnriched: (extColumns?: string) =>
     request<{ rows: any[]; as_of: string | null; elapsed_ms: number }>(
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     request<{
       rows: any[]
       as_of: string | null
@@ -3154,10 +3122,6 @@ export const api = {
     )
     return { presets: data.strategies, load_errors: data.load_errors }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     const data = await request<{
       strategies: StrategyDetail[]
       load_errors?: StrategyLoadError[]
@@ -3656,10 +3620,6 @@ export const api = {
 
   extDataCreate: (body: { id: string; label: string; mode: 'snapshot' | 'timeseries'; fields: { name: string; dtype: string; label: string }[]; description?: string; symbol_map?: Record<string, string>; code_map?: Record<string, string> }) =>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   extDataCreate: (body: { id: string; label: string; mode: 'snapshot' | 'timeseries'; fields: { name: string; dtype: string; label: string }[]; description?: string; symbol_map?: Record<string, string>; code_map?: Record<string, string>; market_level?: boolean }) =>
     request<ExtDataConfig>('/api/ext-data', {
       method: 'POST',
@@ -3668,10 +3628,6 @@ export const api = {
 
   extDataUpdate: (id: string, body: { label?: string; fields?: { name: string; dtype: string; label: string }[]; description?: string }) =>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   extDataUpdate: (id: string, body: { label?: string; fields?: { name: string; dtype: string; label: string }[]; description?: string; symbol_map?: Record<string, string>; code_map?: Record<string, string>; market_level?: boolean }) =>
     request<ExtDataConfig>(`/api/ext-data/${id}`, {
       method: 'PUT',
@@ -4415,10 +4371,6 @@ export const api = {
   tradingStrategyRuns: (strategyId: string, limit = 20) =>
     request<{ runs: StrategyRunReportApi[] }>(`/api/trading/strategies/${encodeURIComponent(strategyId)}/runs?limit=${limit}`),
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // ===== Paper (虚拟账户/模拟盘: 虚拟资金 + 真实行情价格模拟撮合, 多账户) =====
   paperAccounts: () =>
     request<{ accounts: PaperAccountSummary[] }>('/api/paper/accounts'),
@@ -4678,10 +4630,6 @@ export interface PipelineJob {
     index_daily_rows?: number
     minute_rows: number
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     universe_size?: number
     daily_days?: number
     adj_factor_symbols?: number

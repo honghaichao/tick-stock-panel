@@ -100,10 +100,6 @@ export function StockIntradayChart({
                 onClick={() => setMinuteDismissed(false)}
                 className="px-4 py-1.5 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent transition-colors duration-150"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 className="px-4 py-1.5 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent transition-colors duration-150"
               >
                 获取分钟K
@@ -117,10 +113,6 @@ export function StockIntradayChart({
                   onClick={() => fetchMinute.mutate()}
                   className="px-4 py-1.5 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent transition-colors duration-150"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   className="px-4 py-1.5 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent transition-colors duration-150"
                 >
                   确定

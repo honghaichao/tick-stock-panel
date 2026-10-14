@@ -12,7 +12,6 @@ from app.strategy.engine import StrategyDataContext, StrategyEngine
 
 BUILTIN_DIR = Path(__file__).resolve().parents[1] / "app" / "strategy" / "builtin"
 
-# --- THEIR (origin/main) ---
 BUILTIN_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
 
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import date
 
-# --- THEIR (origin/main) ---
 import importlib.util
 from datetime import date
 from pathlib import Path
@@ -12,7 +11,6 @@ import polars as pl
 from app.backtest.matrix import build_market_data_matrix
 from app.strategy.builtin import high_turnover_surge
 
-# --- THEIR (origin/main) ---
 
 _FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
 

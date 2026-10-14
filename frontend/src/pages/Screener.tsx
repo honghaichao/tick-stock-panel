@@ -272,10 +272,6 @@ export function Screener() {
       toast(`策略「${e.file}」加载失败：${e.error}`, 'error')
     }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 去内置化一次性迁移提示: 后端启动时自动种入默认信号/归档失效策略,
   // 摘要只在首次见到时提示一次 (localStorage 记录迁移指纹)。
   const legacyMigration = strategies.data?.legacy_migration
@@ -697,10 +693,6 @@ export function Screener() {
     queryKey: QK.watchlist,
     queryFn: api.watchlistList,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 自选列表 (用于判断是否在自选中)
   const watchlist = useQuery({
     queryKey: QK.watchlist,
@@ -744,10 +736,6 @@ export function Screener() {
 
   // 策略监控: 查询规则, 建立 strategyId → ruleId 映射 (只看 type=strategy 且 enabled)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 策略监控: 查询规则, 建立 assetType:strategyId → ruleId 映射 (只看 type=strategy 且 enabled)
   const monitorRules = useQuery({ queryKey: QK.monitorRules, queryFn: api.monitorRulesList })
   const strategyMonitorMap = useMemo(() => {
@@ -756,10 +744,6 @@ export function Screener() {
       if (r.type === 'strategy' && r.enabled && r.strategy_id) {
         m.set(r.strategy_id, r.id)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         m.set(`${r.asset_type ?? 'stock'}:${r.strategy_id}`, r.id)
       }
     }
@@ -769,10 +753,6 @@ export function Screener() {
   const toggleStrategyMonitor = (strategyId: string, strategyName: string) => {
     const existingRuleId = strategyMonitorMap.get(strategyId)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     const existingRuleId = strategyMonitorMap.get(`${assetType}:${strategyId}`)
     if (existingRuleId) {
       // 已监控 → 删除规则
@@ -782,10 +762,6 @@ export function Screener() {
     } else {
       // 未监控 → 直接创建 type=strategy 规则
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       // 未监控 → 直接创建 type=strategy 规则; 必须带当前页资产类型,
       // 否则 ETF 页点监控会默认 stock, 引擎在股票轮评估, ETF 命中永不告警。
       api.monitorRuleSave({
@@ -833,10 +809,6 @@ export function Screener() {
         right={
           <div className="flex items-center gap-2">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           /* 工具栏 10 组控件总宽会超过标题栏 (窄屏实测溢出 148px)。
              不能靠 overflow-x-auto + 隐藏滚动条 —— 那样右侧按钮被静默裁掉,
              用户既看不到也滚不到 (「创建策略 · AI」曾整块消失)。
@@ -999,10 +971,6 @@ export function Screener() {
                 ? '策略池为空，点击右上角「策略池」按钮添加策略'
                 : '当前周期筛选下无策略，切换周期筛选或编辑策略池'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           {!strategies.isLoading && strategies.isError && (
             <div className="flex flex-col items-center gap-2 py-4 text-center border border-dashed border-danger/40 rounded-btn">
               <span className="text-sm text-secondary">策略列表加载失败，请重试；策略池配置本身不受影响。</span>
@@ -1064,10 +1032,6 @@ export function Screener() {
                   onSettings={() => setSettingsStrategyId(s.id)}
                   monitored={strategyMonitorMap.has(s.id)}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   monitored={strategyMonitorMap.has(`${assetType}:${s.id}`)}
                   onToggleMonitor={() => toggleStrategyMonitor(s.id, s.name)}
                   timeframeBadge={isMinute ? '分钟' : undefined}
@@ -1132,10 +1096,6 @@ export function Screener() {
                         {filterActive(filter) && (
                           <span className="bg-accent text-base rounded-full min-w-4 h-4 px-1 flex items-center justify-center text-[10px] font-bold leading-none">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                           <span className="bg-accent text-white rounded-full min-w-4 h-4 px-1 flex items-center justify-center text-[10px] font-bold leading-none">
                             {countActiveFilters(filter)}
                           </span>
@@ -1274,10 +1234,6 @@ export function Screener() {
                 <span className="text-sm text-secondary">点击策略卡片查看选股结果</span>
                 <span className="text-[11px] text-muted">若提示 enriched 表无数据，请先运行盘后管道</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 {/* 池空时没有卡片可点, 原文案「点击策略卡片」会指向不存在的操作 */}
                 {pool.length === 0 ? (
                   <>

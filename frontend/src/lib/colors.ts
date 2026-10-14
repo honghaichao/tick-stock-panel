@@ -25,10 +25,6 @@ export const color = {
 
   /** 评分权重异常警告 — amber 色系 */
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   /** 策略条件区 section 标题色 */
   filterSection: 'text-sky-400',
 

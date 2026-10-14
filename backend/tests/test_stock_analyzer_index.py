@@ -1,6 +1,5 @@
 """AI 分析 prompt 指数文案测试。"""
 
-# --- THEIR (origin/main) ---
 """AI 分析 prompt 指数 / ETF 文案测试。"""
 from app.services.stock_analyzer import _build_user_prompt
 

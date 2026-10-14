@@ -2,7 +2,6 @@
 
 多盘并存的分区里, 选股/自选/告警/个股详情 (_load_ext_value_maps)、enriched 因子帧
 
-# --- THEIR (origin/main) ---
 多盘并存的分区里, 策略/自选/告警/个股详情 (_load_ext_value_maps)、enriched 因子帧
 (ext_factors._timeseries_frame) 与板块资金流 (sector_rotation._load_sector_flow)
 都按 symbol 去重取一行。去重只看行序, 所以写入端必须保证分区内按时间列升序:

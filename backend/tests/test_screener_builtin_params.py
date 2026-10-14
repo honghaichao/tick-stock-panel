@@ -84,7 +84,6 @@ def _install_api_fakes(monkeypatch):
     monkeypatch.setattr(screener_api, "ScreenerService", _CapturingScreenerService)
     monkeypatch.setattr(screener_api, "_load_ext_value_maps", lambda *_args: {})
 
-# --- THEIR (origin/main) ---
     monkeypatch.setattr(screener_api, "_load_ext_value_maps", lambda *_args, **_kwargs: {})
     monkeypatch.setattr(screener_api, "_update_cache_strategy", lambda *_args: None)
     monkeypatch.setattr(screener_api.strategy_cache, "write_cache", lambda *_args: None)

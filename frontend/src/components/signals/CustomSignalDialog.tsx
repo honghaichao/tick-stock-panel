@@ -7,10 +7,6 @@ import { api, type CustomSignal, type CustomSignalCondition, type CustomSignalFi
 import { QK } from '@/lib/queryKeys'
 import { useDialogBackdrop } from '@/lib/useDialogBackdrop'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -134,10 +130,6 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
   const addCond = () => setDraft(d => ({ ...d, conditions: [...d.conditions, { left: 'close', op: '>', right: '0', leftDays: 0, rightDays: 0 }] }))
   const removeCond = (idx: number) => setDraft(d => ({ ...d, conditions: d.conditions.filter((_, i) => i !== idx) }))
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const updateConditions = (conditions: CustomSignal['conditions']) =>
     setDraft(d => ({ ...d, conditions }))
 
@@ -202,10 +194,6 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
                   <span className="text-[11px] text-muted">条件（多条件为「且」关系）</span>
                   <div className="flex items-center gap-2 shrink-0">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 <ConditionEditor
                   conditions={draft.conditions}
                   onChange={updateConditions}
@@ -260,10 +248,6 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
                   })}
                 </div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   }
                 />
                 {aiOpen && (
@@ -293,10 +277,6 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
                             disabled={aiLoading}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-amber-500/90 text-base text-xs font-medium disabled:opacity-50 cursor-pointer"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-amber-500/90 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
                           >
                             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
@@ -319,10 +299,6 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
               <button onClick={onClose} className="px-4 py-1.5 rounded-btn bg-elevated text-secondary text-xs">取消</button>
               <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-amber-500/90 text-base text-xs font-medium disabled:opacity-50">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-amber-500/90 text-white text-xs font-medium disabled:opacity-50">
                 <Save className="h-3.5 w-3.5" />保存
               </button>

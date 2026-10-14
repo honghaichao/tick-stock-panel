@@ -179,10 +179,6 @@ export function Indices() {
           <p className="mt-1 text-xs text-muted">
             指数使用独立 kline_index_* parquet，不进入股票选股和策略链路。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             指数使用独立 kline_index_* parquet，不进入股票策略链路。
           </p>
         </div>
@@ -192,10 +188,6 @@ export function Indices() {
             disabled={syncDaily.isPending}
             className="inline-flex items-center gap-1.5 rounded-btn bg-accent px-3 py-1.5 text-xs font-medium text-base hover:bg-accent/90 disabled:opacity-50"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             className="inline-flex items-center gap-1.5 rounded-btn bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50"
           >
             {syncDaily.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}

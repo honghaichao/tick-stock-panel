@@ -37,10 +37,6 @@ const VARIANTS: Variant[] = [
     iconAccent: 'text-[#3DD68C]',
     nameClass: 'font-sans font-black text-base tracking-[0.10em]',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     nameClass: 'font-sans font-black text-[16px] leading-6 tracking-[0.10em]',
     glow: '#3DD68C',
   },
@@ -53,10 +49,6 @@ const VARIANTS: Variant[] = [
     iconAccent: 'text-[#FAFAFA]',
     nameClass: 'font-sans font-black text-base tracking-[0.18em]',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     nameClass: 'font-sans font-black text-[16px] leading-6 tracking-[0.18em]',
     glow: '#FAFAFA',
   },
@@ -69,10 +61,6 @@ const VARIANTS: Variant[] = [
     iconAccent: 'text-[#8B5CF6]',
     nameClass: 'font-mono font-bold text-base tracking-[0.08em]',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     nameClass: 'font-mono font-bold text-[16px] leading-6 tracking-[0.08em]',
     glow: '#8B5CF6',
   },
@@ -85,10 +73,6 @@ const VARIANTS: Variant[] = [
     iconAccent: 'text-[#22D3EE]',
     nameClass: 'font-sans font-light text-base tracking-[0.12em]',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     nameClass: 'font-sans font-light text-[16px] leading-6 tracking-[0.12em]',
     glow: '#22D3EE',
   },

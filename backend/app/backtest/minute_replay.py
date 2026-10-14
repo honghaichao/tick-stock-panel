@@ -2,7 +2,6 @@
 
 与实盘选股 (ScreenerService 1m context) 走同一条 StrategyEngine.run 执行路径,
 
-# --- THEIR (origin/main) ---
 与实盘策略 (ScreenerService 1m context) 走同一条 StrategyEngine.run 执行路径,
 消除回测/实盘偏差。语义铁律:
 
@@ -120,7 +119,6 @@ class MinuteReplayResult:
 class MinuteSignalReplayer:
     """逐交易日回放分钟策略, 产出与实盘选股同源的入场命中。"""
 
-# --- THEIR (origin/main) ---
     """逐交易日回放分钟策略, 产出与实盘策略同源的入场命中。"""
 
     def __init__(self, engine, strategy_engine: StrategyEngine) -> None:

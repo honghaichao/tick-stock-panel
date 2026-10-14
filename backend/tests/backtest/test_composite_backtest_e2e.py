@@ -94,7 +94,6 @@ EXECUTION_BACKEND = "composite"
 def composite_setup(tmp_path):
     builtin = Path(__file__).resolve().parents[2] / "app" / "strategy" / "builtin"
 
-# --- THEIR (origin/main) ---
     builtin = Path(__file__).resolve().parents[1] / "fixtures" / "strategies"
     comp_dir = tmp_path / "composite"
     comp_dir.mkdir(parents=True)
@@ -169,7 +168,6 @@ def test_worker_strategy_dirs_includes_composite(tmp_path):
     dir_names = [d.name for d in dirs]
     assert "builtin" in dir_names
 
-# --- THEIR (origin/main) ---
     assert "research" in dir_names
     assert "composite" in dir_names, f"worker._strategy_dirs 缺 composite 目录: {dir_names}"
     assert "custom" in dir_names

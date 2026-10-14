@@ -15,10 +15,6 @@ import {
   History,
   Plus,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   Bot,
   Database,
   FlaskConical,
@@ -32,10 +28,6 @@ import {
   Square,
   Trash2,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   Star,
   Trash2,
   TrendingUp,
@@ -270,10 +262,6 @@ function DrawerHeader({
           className="max-w-36 truncate rounded-btn bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted"
           title={`供应商: ${status.provider}`}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       <span className="shrink-0 text-sm font-semibold text-foreground">AI 助手</span>
       {status?.model && (
         <span
@@ -285,10 +273,6 @@ function DrawerHeader({
       )}
       <div className="ml-auto flex items-center gap-0.5">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       <RhPromoBanner />
       <div className="ml-auto flex shrink-0 items-center gap-0.5">
         <div className="relative">
@@ -514,10 +498,6 @@ function EmptyState({ status, suggests }: { status: AssistantStatus | null; sugg
           </button>
         ))}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     return (
       <p className="pt-8 text-center text-xs text-muted">
         问我任何关于行情、个股、策略、扩展数据或数据能力的问题。

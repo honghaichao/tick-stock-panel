@@ -21,10 +21,6 @@ const META: Record<string, StrategyEventMeta> = {
     label: '进入',
     action: '进入选股结果',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     action: '进入策略结果',
     className: 'text-danger',
   },
@@ -32,10 +28,6 @@ const META: Record<string, StrategyEventMeta> = {
     label: '移出',
     action: '移出选股结果',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     action: '移出策略结果',
     className: 'text-bear',
   },
@@ -43,10 +35,6 @@ const META: Record<string, StrategyEventMeta> = {
     label: '进入',
     action: '进入选股结果',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     action: '进入策略结果',
     className: 'text-danger',
   },
@@ -54,10 +42,6 @@ const META: Record<string, StrategyEventMeta> = {
     label: '移出',
     action: '移出选股结果',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     action: '移出策略结果',
     className: 'text-bear',
   },
@@ -65,10 +49,6 @@ const META: Record<string, StrategyEventMeta> = {
 
 /** 新建策略监控的默认通知事件: 选股结果(进入/移出), 与后端省略字段时的回填一致 */
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 /** 新建策略监控的默认通知事件: 策略结果(进入/移出), 与后端省略字段时的回填一致 */
 export const DEFAULT_STRATEGY_NOTIFY_EVENTS: StrategyNotifyEvent[] = [
   'pool_entry',
@@ -90,10 +70,6 @@ export const STRATEGY_NOTIFY_EVENT_OPTIONS: {
   { key: 'pool_entry', label: '进入选股结果', group: 'pool' },
   { key: 'pool_exit', label: '移出选股结果', group: 'pool' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   { key: 'pool_entry', label: '进入策略结果', group: 'pool' },
   { key: 'pool_exit', label: '移出策略结果', group: 'pool' },
 ]

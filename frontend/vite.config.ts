@@ -19,10 +19,6 @@ export default defineConfig({
     allowedHosts: true,  // 允许任意 host (trycloudflare 隧道)
     // dev.sh / dev.ps1 会用 CLI --host 覆盖
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     host: '0.0.0.0',   // dev.sh / dev.ps1 会用 CLI --host 覆盖
     port: 3011,
     proxy: {

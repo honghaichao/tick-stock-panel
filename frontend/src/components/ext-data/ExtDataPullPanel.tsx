@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Search, Check, Clock, Zap, Settings2, AlertCircle, CheckCircle2, Calendar, History, KeyRound } from 'lucide-react'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { Loader2, Search, Check, Clock, Zap, Settings2, AlertCircle, CheckCircle2, Calendar, History, KeyRound, Layers } from 'lucide-react'
 import { api, type ExtDataBackfillResult, type ExtDataConfig, type ExtPullAuth } from '@/lib/api'
 import { toast } from '@/components/Toast'
@@ -259,10 +255,6 @@ export function ExtDataPullPanel({ config, onSaved }: {
           <Settings2 className="h-3 w-3 text-muted" />
           <span>请求配置</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           <span>{fanout ? '第一级 (目录) 请求配置' : '请求配置'}</span>
         </div>
 
@@ -576,10 +568,6 @@ export function ExtDataPullPanel({ config, onSaved }: {
             disabled={running || !url}
             className="inline-flex items-center justify-center gap-1 px-2 py-2 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent disabled:opacity-40 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             className="inline-flex items-center justify-center gap-1 px-2 py-2 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent disabled:opacity-40 transition-colors"
           >
             {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
@@ -591,10 +579,6 @@ export function ExtDataPullPanel({ config, onSaved }: {
           disabled={saving || !url}
           className="w-full inline-flex items-center justify-center gap-1 py-2 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent disabled:opacity-40 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           className="w-full inline-flex items-center justify-center gap-1 py-2 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent disabled:opacity-40 transition-colors"
         >
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
@@ -626,10 +610,6 @@ export function ExtDataPullPanel({ config, onSaved }: {
               title="按本地交易日逐日拉取写入历史分区; 已有分区自动跳过, 可重复执行"
               className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-btn bg-accent/90 text-base text-[10px] font-medium hover:bg-accent disabled:opacity-40 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-btn bg-accent/90 text-white text-[10px] font-medium hover:bg-accent disabled:opacity-40 transition-colors"
             >
               {bfRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <History className="h-3 w-3" />}

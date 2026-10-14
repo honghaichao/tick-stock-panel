@@ -1,10 +1,6 @@
 import type { ComponentType } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import type { ComponentType, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { BrandIconProps } from '@/components/BrandIcons'
@@ -58,10 +54,6 @@ export interface FrontendExtensionNavigation {
   label: string
   icon: LucideIcon
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   /** lucide 图标或侧栏品牌图标族 (BrandIcons) — 与 Layout NavIcon 同口径 */
   icon: LucideIcon | ((props: BrandIconProps) => ReactNode)
   order?: number

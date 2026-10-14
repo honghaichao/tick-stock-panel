@@ -303,10 +303,6 @@ export function ExtDataStatCard({ config, onDelete, deleting, onEdit }: {
                   disabled={deleting}
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-base text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-white text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
                 >
                   {deleting ? '删除中…' : '确认删除'}

@@ -35,7 +35,6 @@ _MAX_HISTORY_MESSAGES = 16
 # 工具轮次上限(与策略迭代器的预算同量级, 防失控展开)。
 _MAX_TOOL_ROUNDS = 6
 
-# --- THEIR (origin/main) ---
 # 工具轮次检查点(非硬限): 到达后弹「是否继续」卡(与动作确认卡同机制),
 # 继续则重置计数再跑一个周期, 停止或超时优雅收尾 — 防失控展开的同时不掐断复杂编排。
 # 实际值在设置页 AI 配置里可调(ai_round_checkpoint, 0=不检查), 此处仅兜底默认。
@@ -204,7 +203,6 @@ async def chat_stream(
     async def execute(name: str, args: dict[str, Any]) -> dict[str, Any]:
         call_id = uuid.uuid4().hex[:8]
 
-# --- THEIR (origin/main) ---
         call_id = assistant_actions.new_call_id()
         await queue.put({
             "type": "tool_call",
@@ -291,7 +289,6 @@ async def chat_stream(
                     ))
                     return
 
-# --- THEIR (origin/main) ---
                 if round_checkpoint and tool_rounds >= round_checkpoint:
                     # 轮次检查点: 复用动作确认闸门(PendingRegistry + 决策端点)。
                     # 批准 → 重置计数继续; 拒绝/超时 → 保留已生成内容, 优雅收尾。
@@ -334,7 +331,6 @@ async def chat_stream(
                         for call in tool_calls
                     ],
 
-# --- THEIR (origin/main) ---
                     "tool_calls": [_assistant_tool_call(call) for call in tool_calls],
                 }
                 if round_text:
@@ -382,7 +378,6 @@ def _compact_args(args: dict[str, Any]) -> dict[str, Any]:
         compact[str(key)] = text
     return compact
 
-# --- THEIR (origin/main) ---
     """足迹事件的 args 预览: 递归保留 dict/list 结构(动作确认卡需要展示完整
     待执行参数), 截断超长字符串与超大集合, 防单行事件过大。"""
     def compact(value: Any, depth: int = 0) -> Any:

@@ -3,10 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Settings2, RotateCcw, Save, ChevronDown, Filter, Star, TrendingUp, Sparkles, Download, Layers, Plus, Trash2 } from 'lucide-react'
 import { api, type StrategyDetail, type StrategyParamDef, type CompositeChildInfo, type ScoringDirection } from '@/lib/api'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
@@ -89,10 +85,6 @@ function Section({ icon: Icon, title, accent, defaultOpen = true, children, extr
 }
 
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 // ===== 叠加条件支持判定: 与后端 _OVERLAY_UNSUPPORTED_BACKENDS 同集 =====
 // composite 已有自身叠加合并语义, 分钟策略帧不带 enriched 列 (ext_*/因子不可见)。
 function overlaySupported(d: StrategyDetail | null): boolean {
@@ -167,10 +159,6 @@ export function RangeField({ label, minVal, maxVal, onMinChange, onMaxChange, un
     <div className="flex items-center gap-1.5">
       <span className="text-[11px] text-secondary w-16 shrink-0 text-right">{label}</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       <span className={FIELD_LABEL_CLS}>{label}</span>
       <input
         type="number"
@@ -180,10 +168,6 @@ export function RangeField({ label, minVal, maxVal, onMinChange, onMaxChange, un
         step={step}
         className="w-20 px-1.5 py-0.5 rounded bg-base border border-border text-[11px] font-mono text-foreground text-center focus:outline-none focus:border-accent/50"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         className={`${FIELD_INPUT_CLS} w-[84px] px-2 text-center`}
       />
       <span className="text-[10px] text-muted">~</span>
@@ -197,10 +181,6 @@ export function RangeField({ label, minVal, maxVal, onMinChange, onMaxChange, un
       />
       {unit && <span className="text-[10px] text-muted shrink-0">{unit}</span>}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         className={`${FIELD_INPUT_CLS} w-[84px] px-2 text-center`}
       />
       {unit && <span className="w-4 shrink-0 text-[10px] text-muted">{unit}</span>}
@@ -253,10 +233,6 @@ function ParamField({ def, value, onChange }: {
       <div className="flex items-center gap-2">
         <span className="text-[11px] text-secondary w-16 shrink-0 text-right">{def.label}</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <span className={PARAM_LABEL_CLS} title={def.label}>{def.label}</span>
         <button
           type="button"
@@ -283,10 +259,6 @@ function ParamField({ def, value, onChange }: {
           onChange={e => onChange(e.target.value)}
           className="w-24 px-1.5 py-0.5 rounded bg-base border border-border text-[11px] font-mono text-foreground focus:outline-none focus:border-accent/50"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <span className={PARAM_LABEL_CLS} title={def.label}>{def.label}</span>
         <select
           value={value ?? def.default}
@@ -303,10 +275,6 @@ function ParamField({ def, value, onChange }: {
     <div className="flex items-center gap-2">
       <span className="text-[11px] text-secondary w-16 shrink-0 text-right">{def.label}</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   if (def.type === 'string') {
     return (
       <div className="flex items-center gap-2">
@@ -336,10 +304,6 @@ function ParamField({ def, value, onChange }: {
       {def.min != null && def.max != null && (
         <span className="text-[10px] text-muted">{def.min}~{def.max}</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         className={`${FIELD_INPUT_CLS} w-24 px-2 text-center`}
       />
       {def.min != null && def.max != null && (
@@ -521,10 +485,6 @@ export function StrategySettingsDialog({ strategyId, onClose, onSaved, onAiModif
           return list.map((c, i) => ({ ...c, weight: pcts[i] }))
         })())
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         loadIntoState(d)
         // composite 策略: 加载全部可选子策略(排除自身和其他 composite)供添加
         if (d.source === 'composite') {
@@ -537,10 +497,6 @@ export function StrategySettingsDialog({ strategyId, onClose, onSaved, onAiModif
       .finally(() => setLoading(false))
   }, [strategyId])
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   }, [strategyId, loadIntoState])
 
   // ===== 未保存改动检测 (分区维度) =====
@@ -647,10 +603,6 @@ export function StrategySettingsDialog({ strategyId, onClose, onSaved, onAiModif
       setBasicFilterEnabled(d.basic_filter?.enabled !== false)
       setCompositeChildren(d.composite_children ?? [])
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       // 重新加载默认值 (走同一归一化路径, 基线一并刷新)
       const d = await api.strategyGet(strategyId)
       loadIntoState(d)
@@ -732,10 +684,6 @@ export function StrategySettingsDialog({ strategyId, onClose, onSaved, onAiModif
               <span id="strategy-settings-title" className="text-sm font-semibold text-foreground">{detail?.name ?? strategyId}</span>
               {detail && <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-muted">{{ builtin: '内置', custom: '自定义', ai: 'AI', composite: '叠加' }[detail.source] ?? detail.source}</span>}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               {detail && <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-muted">{{ custom: '自定义', ai: 'AI', composite: '叠加' }[detail.source] ?? detail.source}</span>}
               <span className="text-[10px] text-muted/40 font-mono">{strategyId}</span>
             </div>
@@ -1002,10 +950,6 @@ export function StrategySettingsDialog({ strategyId, onClose, onSaved, onAiModif
           {/* 底部按钮 */}
           <div className="flex items-center justify-between px-5 py-3 border-t border-border/50 bg-surface/50">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           {loading ? (
             <div className="flex flex-1 items-center justify-center py-16"><div className="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin" /></div>
           ) : detail ? (

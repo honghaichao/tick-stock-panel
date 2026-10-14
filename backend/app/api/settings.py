@@ -59,7 +59,6 @@ def get_settings() -> dict:
         ai_configured,
         current_ai_model,
 
-# --- THEIR (origin/main) ---
         current_ai_context_window,
         current_ai_max_output_tokens,
         current_ai_model,
@@ -90,7 +89,6 @@ def get_settings() -> dict:
         # AI 配置
         "ai_provider": ai_provider,
 
-# --- THEIR (origin/main) ---
         # 配置文件位置 (AI 与数据源 Key 统一存放, 支持外部编辑后热加载)
         "secrets_path": str(secrets_store.file_path()),
         # AI 配置
@@ -160,7 +158,6 @@ def save_tickflow_key(req: TickflowKeyIn, request: Request) -> dict:
     from app.tickflow.policy import (
         base_tier_name, is_invalid_key,
 
-# --- THEIR (origin/main) ---
         base_tier_name,
         is_invalid_key,
     )
@@ -334,7 +331,6 @@ def save_ai_settings(req: AiSettingsIn) -> dict:
         current_ai_model,
         current_ai_provider,
 
-# --- THEIR (origin/main) ---
         CHAT_COMPLETIONS_PROTOCOL,
         OPENAI_PROVIDER,
         RESPONSES_PROTOCOL,
@@ -459,7 +455,6 @@ def clear_ai_settings() -> dict:
     # 同步重置运行时内存(provider 回默认值,其余置空)
     settings.ai_provider = "openai_compat"
 
-# --- THEIR (origin/main) ---
     secrets_store.clear("ai_provider", "ai_protocol", "ai_base_url", "ai_api_key", "ai_model", "ai_codex_command", "ai_codex_reasoning_effort", "ai_max_output_tokens", "ai_context_window")
     # 同步重置运行时内存(provider 回默认值,其余置空)
     settings.ai_provider = "openai_compat"
@@ -472,7 +467,6 @@ def clear_ai_settings() -> dict:
     settings.ai_max_output_tokens = 8192
     settings.ai_context_window = 64000
 
-# --- THEIR (origin/main) ---
     settings.ai_max_output_tokens = 16384
     settings.ai_context_window = 128000
 
@@ -538,7 +532,6 @@ def _minute_history_days() -> int | None:
 
     provider 可选类属性 minute_history_days 声明 (如 stock-sdk = 5,
 
-# --- THEIR (origin/main) ---
     provider 可选类属性 minute_history_days 声明 (如浅源 = 5,
     免费分时接口只保留最近 5 个交易日); 未声明或走 tickflow 时视为深历史。
     前端分时档位/默认值据此收窄。
@@ -875,7 +868,6 @@ def save_data_source(req: CustomSourceIn) -> dict:
     config = req.model_dump()
     config["name"] = (config.get("name") or "").lower()
 
-# --- THEIR (origin/main) ---
     """创建或更新一个自定义数据源 yaml, 保存后自动 reload。
 
     先验后存 (对齐插件 Key 的先探后存语义): 用与加载同一套校验试建临时
@@ -1441,7 +1433,6 @@ def update_feishu_webhook(req: FeishuWebhookPrefsIn) -> dict:
     from app.services import preferences
     from app.services import webhook_adapter
 
-# --- THEIR (origin/main) ---
     from app.services import preferences, webhook_adapter
 
     url = (req.url or "").strip()
@@ -1470,7 +1461,6 @@ def update_wecom_webhook(req: WecomWebhookPrefsIn) -> dict:
     from app.services import preferences
     from app.services import webhook_adapter
 
-# --- THEIR (origin/main) ---
     from app.services import preferences, webhook_adapter
 
     url = (req.url or "").strip()
@@ -1579,7 +1569,6 @@ def test_webhook(req: WebhookTestIn) -> dict:
     from app.services import preferences
     from app.services import webhook_adapter
 
-# --- THEIR (origin/main) ---
     from app.services import preferences, webhook_adapter
 
     title = "TickFlow Stock Panel 推送测试"
@@ -2145,7 +2134,6 @@ def update_review_schedule(req: ReviewScheduleIn, request: Request) -> dict:
     # 动态操作 APScheduler job
     from app.jobs.daily_pipeline import _register_review_job, REVIEW_JOB_ID
 
-# --- THEIR (origin/main) ---
     from app.jobs.daily_pipeline import REVIEW_JOB_ID, _register_review_job
     scheduler = getattr(request.app.state, "scheduler", None)
     if scheduler:

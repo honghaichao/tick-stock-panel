@@ -395,7 +395,6 @@ async def generate_ai_text_with_tools(
             tools=tool_schemas,
         )
 
-# --- THEIR (origin/main) ---
         if is_responses_protocol():
             from app.services import ai_responses
 
@@ -437,7 +436,6 @@ async def generate_ai_text_with_tools(
                 for tc in tool_calls
             ],
 
-# --- THEIR (origin/main) ---
             "tool_calls": [_assistant_tool_call(tc) for tc in tool_calls],
         }
         if message.content:

@@ -419,7 +419,6 @@ def test_loader_probe_plugin_key_unsupported_plugin():
     # stock-sdk 未声明 api_key_env → 不支持界面配 Key
     ok, reason = loader.probe_plugin_key("stocksdk", "x")
 
-# --- THEIR (origin/main) ---
 def test_loader_probe_plugin_key_unsupported_plugin(monkeypatch):
     from app.data_providers.custom import loader
 
@@ -1227,7 +1226,6 @@ def test_adj_output_schema_sorted_and_deduped(monkeypatch):
     df = provider.get_adj_factors(["000001.SZ", "600519.SH"], None, None)
     assert df.columns == ["symbol", "trade_date", "ex_factor"]
 
-# --- THEIR (origin/main) ---
     assert df.columns == _ADJ_OUT_COLS
     assert df.schema["trade_date"] == pl.Date and df.schema["ex_factor"] == pl.Float64
     assert df.height == 3
@@ -1240,7 +1238,6 @@ def test_adj_etf_and_empty_symbols_return_empty(monkeypatch):
     empty = provider.get_adj_factors([], None, None)
     assert empty.is_empty() and empty.columns == ["symbol", "trade_date", "ex_factor"]
 
-# --- THEIR (origin/main) ---
     assert empty.is_empty() and empty.columns == _ADJ_OUT_COLS
     etf = provider.get_adj_factors(["510300.SH"], None, None, asset_type="etf")
     assert etf.is_empty()
@@ -1257,7 +1254,6 @@ def test_adj_dump_unavailable_returns_empty(monkeypatch):
     df = provider.get_adj_factors(["600519.SH"], None, None)
     assert df.is_empty() and df.columns == ["symbol", "trade_date", "ex_factor"]
 
-# --- THEIR (origin/main) ---
     assert df.is_empty() and df.columns == _ADJ_OUT_COLS
 
 
@@ -1532,7 +1528,6 @@ def test_release_of_extracts_from_presigned_url():
 def test_test_dataset_daily_preview(monkeypatch):
     bars = {"000001.SZ": [_bar(date(2026, 8, 27), 11.05), _bar(date(2026, 8, 28), 11.65)]}
 
-# --- THEIR (origin/main) ---
     # 实现窗口为 now-30天..now, 数据日期必须相对今天生成; 硬编码日期会随时间
     # 滑出窗口 (2026-09-27 起原硬编码 8/27 的版本必然失败)。
     d1 = date.today() - timedelta(days=2)
@@ -1544,7 +1539,6 @@ def test_test_dataset_daily_preview(monkeypatch):
     assert out["rows"] == 2
     assert out["preview"][0]["date"] == "2026-08-27"  # date → ISO 字符串
 
-# --- THEIR (origin/main) ---
     assert out["preview"][0]["date"] == d1.isoformat()  # date → ISO 字符串
 
 

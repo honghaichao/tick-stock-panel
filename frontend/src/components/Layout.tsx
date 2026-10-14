@@ -1,9 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense } from 'react'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense, type ReactNode } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -54,10 +50,6 @@ import {
   CheckCircle2,
   BookOpenCheck,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { compareByDefaultNav, defaultNavIndex, seedHiddenForNewUser } from '@/lib/navOrder'
 import {
   Settings,
@@ -79,10 +71,6 @@ import {
   PanelLeftOpen,
 } from 'lucide-react'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   Download,
   HardDriveDownload,
 } from 'lucide-react'
@@ -145,10 +133,6 @@ const nav = [
   { to: '/indices', label: '指数', icon: BarChart3 },
   { to: '/data',       label: '数据',   icon: Database },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   { to: '/',                 label: '看板',     icon: IconDashboard },
   { to: '/watchlist',        label: '自选',     icon: IconWatchlist },
   { to: '/screener',         label: '策略',     icon: IconStrategy },
@@ -226,10 +210,6 @@ function SidebarIndexQuotes({ rows, items }: { rows: IndexQuote[] | undefined; i
               <span className="text-[10px] text-secondary">{item.name}</span>
               <span className={`text-[10px] font-mono ${indexPctClass(pct)}`}>{fmtIndexPct(pct)}</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             className="block rounded bg-elevated/60 px-1.5 py-1.5 transition-colors hover:bg-elevated"
             title={`${item.name} ${item.symbol}`}
           >
@@ -338,10 +318,6 @@ function DataSourceHealthBadge({ matrix }: { matrix: CapabilityMatrix | undefine
         <span className="pointer-events-none absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-accent/50 transition-colors group-hover:bg-accent" />
         <DatabaseZap className="h-3.5 w-3.5 shrink-0 text-muted group-hover:text-accent transition-colors" />
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <DatabaseZap className="h-3.5 w-3.5 shrink-0 text-muted group-hover:text-foreground transition-colors" />
         {/* 能力方格 (按注册顺序: 实时/日K/分钟/除权/财务), 与悬浮卡逐格同色对应 */}
         <span className="flex items-center gap-1 shrink-0">
@@ -430,10 +406,6 @@ function AIConfigBadge({ configured, model }: { configured?: boolean; model?: st
       {configured ? (
         <span className="truncate text-[11px] font-medium text-secondary group-hover:text-foreground transition-colors">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted group-hover:text-foreground transition-colors" />
       {configured ? (
         <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-secondary group-hover:text-foreground transition-colors">
@@ -497,10 +469,6 @@ export function Layout() {
       const v = localStorage.getItem('tf-nav-state')
       if (v === 'expanded' || v === 'rail' || v === 'hidden') return v
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       // 两态导航: expanded(14rem) / rail(3.5rem 图标条)。历史三态版本的 'hidden' 归一为展开
       const v = localStorage.getItem('tf-nav-state')
       if (v === 'expanded' || v === 'rail') return v
@@ -554,10 +522,6 @@ export function Layout() {
 
   // 数据同步状态轮询: 有活跃 job 时「数据」菜单项显示转圈
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 数据同步状态轮询: 有活跃 job 时「数据」菜单项显示转圈。
   // 标签页隐藏时 TanStack 默认暂停轮询 — 转圈提示只在页面可见时有意义, 不再强制后台轮询
   const { data: pipelineJobs } = useQuery({
@@ -596,10 +560,6 @@ export function Layout() {
   const toggleNavCollapsed = () => {
     setNavStatePersist(navState === 'expanded' ? 'rail' : navState === 'rail' ? 'hidden' : 'expanded')
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 两态切换 (仅桌面): 展开 <-> 图标条
   const toggleNavCollapsed = () => {
     setNavStatePersist(navState === 'expanded' ? 'rail' : 'expanded')
@@ -629,10 +589,6 @@ export function Layout() {
   const isWatchlistMode = quoteMode === 'watchlist'
   const realtimeModeLabel = isWatchlistMode ? '自选股' : '全市场'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const realtimeModeLabel = isWatchlistMode ? '自选' : '全市场'
   // 当前实时行情数据源名称 (插件/自定义源显示源名, tickflow 不显示)
   const realtimeProvider = prefs?.realtime_data_provider
@@ -674,10 +630,6 @@ export function Layout() {
     queryFn: () => api.alertsList({ days: 7, limit: 1 }),
     refetchInterval: 15000,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 轮询触发记录总数 → 更新监控中心徽标 (每 15 秒; 后台标签页由 SSE 事件驱动, 不轮询)。
   // 非交易时段无新告警, 降为 2 分钟兜底
   const alertsTotalQuery = useQuery({
@@ -698,10 +650,6 @@ export function Layout() {
     .filter(m => m.visible)
     .map(m => ({ to: `/analysis/${m.id}`, label: m.label, icon: m.icon === 'tags' ? Tags : BarChart3 }))
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   type NavIcon = (props: BrandIconProps) => ReactNode
   // arch: 'ext' = 扩展域页面 (官方扩展/自定义分析), 核心域 nav 常量不带标。
   // 与菜单设置 ARCH_CLASS 同口径: nav 常量 8 项全部核心, 其余两个来源全部扩展。
@@ -742,10 +690,6 @@ export function Layout() {
           if (anchor >= 0) merged.splice(anchor + 1, 0, item)
           else if (defaultIndex >= 0) merged.unshift(item)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           // 未保存过排序的新条目: 默认基准内的路径插回默认位置(排在已出现的
           // 最近默认前驱之后), 分析菜单/未知扩展追加到末尾。基准含迁移到
           // custom/ 的扩展域页面, 保证老用户升级无感 (lib/navOrder)。
@@ -764,10 +708,6 @@ export function Layout() {
       })()
     : allNav
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     // 无保存排序 (新装/从未调整过菜单): 按迁移前默认基准排序, 扩展域页面
     // 不沉底 — 老用户升级侧栏顺序与迁移前一致; 未知路径稳定追加在后。
     : [...allNav].sort((a, b) => compareByDefaultNav(a.to, b.to))
@@ -842,10 +782,6 @@ export function Layout() {
     <div
       className="h-screen grid bg-base text-foreground overflow-hidden transition-[grid-template-columns] duration-200 ease-smooth"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       className="h-full grid bg-base text-foreground overflow-hidden transition-[grid-template-columns] duration-200 ease-smooth"
       style={{ gridTemplateColumns: isDesktop && !overlayPreview ? (navState === 'expanded' ? '14rem 1fr' : navState === 'rail' ? '3.5rem 1fr' : '0 1fr') : '1fr' }}
     >
@@ -912,10 +848,6 @@ export function Layout() {
                 style={{ textShadow: `0 0 10px ${BRAND}44` }}
               >
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               <div className="font-semibold text-[11px] uppercase tracking-[0.12em] text-foreground/90 whitespace-nowrap">
                 Tick Stock Panel
               </div>
@@ -930,10 +862,6 @@ export function Layout() {
                 )}
                 title={railMode ? '隐藏菜单 (再点击左缘按钮可唤出)' : '收起菜单'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 title={railMode ? '展开菜单' : '收起菜单'}
               >
                 {railMode
@@ -958,10 +886,6 @@ export function Layout() {
                 <DataSourceHealthBadge matrix={matrix} />
               <div className="mx-2 border-t border-border/45" aria-hidden="true" />
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               <div className="mx-2 border-t border-border/60" aria-hidden="true" />
               <AIConfigBadge
                 configured={settingsState?.ai_configured ?? settingsState?.has_ai_key}
@@ -979,10 +903,6 @@ export function Layout() {
         <nav className="flex-1 min-h-0 overflow-y-auto px-2 py-3 space-y-0.5">
           {visibleNavItems.map(({ to, label, icon: Icon, badge }) => {
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <nav className="tf-nav-scroll flex-1 min-h-0 overflow-y-auto px-2 py-3 space-y-0.5">
           {visibleNavItems.map(({ to, label, icon: Icon, badge, arch }) => {
             // 「自选」项 — 开启分组侧栏且未整体收起时, 渲染为可展开父项 + 二级分组
@@ -1005,10 +925,6 @@ export function Layout() {
                         'pointer-events-none absolute left-0 top-1/2 h-4 -translate-y-1/2 w-[2.5px] rounded-full bg-accent transition-opacity duration-150',
                         location.pathname === '/watchlist' ? 'opacity-100 shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'opacity-0',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                         'pointer-events-none absolute inset-y-1 left-0 w-[2px] rounded-full bg-accent transition-opacity duration-150',
                         location.pathname === '/watchlist' ? 'opacity-100' : 'opacity-0',
                       )}
@@ -1047,10 +963,6 @@ export function Layout() {
                         <Icon className={cn('h-4 w-4 shrink-0 transition-colors', isActive ? 'text-accent' : 'text-foreground/60 group-hover:text-foreground/85')} />
                         {!railMode && <span className="flex-1">{label}</span>}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                             'pointer-events-none absolute inset-y-1 left-0 w-[2px] rounded-full bg-accent transition-opacity duration-150',
                             isActive ? 'opacity-100' : 'opacity-0',
                           )}
@@ -1294,10 +1206,6 @@ export function Layout() {
                     </span>
                   )}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                       'pointer-events-none absolute inset-y-1 left-0 w-[2px] rounded-full bg-accent transition-opacity duration-150',
                       isActive ? 'opacity-100' : 'opacity-0',
                     )}

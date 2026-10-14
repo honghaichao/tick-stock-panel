@@ -105,10 +105,6 @@ const TOOL_LABELS: Record<string, string> = {
   run_strategy: '执行选股策略',
   get_factor_values: '查询因子排名',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   run_strategy: '执行策略',
   get_factor_values: '查询因子排名',
   create_signal_strategy: '创建自定义信号',
@@ -130,10 +126,6 @@ export const FootprintGroup = memo(function FootprintGroup({ calls }: { calls: T
   if (!calls.length) return null
   const charts = calls.filter(c => c.status === 'ok' && c.charts).flatMap(c => c.charts!)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const charts = calls
     .filter(c => c.status === 'ok' && c.charts)
     .flatMap(c => c.charts!)
@@ -163,10 +155,6 @@ export const FootprintCard = memo(function FootprintCard({ calls }: { calls: Too
   const hasError = calls.some(c => c.status === 'error')
   const running = calls.some(c => c.status === 'running')
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const activeStatuses = new Set(['running', 'awaiting', 'approved'])
   const done = calls.filter(c => !activeStatuses.has(c.status))
   const totalMs = done.reduce((sum, c) => sum + (c.elapsedMs ?? 0), 0)
@@ -190,10 +178,6 @@ export const FootprintCard = memo(function FootprintCard({ calls }: { calls: Too
         </span>
         {!running && done.length > 0 && (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <span className={cn(active && 'animate-pulse')}>
           {awaiting
             ? `等待确认操作 (${done.length}/${calls.length})…`
@@ -208,10 +192,6 @@ export const FootprintCard = memo(function FootprintCard({ calls }: { calls: Too
         )}
         {hasError && !running && <span className="text-danger">· 部分失败</span>}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         {hasError && !active && <span className="text-danger">· 部分失败</span>}
         {awaiting && <span className="text-danger">· 需要确认</span>}
         <ChevronDown
@@ -220,10 +200,6 @@ export const FootprintCard = memo(function FootprintCard({ calls }: { calls: Too
       </button>
       {expanded && (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       {showDetails && (
         <div className="border-t border-border/60 px-3 py-2 space-y-2">
           {calls.map(call => (
@@ -246,10 +222,6 @@ function ToolCallRow({ call }: { call: ToolCallRecord }) {
             ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-accent" />
             : <AlertCircle className="h-3.5 w-3.5 shrink-0 text-danger" />}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         {call.status === 'running' || call.status === 'approved'
           ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-accent" />
           : call.status === 'awaiting'

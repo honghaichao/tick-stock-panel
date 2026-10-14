@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-# --- THEIR (origin/main) ---
 import importlib.util
 from datetime import date, timedelta
 from pathlib import Path
@@ -23,7 +22,6 @@ from app.backtest.matrix import build_market_data_matrix
 from app.indicators.pipeline import compute_limit_signals
 from app.strategy.builtin.near_limit_up import MATRIX_STRATEGY
 
-# --- THEIR (origin/main) ---
 
 _FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
 

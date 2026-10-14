@@ -34,10 +34,6 @@ interface NavEntry {
 
 // 与 Layout 侧边栏默认顺序保持一致 (nav_order 未保存时的默认展示顺序)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   type: 'builtin' | 'analysis' | 'extension'
   visible: boolean
 }
@@ -62,10 +58,6 @@ const BUILTIN_PAGES: NavEntry[] = [
   { id: '/signals', label: '信号库', type: 'builtin', visible: true },
   { id: '/review', label: '复盘', type: 'builtin', visible: true },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   { id: '/regime', label: '市场环境', type: 'builtin', visible: true },
   { id: '/indices', label: '指数', type: 'builtin', visible: true },
   { id: '/data', label: '数据', type: 'builtin', visible: true },
@@ -132,10 +124,6 @@ function SortableItem({ entry, hidden, onToggleHidden, badgeEnabled, onToggleBad
       style={style}
       className={`grid grid-cols-[2.5rem_1fr_4.5rem_3rem_3rem_3rem] items-center border-b border-border/70 px-4 py-3 last:border-b-0 ${
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       className={`group grid grid-cols-[2.5rem_1fr_4.5rem_3rem_3rem_3rem] items-center border-b border-border/60 px-4 py-2.5 transition-colors last:border-b-0 hover:bg-elevated/40 ${
         isDragging ? 'bg-elevated rounded-lg shadow-lg' : ''
       } ${hidden ? 'opacity-50' : ''}`}
@@ -175,10 +163,6 @@ function SortableItem({ entry, hidden, onToggleHidden, badgeEnabled, onToggleBad
         }`}>
           {entry.type === 'builtin' ? '内置' : '扩展'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <span className={`text-[11px] font-medium ${
           entry.type === 'analysis' ? 'text-accent' : 'text-muted'
         }`}>
@@ -209,10 +193,6 @@ function SortableItem({ entry, hidden, onToggleHidden, badgeEnabled, onToggleBad
           </Link>
         ) : (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         {entry.type === 'analysis' ? (
           <Link
             to={`/settings?tab=ext-pages`}
@@ -282,10 +262,6 @@ export function SettingsMenuSettingsPanel() {
 
     if (saved.length === 0) return [...BUILTIN_PAGES, ...analysisEntries]
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     for (const e of extensionEntries) entryMap.set(e.id, e)
 
     // 无保存排序: 按迁移前默认基准排序 (扩展域页面不沉底, 老用户升级无感)
@@ -320,10 +296,6 @@ export function SettingsMenuSettingsPanel() {
     return ordered
   }, [prefs?.nav_order, analysisEntries])
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     for (const e of [...BUILTIN_PAGES, ...analysisEntries, ...extensionEntries]) {
       if (seen.has(e.id)) continue
       // 未保存过排序的新条目: 默认基准内的路径插回默认位置, 其余追加到末尾
@@ -368,10 +340,6 @@ export function SettingsMenuSettingsPanel() {
       if (anchor >= 0) result.splice(anchor + 1, 0, e)
       else if (defaultIndex >= 0) result.unshift(e)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       // 与 allEntries 同一语义: 默认基准内的路径插回默认位置而非追加到末尾
       const di = defaultNavIndex(e.id)
       let anchor = -1
@@ -462,10 +430,6 @@ export function SettingsMenuSettingsPanel() {
           <div />
           <div>菜单</div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <div className="grid grid-cols-[2.5rem_1fr_4.5rem_3rem_3rem_3rem] items-center border-b border-border bg-elevated/40 px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted">
           <div />
           <div>菜单 · 归属</div>

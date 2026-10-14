@@ -4,10 +4,6 @@ import { RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider, QueryCache } from '@tanstack/react-query'
 import { initializeFrontendExtensions } from './extensions/bootstrap'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { QueryClient, QueryCache } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { initializeFrontendExtensions } from './extensions/bootstrap'
@@ -77,10 +73,6 @@ async function bootstrap() {
         <RouterProvider router={router} />
       </QueryClientProvider>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 页面包能力桥: 运行时页面包经 shim 读取宿主 api/QK/cn/format
   installTspExtBridge({ api, QK, cn, format })
   // 运行时页面包: 必须在 router 模块求值(finalize + 建路由表)之前挂载

@@ -25,10 +25,6 @@ function clampPos(pos: BallPos): BallPos {
   const maxX = Math.max(0, window.innerWidth - SIZE)
   const maxY = Math.max(0, window.innerHeight - SIZE)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 /** 页面 CSS zoom (html 上): 视觉坐标(getBoundingClientRect/clientX) 与
  * 布局坐标(style.left) 在 zoom≠1 时相差 zoom 倍, 拖拽换算必须经过它,
  * 否则 90% 缩放下每次拖动球会向左上跳约 11%。 */
@@ -58,10 +54,6 @@ function loadPos(): BallPos {
   } catch { /* 存储不可用时用默认位置 */ }
   return { x: window.innerWidth - SIZE - 24, y: window.innerHeight - SIZE - 152 }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const z = pageZoom()
   return { x: window.innerWidth / z - SIZE - 24, y: window.innerHeight / z - SIZE - 152 }
 }
@@ -75,10 +67,6 @@ function savePos(pos: BallPos) {
 export function AssistantFloatingButton() {
   const { open, sending } = useAssistantStore()
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const { open, sending, fabVisible } = useAssistantStore()
   const [pos, setPos] = useState<BallPos>(() => loadPos())
   const ballRef = useRef<HTMLButtonElement>(null)
@@ -105,10 +93,6 @@ export function AssistantFloatingButton() {
       offsetX: event.clientX - rect.left,
       offsetY: event.clientY - rect.top,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     const z = pageZoom()
     dragRef.current = {
       active: true,
@@ -124,10 +108,6 @@ export function AssistantFloatingButton() {
     if (!el) return
     const next = clampPos({ x: event.clientX - drag.offsetX, y: event.clientY - drag.offsetY })
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     const z = pageZoom()
     const next = clampPos({ x: event.clientX / z - drag.offsetX, y: event.clientY / z - drag.offsetY })
     if (!drag.moved) {
@@ -148,10 +128,6 @@ export function AssistantFloatingButton() {
     if (rect) {
       const final = clampPos({ x: rect.left, y: rect.top })
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       const z = pageZoom()
       const final = clampPos({ x: rect.left / z, y: rect.top / z })
       setPos(final)
@@ -188,10 +164,6 @@ export function AssistantFloatingButton() {
       className={cn(
         'fixed z-[59] flex touch-none cursor-pointer items-center justify-center',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         // z-30 = 常驻入口层: 在页面内容之上, 但低于 z-40 遮罩与 z-50 弹窗 —
         // 弹窗打开时悬浮球被盖住, 不再悬浮遮挡弹窗内容 (与 AiConfigEntry 同层)。
         'fixed z-30 flex touch-none cursor-pointer items-center justify-center',

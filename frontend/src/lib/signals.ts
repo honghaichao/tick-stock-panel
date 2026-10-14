@@ -4,10 +4,6 @@
  * 信号 ID 必须与后端 backtest/strategy.py:_build_signal_mask 对齐
  * (signal_* 前缀为内置原子信号, csg_ 前缀为用户自定义信号)。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
  * 信号/字段显示名 — 展示侧统一查表。
  *
  * 日线信号布尔列 (csg_* 与迁移自内置、沿用 signal_* 列名的定义) 全部由
@@ -188,10 +184,6 @@ export const SIGNAL_LABELS: Record<string, string> = BUILTIN_SIGNAL_DEFINITIONS.
 /** 内置信号 ID 列表 */
 export const SIGNAL_OPTIONS = BUILTIN_SIGNAL_DEFINITIONS.map(sig => sig.id)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 /** 盘中信号 → 中文标签 (日线信号标签由用户定义提供, 不在此表) */
 export const SIGNAL_LABELS: Record<string, string> = { ...MONITOR_INTRADAY_SIGNAL_LABELS }
 
@@ -219,10 +211,6 @@ const FIELD_LABELS: Record<string, string> = {
  * 信号/字段 ID → 中文显示名。
  * 内置信号查 SIGNAL_LABELS; csg_ 前缀查传入的自定义信号名称映射;
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
  * 自定义信号列 (csg_/signal_*) 查传入的命名映射; 盘中信号查 SIGNAL_LABELS;
  * 技术指标查 FIELD_LABELS; 都找不到则原样返回。
  */

@@ -755,7 +755,6 @@ _TABLE_FIELD_DESC: dict[str, dict[str, str]] = {
         "trade_date": "除权除息日",
         "ex_factor": "复权因子",
 
-# --- THEIR (origin/main) ---
         "trade_date": "除权除息日",
         "ex_factor": "单事件等比因子 = 除权前收盘价 / 除权参考价, 按日期连乘得累计复权因子",
         # 事件明细列: 表结构固定 8 列, 明细由提供事件的数据源(扶摇)回填, TickFlow 源为 null
@@ -853,7 +852,6 @@ def get_version(request: Request) -> dict:
 
     # 1. 优先用 app.__version__ (唯一权威版本, 打包期由 PyInstaller 注入)
 
-# --- THEIR (origin/main) ---
     # 1. 优先用 app.__version__ (唯一权威版本, 运行时从 frontend/package.json 加载)
     if __version__:
         v = __version__.strip()

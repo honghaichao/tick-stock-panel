@@ -165,7 +165,6 @@ def polars_limit_price(previous: pl.Expr, limit_pct: pl.Expr, *, up: bool) -> pl
     numerator = ((1 + sign * limit_pct) * 100).round(0).cast(pl.Int64, strict=False)
     cents = (previous.fill_null(0) * 100 + 0.5).floor().cast(pl.Int64, strict=False)
 
-# --- THEIR (origin/main) ---
     numerator = ((1 + sign * limit_pct) * 100).round(0).cast(pl.Int64)
     cents = (previous * 100 + 0.5).floor().cast(pl.Int64)
     return ((cents * numerator + 50) // 100) / 100

@@ -9,7 +9,6 @@
 
 mock 范式沿用 test_stocksdk_provider.py (monkeypatch 模块属性)。
 
-# --- THEIR (origin/main) ---
 覆盖的阻断问题 (历史回归):
 1. 自定义分钟源异常直接 500 (无 try/except)
 2. 插件化路由重复 + asset_type 未透传
@@ -274,7 +273,6 @@ def test_on_chunk_done_wrapped_to_3_args(monkeypatch):
         # 模拟 provider 实现内部以 2 参调用 on_chunk_done
         # (如 GenericHTTPProvider/provider.py:127 / StockSDKProvider/provider.py:166)
 
-# --- THEIR (origin/main) ---
         # (如 GenericHTTPProvider/provider.py:127)
         if on_chunk_done is not None:
             on_chunk_done(1, 3)

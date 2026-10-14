@@ -33,10 +33,6 @@ import {
 import { useToggleRealtimeQuotes, useUpdateQuoteInterval } from '@/lib/useSharedMutations'
 import { MissingCapChip, routeCapUsable, routeProviderDisplay, type RouteCapId } from '@/lib/capability-labels'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { MissingCapChip, routeCap, routeCapUsable, routeProviderDisplay, type RouteCapId } from '@/lib/capability-labels'
 import { QK } from '@/lib/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
@@ -55,10 +51,6 @@ import { RepairDailyPanel } from '@/components/data/RepairDailyPanel'
 import { EnrichedRebuildPanel } from '@/components/data/EnrichedRebuildPanel'
 import { MinuteSyncConfig } from '@/components/data/MinuteSyncConfig'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { FinancialSyncPanel } from '@/components/data/FinancialSyncPanel'
 import { MinuteSyncConfig } from '@/components/data/MinuteSyncConfig'
 import { AdjFactorSyncConfig } from '@/components/data/AdjFactorSyncConfig'
@@ -143,10 +135,6 @@ export function Data() {
     onSuccess: () => {
       // 清库删除全部 parquet + alerts, 各页 (看板/自选/选股/指数/财务/个股/连板/监控) 缓存
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       // 清库删除全部 parquet + alerts, 各页 (看板/自选/策略/指数/财务/个股/连板/监控) 缓存
       // 数据均已失效, 故广域失效所有 query 令其重取 —— 数据已清空, 全量刷新是正确行为而非误伤。
       qc.invalidateQueries()
@@ -291,10 +279,6 @@ export function Data() {
     ...(etfAuto ? ['ETF'] : []),
     ...((hasMinuteCap && minuteAuto) ? ['分钟K'] : []),
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 管道步骤 + 各步能力路由 (路由徽标数据源 = 能力矩阵, 单一权威; 指标为本地计算无路由)
   const pipelineSteps: { label: string; cap?: RouteCapId }[] = [
     { label: '日K', cap: 'daily' },
@@ -596,10 +580,6 @@ export function Data() {
             onSettings={hasData ? () => setOpenSettings(v => v === 'financials' ? null : 'financials') : undefined}
             settingsOpen={openSettings === 'financials'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             // 财务不在盘后管道内, 顶部「立即同步」不含它 —— 给出独立的拉取入口
             onPull={() => setOpenSettings(v => v === 'financial-sync' ? null : 'financial-sync')}
             pullTitle="手动拉取财务数据"
@@ -648,10 +628,6 @@ export function Data() {
               disabled={isStarting}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-gradient-to-r from-accent/25 to-accent/10 border border-accent/30 text-accent text-xs font-medium hover:from-accent/35 hover:to-accent/20 disabled:opacity-40 transition-all duration-150"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             <button
               onClick={() => adjGate.guard(() => startSync.mutate())}
               disabled={isStarting}
@@ -803,10 +779,6 @@ export function Data() {
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5 text-[10px] text-muted pb-2 border-b border-border/50">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 <div className="flex items-center gap-1.5 text-[10px] text-muted pb-2 border-b border-border/50 flex-wrap">
                   <span className="text-accent/60 font-medium">盘前</span>
                   <span>个股维表</span>
@@ -817,10 +789,6 @@ export function Data() {
                       {i > 0 && <span className="text-border">→</span>}
                       <span>{step}</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                     <span key={step.label} className="contents">
                       {i > 0 && <span className="text-border">→</span>}
                       <span
@@ -1242,10 +1210,6 @@ export function Data() {
                   disabled={!hasDailyBatchCap || !!activeJobId || syncIndexDaily.isPending}
                   className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
                 >
                   {syncIndexDaily.isPending ? (
@@ -1336,10 +1300,6 @@ export function Data() {
                   disabled={stopSync.isPending}
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-base text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-white text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
                 >
                   {stopSync.isPending ? '停止中…' : '确认停止'}
@@ -1406,10 +1366,6 @@ export function Data() {
                   disabled={clearData.isPending}
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-base text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-white text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
                 >
                   {clearData.isPending ? '清除中…' : '清除数据'}

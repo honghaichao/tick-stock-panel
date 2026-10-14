@@ -3,10 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Play, FlaskConical, Clock, Loader2, Square, Search, Plus, X, SlidersHorizontal, BarChart3, Gauge, Zap, ListPlus, HelpCircle, ChevronRight, AlertTriangle, Layers, BookmarkPlus, Download } from 'lucide-react'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { Play, FlaskConical, Clock, Loader2, Square, Search, Plus, X, SlidersHorizontal, BarChart3, Gauge, Zap, ListPlus, HelpCircle, ChevronRight, AlertTriangle, Layers, BookmarkPlus, Download, Filter, Star, TrendingUp, CalendarRange } from 'lucide-react'
 import {
   api,
@@ -174,10 +170,6 @@ const TRADE_PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100]
 const BADGE_CLS_MAP: Record<string, string> = {
   builtin: 'bg-secondary/10 text-muted border-border',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 const SRC_MAP: Record<string, string> = { custom: '自定义', ai: 'AI', composite: '叠加' }
 const TRADE_PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100]
 const BADGE_CLS_MAP: Record<string, string> = {
@@ -211,10 +203,6 @@ const BASIC_FILTER_RANGES = [
 type AdvancedSettingsTab = 'params' | 'filter' | 'entry' | 'exit' | 'scoring' | 'risk' | 'range'
 type StrategyGroup = 'all' | 'custom' | 'ai' | 'builtin' | 'composite'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 // 高级设置分区 — 与策略设置弹窗 (StrategySettingsDialog) 同一信息架构:
 // 策略条件(基础过滤+参数+叠加) / 策略权重 / 风控触发(风控+买卖触发) / 回测范围。
 // 回测抽屉编辑的是本次回测的 overrides, 策略弹窗编辑的是策略定义; 字段与口径两边一致。
@@ -236,10 +224,6 @@ const ADVANCED_TABS: { id: AdvancedSettingsTab; label: string }[] = [
   { id: 'risk', label: '风控' },
   { id: 'range', label: '回测范围' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 ]
 const ADVANCED_TABS: { id: AdvancedSettingsTab; label: string; icon: typeof Filter }[] = [
   { id: 'conditions', label: '策略条件', icon: Filter },
@@ -730,10 +714,6 @@ function Stat({ label, value, color }: { label: ReactNode; value: string; color?
       <div
         className={`mt-1 break-words font-mono font-semibold leading-tight tracking-tight num ${compact ? 'text-xs xl:text-sm' : 'text-sm xl:text-base'}`}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         className={`mt-1 break-words font-mono font-semibold leading-tight tracking-tight num ${compact ? 'text-xs xl:text-sm' : 'text-sm xl:text-[16px] xl:leading-6'}`}
         style={{ color: color ?? 'inherit' }}
         title={value}
@@ -1043,10 +1023,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
   const [quickRanges, setQuickRanges] = useState(loadQuickRanges)
   const [settingsTab, setSettingsTab] = useState<AdvancedSettingsTab>('params')
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const [settingsTab, setSettingsTab] = useState<AdvancedSettingsTab>('conditions')
   const [strategyParams, setStrategyParams] = useState<Record<string, any>>(saved?.params ?? {})
   const [overrides, setOverrides] = useState<Record<string, any>>(saved?.overrides ?? {})
@@ -1518,10 +1494,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
 
   // 选股分析弹窗的切标的候选 (与表格同序, 保证计数与「上一只/下一只」一致)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 策略分析弹窗的切标的候选 (与表格同序, 保证计数与「上一只/下一只」一致)
   const picksNavItems = useMemo(
     () => toNavItems(result?.per_symbol_stats ?? []),
@@ -1564,10 +1536,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
     [matrixStrategy, compositeStrategy],
   )
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     () => compositeStrategy
       // composite 的触发器/评分由子策略决定, 只调合并参数与风控
       ? ADVANCED_TABS.filter(tab => tab.id !== 'scoring')
@@ -1814,10 +1782,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
                 )}
                 {st.source && st.source !== 'builtin' && (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 {st.source && (
 
                   <span className={`ml-1 text-[8px] px-1 py-px rounded border ${BADGE_CLS_MAP[st.source] ?? ''}`}>
@@ -2070,10 +2034,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
         <div className="rounded-btn border border-accent/20 bg-accent/5 px-3 py-2.5 text-[11px] leading-relaxed text-secondary">
           <span className="font-medium text-foreground">全量模拟</span>：每日将策略选出的全部候选独立买入，不受资金/最大持仓数限制；每一笔仍按策略卖点、止损、移动止盈/止损和最长持仓执行，用于评估策略本身的选股 + 交易规则质量。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           <span className="font-medium text-foreground">全量模拟</span>：每日将策略选出的全部候选独立买入，不受资金/最大持仓数限制；每一笔仍按策略卖点、止损、移动止盈/止损和最长持仓执行，用于评估策略本身的候选质量 + 交易规则质量。
         </div>
         )}
@@ -2378,10 +2338,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
               />
             </div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             <div className="text-[11px] text-muted">run_id: {result.run_id}</div>
           </motion.div>
         )}
@@ -2545,10 +2501,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
 
             {/* Tab: 按日期 / 交易明细 / 选股分析 / 因子归因 */}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             {/* Tab: 按日期 / 交易明细 / 策略分析 / 因子归因 */}
             {(result.trades.length > 0 || result.per_symbol_stats.length > 0 || (result.factor_attribution?.factors.length ?? 0) > 0) && (
               <div className="rounded-card border border-border overflow-hidden">
@@ -2573,10 +2525,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
                           : t === 'picks'
                           ? `选股分析 (${result.per_symbol_stats.length})`
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                           ? `策略分析 (${result.per_symbol_stats.length})`
                           : `因子归因 (${attributionCount})`}
                       </button>
@@ -2788,10 +2736,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
                         <th className="px-4 py-2.5 font-medium">标的</th>
                         <th className="px-4 py-2.5 font-medium text-right">选股次数</th>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                         <th className="px-4 py-2.5 font-medium text-right">入选次数</th>
                         <th className="px-4 py-2.5 font-medium text-right">总收益</th>
                         <th className="px-4 py-2.5 font-medium text-right">胜率</th>
@@ -3009,10 +2953,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
 
               {settingsTab === 'filter' && (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             </div>
 
             <div className="flex min-h-0 flex-1">
@@ -3103,10 +3043,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
                   <div className="text-[11px] leading-5 text-muted">
                     字段与策略编辑器「基础参数」一致，初始值取自策略文件；清空某项即改为不限（会覆盖策略原值）。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                     字段与策略设置「基础参数」一致，初始值取自策略配置；清空某项即改为不限（会覆盖策略原值）。
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -3158,10 +3094,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
 
               {settingsTab === 'scoring' && (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 
                 <ConfigSection
                   title="策略参数"
@@ -3255,10 +3187,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
               {settingsTab === 'risk' && (
                 <ConfigSection title="风控">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               </div>
 
               {/* 风控触发: 成交口径说明 + 风控与持仓纪律 + 买卖触发器 */}
@@ -3340,10 +3268,6 @@ export function StrategyBacktest({ loadCandidate, onLoadConsumed }: {
                 </ConfigSection>
               )}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 
                 {/* matrix/composite 的触发器由策略公式/子策略决定, 不可覆盖 */}
                 {!matrixStrategy && !compositeStrategy && (

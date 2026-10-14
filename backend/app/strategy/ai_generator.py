@@ -30,7 +30,6 @@ _SYSTEM_PREFIX = """你是A股量化策略设计专家。根据用户描述的�
 要求:
 1. 用户可能调整的策略阈值通过 META["params"] 暴露，每项使用 id/label/type/default/min/max/step；公式常数、固定窗口边界、布尔开关不必强行参数化
 
-# --- THEIR (origin/main) ---
 3. 策略只落在自己的目录：AI 生成的策略只属于 data/strategies/ai/，文件名/ID 用 ai_ 前缀；不要引用 app/strategy/ 下的任何项目文件
 4. polars 策略只 import polars 和 datetime；matrix_native 策略只允许 import numpy 以及 from app.backtest.matrix import 所需矩阵协议和算子
 
@@ -354,7 +353,6 @@ META = {{...}}，{entrypoint_requirement}。只输出完整 Python 代码。
         "app.backtest.matrix",
         "app.strategy.builtin.factor_rank_research",
 
-# --- THEIR (origin/main) ---
         "app.strategy.research.factor_rank_research",
         "app.strategy.market_data",   # 新增: 策略可读取指数/ETF 日K
         "datetime",

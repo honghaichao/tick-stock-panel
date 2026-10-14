@@ -20,10 +20,6 @@ import { cn } from '@/lib/cn'
 import type { ComponentType } from 'react'
 
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { Suspense, lazy, useState, type ComponentType } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -61,10 +57,6 @@ const TABS: readonly TabDef[] = [
   { key: 'menus',      label: '菜单设置',   icon: SlidersHorizontal, panel: SettingsMenuSettingsPanel },
   { key: 'system',     label: '系统设置',   icon: Settings2, panel: SettingsSystemPanel },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   { key: 'page-packs',  label: '页面包',     icon: Package,   panel: SettingsPagePacksPanel },
   { key: 'timeout',    label: '网络设置',   icon: Clock3,    panel: SettingsTimeoutPanel },
   { key: 'menus',      label: '菜单设置',   icon: SlidersHorizontal, panel: SettingsMenuSettingsPanel },
@@ -159,10 +151,6 @@ export function Settings() {
             ? <SettingsMonitoringPanel highlight={highlight} />
             : <activeTab.panel highlight={highlight} />}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             <Suspense fallback={<div className="py-12 text-center text-xs text-muted">加载中…</div>}>
               {activeTab.key === 'monitoring'
                 ? <SettingsMonitoringPanel highlight={highlight} />

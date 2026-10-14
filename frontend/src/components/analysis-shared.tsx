@@ -463,10 +463,6 @@ export function ConfigButton({ onClick }: { onClick: () => void }) {
  * 当检测到内置预设存在但无数据时, 展示图标 + 提示 + 「获取数据」按钮,
  * 让用户手动触发拉取 (POST /api/ext-data/presets/{id}/fetch), 而非自动拉取。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
  * 内置预设 (概念/行业) 无数据时的空状态。
  *
  * 内置表出厂即带完整拉取配方 (URL / 鉴权 / 两级请求), 此处按钮直接走通用
@@ -497,10 +493,6 @@ export function PresetFetchState({
         <DownloadCloud className="mx-auto h-10 w-10 text-muted" strokeWidth={1.5} />
         <h2 className="mt-4 text-base font-medium text-foreground">{title}</h2>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <h2 className="mt-4 text-[16px] leading-6 font-medium text-foreground">{title}</h2>
         <p className="mt-2 text-sm text-secondary leading-relaxed">{hint}</p>
         <button
@@ -520,10 +512,6 @@ export function PresetFetchState({
           </p>
         )}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           needKey ? (
             <div className="mt-3 rounded-lg border border-warning/30 bg-warning/[0.06] px-3 py-2.5 text-left">
               <p className="flex items-start gap-1.5 text-xs text-warning">

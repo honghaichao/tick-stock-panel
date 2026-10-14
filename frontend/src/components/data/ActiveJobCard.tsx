@@ -88,10 +88,6 @@ export function ActiveJobCard({ job }: { job: PipelineJob }) {
           <div className="font-mono text-2xl font-bold tracking-tight">
             {job.progress}<span className="text-base text-muted">%</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             {job.progress}<span className="text-[16px] leading-6 text-muted">%</span>
           </div>
         )}
@@ -129,10 +125,6 @@ export function ActiveJobCard({ job }: { job: PipelineJob }) {
             <Pill label="enriched" value={cell(null, `${job.result.enriched_days ?? 0} 行`)} />
             <Pill label="分钟K" value={cell('sync_minute', `${job.result.minute_rows ?? 0} 行`)} />
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         // 按结果里实际存在的字段渲染: 独立除权因子同步没有日K/分钟K字段, 不显示 "0 天"
         const pills: { label: string; value: string }[] = []
         if (job.result.universe_size != null) pills.push({ label: '标的池', value: String(job.result.universe_size) })

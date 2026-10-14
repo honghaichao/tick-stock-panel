@@ -22,7 +22,6 @@ STRATEGY_PATH = (
     / "strategy"
     / "builtin"
 
-# --- THEIR (origin/main) ---
     / "research"
     / "factor_rank_research.py"
 )

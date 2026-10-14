@@ -5,10 +5,6 @@
  * user/assistant 消息回传, 由后端负责截断。工具往返(footprint)只用于本地
  * 展示, 不进入请求历史。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
  * 会话历史双写: localStorage 即时缓存 (启动秒开/离线兜底) + 服务端同步
  * (/api/custom/assistant/sessions, 防抖 1.5s fire-and-forget) — 换设备可见。
  * 每轮请求把可见的 user/assistant 消息回传, 由后端负责截断。工具往返
@@ -26,10 +22,6 @@ import {
 
 export type ToolCallStatus = 'running' | 'ok' | 'error'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { mergeSessions } from './sessionsMerge'
 
 /**
@@ -77,10 +69,6 @@ interface AssistantState {
 
 const STORAGE_KEY = 'assistant.sessions.v1'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   /** 悬浮球是否显示 (纯 UI 偏好, 独立 localStorage, 不随会话持久化) */
   fabVisible: boolean
 }
@@ -129,10 +117,6 @@ function persistSessions() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ sessions: trimmed, activeId: state.activeId }))
   } catch { /* 存储满/隐私模式时静默降级为内存态 */ }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 function trimmedSessions() {
   return state.sessions
     .slice(0, MAX_SESSIONS)

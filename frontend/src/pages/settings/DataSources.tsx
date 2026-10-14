@@ -569,10 +569,6 @@ function CapabilityChips({ caps, servingSet, isTickFlow }: {
   servingSet: Set<string>
   isTickFlow: boolean
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 /** 能力芯片: 三态 — 服务中(高亮+勾) / 已适配(灰) / 档位锁定(锁, 仅 TickFlow)。
  *  paid (插件 billing="points"): 每个芯片尾标注「积分」角标 — 该能力按积分计费。 */
 function CapabilityChips({ caps, servingSet, isTickFlow, paid = false }: {
@@ -598,10 +594,6 @@ function CapabilityChips({ caps, servingSet, isTickFlow, paid = false }: {
             ? `TickFlow 需 ${tierReqText(cap.tf_tier)} · 当前档位未解锁`
             : `已适配「${cap.label}」`
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           ? `正在提供「${cap.label}」${paid ? ' · 积分计费' : ''}`
           : locked
             ? `TickFlow 需 ${tierReqText(cap.tf_tier)} · 当前档位未解锁`
@@ -865,10 +857,6 @@ export function SettingsDataSourcesPanel({ highlight }: { highlight?: string } =
                 <div className="mt-2">
                   <CapabilityChips caps={chipCaps} servingSet={servingSet} isTickFlow={isTf} />
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 {/* 能力芯片: 服务中 / 已适配 / 档位锁定 / 积分计费角标 */}
                 <div className="mt-2">
                   <CapabilityChips caps={chipCaps} servingSet={servingSet} isTickFlow={isTf} paid={plugin?.billing === 'points'} />
@@ -882,10 +870,6 @@ export function SettingsDataSourcesPanel({ highlight }: { highlight?: string } =
                       : pluginUnavailable
                         ? (plugin?.runtime === 'none' ? '点击配置 Key' : (plugin?.install_hint || plugin?.status || ''))
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                         ? (plugin?.runtime === 'none' && plugin?.api_key_env
                             ? '点击配置 Key'
                             : (plugin?.install_hint || plugin?.status || ''))
@@ -895,10 +879,6 @@ export function SettingsDataSourcesPanel({ highlight }: { highlight?: string } =
                     {pluginUnavailable ? (
                       plugin?.runtime !== 'none' && (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                       // 安装/卸载按钮只对"纯依赖型"插件(runtime≠none 且无 api_key_env)显示;
                       // 带 Key 配置的插件不可用时, 卡片本身可点击进详情配 Key(如 TdxQuant 依赖已内置)。
                       plugin?.runtime !== 'none' && !plugin?.api_key_env && (
@@ -927,10 +907,6 @@ export function SettingsDataSourcesPanel({ highlight }: { highlight?: string } =
                         </button>
                         {plugin && plugin?.runtime !== 'none' && (
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                         {plugin && plugin?.runtime !== 'none' && !plugin?.api_key_env && (
                           uninstalling ? (
                             <RefreshCw className="h-2.5 w-2.5 animate-spin text-muted" />
@@ -1094,10 +1070,6 @@ function PluginDetail({ plugin, isActive, matrixCaps, servingSet }: {
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="text-base font-semibold text-foreground">{plugin.display_name}</h3>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             <h3 className="text-[16px] leading-6 font-semibold text-foreground">{plugin.display_name}</h3>
             <span className="text-[10px] text-muted/50 uppercase tracking-wider">插件 · {plugin.runtime}</span>
             <span className="rounded bg-warning/15 px-1 py-0.5 text-[9px] font-medium leading-none text-warning">第三方</span>
@@ -1264,10 +1236,6 @@ function TickFlowDetail({ active, matrix }: { active: boolean; matrix?: Capabili
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold text-foreground">TickFlow</h2>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             <h2 className="text-[16px] leading-6 font-semibold text-foreground">TickFlow</h2>
             <span className="rounded bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning">第三方</span>
             <AllTiersBadge />

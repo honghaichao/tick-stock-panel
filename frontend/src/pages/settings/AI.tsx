@@ -10,10 +10,6 @@ import { api, type SettingsState } from '@/lib/api'
 import { QK } from '@/lib/queryKeys'
 import { useCardFlash, cardFlashCls } from '@/lib/useCardFlash'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -105,10 +101,6 @@ const PRESETS: AiPreset[] = [
   { label: 'Codex CLI', provider: CODEX_PROVIDER, url: '', model: DEFAULT_CODEX_MODEL, codexCommand: CODEX_COMMAND, website: 'https://developers.openai.com/codex/noninteractive', websiteLabel: 'codex exec', description: '调用本机 Codex CLI 的 codex exec, 适合已登录 ChatGPT/Codex 的本地环境。' },
   { label: '炸鸡中转站', url: 'https://api.zhaji.dev/v1', model: 'gpt-5.5', website: 'https://api.zhaji.dev', websiteLabel: 'api.zhaji.dev', description: 'OpenAI 兼容中转服务，适合直接使用国际模型。' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 type AiPreset = {
   label: string
   provider?: string
@@ -173,10 +165,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
   const [saved, setSaved] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const [roundCheckpoint, setRoundCheckpoint] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -243,10 +231,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
     const savedOpenAIModel = unconfigured ? '' : (s.ai_openai_model ?? (savedProvider !== CODEX_PROVIDER ? s.ai_model : '') ?? '')
     const savedPreset = unconfigured ? PRESETS[0] : findPreset(savedProvider, savedBaseUrl, s.ai_codex_command ?? CODEX_COMMAND)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 测试按钮可用性: codex 恒可(探测 CLI 可用性); 其余需要地址+模型, 且
   // Key 草稿或已保存至少其一 (留空回退已保存 Key, 改模型/协议不必重输)
   const canTest = isCodexProvider || (!!baseUrl.trim() && !!model.trim() && (!!apiKey.trim() || !!configured))
@@ -284,10 +268,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
   }, [s])
 
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     setProtocol(savedProvider === CODEX_PROVIDER ? 'chat_completions' : (st.ai_protocol ?? 'chat_completions'))
     setBaseUrl(savedBaseUrl)
     setModel(savedOpenAIModel)
@@ -388,10 +368,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
       setProvider(OPENAI_COMPAT_PROVIDER)
       setSelectedPresetLabel(PRESETS[0].label)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       userEditedRef.current = false
       setProvider(OPENAI_COMPAT_PROVIDER)
       setSelectedPresetLabel(PRESETS[0].label)
@@ -410,10 +386,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
       setMaxOutputTokens('8192')
       setContextWindow('64000')
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       setMaxOutputTokens('16384')
       setContextWindow('128000')
       setRoundCheckpoint('100')
@@ -432,10 +404,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
         ai_max_output_tokens: 8192,
         ai_context_window: 64000,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         ai_max_output_tokens: 16384,
         ai_context_window: 128000,
         has_ai_key: false,
@@ -551,10 +519,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
       const r = await api.strategyAiTest()
       setTestResult({ ok: r.ok, msg: r.ok ? `连通成功 · ${r.model ?? provider}` : (r.error ?? '未知错误') })
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       // 只探测当前表单值, 绝不保存 — 测试失败不能把坏配置写进已保存配置。
       const r = await api.testAiSettings({
         provider,
@@ -648,10 +612,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
       >
         <div className="space-y-4">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     <div className="max-w-3xl">
       <AnchorWrap highlight={highlight} anchor="ai-connection">
       {/* 拆成多张卡 (与 数据源 页同构): 原先 7 个区块挤在一张卡里, 只靠细分割线
@@ -813,10 +773,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
                 <Field label="模型">
                   <input type="text" value={model} onChange={e => handleModelChange(e.target.value)} placeholder="gpt-5.6-sol" className={INPUT_CLS} />
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   <input type="text" value={baseUrl} onChange={e => handleBaseUrlChange(e.target.value)} placeholder="https://llm.runninghub.ai/v1" className={INPUT_CLS} />
                 </Field>
                 <Field label="模型">
@@ -884,10 +840,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
                     </Field>
                   </div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 <div className="max-w-[220px]">
                   <Field label="推理强度" hint="模型支持的推理档位 (如 high / xhigh); 非推理模型留空即可。">
                     <input type="text" value={reasoningEffort} onChange={e => setReasoningEffort(e.target.value)} placeholder={DEFAULT_REASONING_EFFORT} className={INPUT_CLS} />
@@ -907,10 +859,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
                     {testing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wifi className="h-3 w-3" />}
                     测试
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 <div className="relative">
                   <input type={showKey ? 'text' : 'password'} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={configured ? `${s?.ai_api_key_masked} · 留空不修改` : 'sk-...'} className={`${INPUT_CLS} pr-9`} />
                   <button onClick={() => setShowKey(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted/40 hover:text-muted" tabIndex={-1} aria-label={showKey ? '隐藏' : '显示'}>
@@ -974,10 +922,6 @@ export function SettingsAIPanel({ highlight }: { highlight?: string } = {}) {
         )}
       </div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               <div className="flex items-center gap-2 border-t border-border/30 pt-3.5">
                 <span className="text-xs font-medium text-secondary">自定义 User-Agent</span>
                 <span className="text-[10px] text-muted">绕过 CDN/WAF 的 Bot 拦截</span>
@@ -1135,10 +1079,6 @@ function Card({ icon: Icon, title, right, children, anchor }: CardProps) {
     <div ref={ref} id={anchor} className={cardFlashCls(flash)}>
       {inner}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   )
 }
 
@@ -1167,10 +1107,6 @@ function Field({ label, hint, inline, children }: {
           <div className="text-[10px] text-muted/50 uppercase tracking-wider">{label}</div>
           {hint && <div className="text-[10px] text-muted mt-0.5">{hint}</div>}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           <div className="text-[10px] font-medium text-muted">{label}</div>
           {hint && <div className="text-[10px] text-muted/70 mt-0.5">{hint}</div>}
         </div>
@@ -1184,10 +1120,6 @@ function Field({ label, hint, inline, children }: {
       {children}
       {hint && <div className="text-[10px] text-muted">{hint}</div>}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       <div className="text-[10px] font-medium tracking-wide text-muted">{label}</div>
       {children}
       {hint && <div className="text-[10px] text-muted/80">{hint}</div>}

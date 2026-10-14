@@ -20,7 +20,6 @@ from app.db_safe import is_valid_ext_ident
 from app.services import kline_sync, trading_day
 from app.services import minute_adjust
 
-# --- THEIR (origin/main) ---
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -118,7 +117,6 @@ def _name_pinyin_keys(name: str) -> tuple[str, ...]:
     """
     from pypinyin import pinyin, Style
 
-# --- THEIR (origin/main) ---
     from pypinyin import Style, pinyin
     if not name:
         return ()
@@ -656,7 +654,6 @@ def get_daily_batch(request: Request, body: dict):
     from datetime import timedelta
 
 
-# --- THEIR (origin/main) ---
     from datetime import timedelta
 
     import polars as pl
@@ -723,7 +720,6 @@ def get_minute_batch(request: Request, body: dict):
     from datetime import datetime
     import polars as pl
 
-# --- THEIR (origin/main) ---
 
     import polars as pl
 
@@ -1267,7 +1263,6 @@ async def sync_minute(request: Request):
     extend_flag = body.get("extend")
 
 
-# --- THEIR (origin/main) ---
     return await trigger_minute_sync(
         request.app.state.repo,
         request.app.state.capabilities,
@@ -1313,7 +1308,6 @@ async def trigger_minute_sync(repo, capset, *, override_days=None, extend_flag=N
             universe = sorted(set(get_pool("watchlist")) | set(get_pool("CN_Equity_A")))
             # 补充 instruments 全量标的，覆盖北交所、新股等
 
-# --- THEIR (origin/main) ---
             # 标的池 = instruments 维表 + 自选 (单一来源, 不拉 CN_Equity_A/SW1 池)
             universe: set[str] = set(get_pool("watchlist"))
             inst_path = repo.store.data_dir / "instruments" / "instruments.parquet"
@@ -1323,7 +1317,6 @@ async def trigger_minute_sync(repo, capset, *, override_days=None, extend_flag=N
                     inst = pl.read_parquet(inst_path, columns=["symbol"])
                     universe = sorted(set(universe) | set(inst["symbol"].to_list()))
 
-# --- THEIR (origin/main) ---
                     universe.update(inst["symbol"].to_list())
                 except Exception:  # noqa: BLE001
                     pass
@@ -1331,7 +1324,6 @@ async def trigger_minute_sync(repo, capset, *, override_days=None, extend_flag=N
             index_set = repo.get_index_symbol_set()
             universe = [s for s in universe if s not in index_set]
 
-# --- THEIR (origin/main) ---
             universe = sorted({s for s in universe if s not in index_set})
             progress("sync_minute", 10, f"标的池 {len(universe)} 只")
 
@@ -1517,7 +1509,6 @@ async def extend_history(request: Request):
         from app.services.pipeline_jobs import JobCancelledError, job_store, release_run_slot, run_with_capacity, try_acquire_run_slot
         from app.api.data import invalidate_storage_cache
 
-# --- THEIR (origin/main) ---
         from app.api.data import invalidate_storage_cache
         from app.services.extend_history import run_extend_history
         from app.services.pipeline_jobs import (
@@ -1609,7 +1600,6 @@ async def repair_daily(request: Request):
         from app.services.pipeline_jobs import JobCancelledError, job_store, release_run_slot, run_with_capacity, try_acquire_run_slot
         from app.api.data import invalidate_storage_cache
 
-# --- THEIR (origin/main) ---
         from app.api.data import invalidate_storage_cache
         from app.services.pipeline_jobs import (
             JobCancelledError,
@@ -1682,7 +1672,6 @@ async def rebuild_enriched(request: Request):
         from app.services.pipeline_jobs import JobCancelledError, job_store, release_run_slot, run_with_capacity, try_acquire_run_slot
         from app.api.data import invalidate_storage_cache
 
-# --- THEIR (origin/main) ---
         from app.api.data import invalidate_storage_cache
         from app.services.pipeline_jobs import (
             JobCancelledError,

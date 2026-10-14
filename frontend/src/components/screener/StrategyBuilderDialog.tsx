@@ -564,10 +564,6 @@ export function StrategyBuilderDialog({ open, onClose, onSavedId, mode = 'create
                 <div>
                   <span className="text-[10px] text-muted/50 uppercase tracking-wider mb-1.5 block">选股方向</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="策略名称，如：xx策略"
                     className="w-full h-9 px-3 rounded-lg bg-base border-0 ring-1 ring-border/30 text-sm font-medium text-foreground placeholder:text-muted/30 focus:outline-none focus:ring-2 focus:ring-accent/30" />
                   <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="一句话描述，如：筛选满足 xx 条件的 yy 个股"
@@ -593,10 +589,6 @@ export function StrategyBuilderDialog({ open, onClose, onSavedId, mode = 'create
                   <textarea value={rules} onChange={e => setRules(e.target.value)}
                     placeholder="描述你的选股逻辑，AI 会自动提取参数。例如：\n前一交易日为明显阴线且跌幅不低于2%，今日阳线收盘反包前一日实体，收盘价接近或高于前一日高点，成交量较前一日放大1.2倍以上，当前 close > ma5 或 close > ma10；使用 filter_history，并优先用 Polars shift/with_columns/filter 实现。"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                     placeholder="描述你的策略逻辑，AI 会自动提取参数。例如：\n前一交易日满足 xx 且跌幅不低于 x%，今日出现 yy 形态，成交量较前一日放大 z 倍以上，且 close > maN ..."
                     className="w-full h-28 px-3 py-2 rounded-lg bg-base border-0 ring-1 ring-border/30 text-sm text-foreground placeholder:text-muted/30 resize-none focus:outline-none focus:ring-2 focus:ring-accent/30" />
                 </div>
@@ -683,10 +675,6 @@ export function StrategyBuilderDialog({ open, onClose, onSavedId, mode = 'create
                                     <span className="text-[11px] font-mono text-foreground">{p.default}</span>
                                     <span className="text-[10px] text-muted">{p.min} ~ {p.max}{p.type === 'float' || p.type === 'int' ? ' · 步长 ' + p.step : ''}</span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                                     {(p.type === 'float' || p.type === 'int') && (
                                       <span className="text-[10px] text-muted">{p.min} ~ {p.max} · 步长 {p.step}</span>
                                     )}
@@ -725,10 +713,6 @@ export function StrategyBuilderDialog({ open, onClose, onSavedId, mode = 'create
                           <div className="px-4 py-3 space-y-2">
                             <div className="text-[10px] text-muted/50 uppercase tracking-wider">评分权重</div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                             <div className="text-[10px] text-muted/50 uppercase tracking-wider">策略权重</div>
                             {Object.entries(scoring).map(([k, v]) => (
                               <div key={k} className="flex items-center gap-2">
@@ -757,10 +741,6 @@ export function StrategyBuilderDialog({ open, onClose, onSavedId, mode = 'create
                     onKeyDown={e => e.key === 'Enter' && handleModify()}
                     placeholder="调整策略逻辑，如：增加RSI超卖条件、要求今日放量、修改均线为30日..."
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                     placeholder="调整策略逻辑，如：增加 xx 条件、要求今日 yy、修改均线为 zz 日..."
                     className="flex-1 h-9 px-3 rounded-lg bg-base border-0 ring-1 ring-border/30 text-sm text-foreground placeholder:text-muted/30 focus:outline-none focus:ring-2 focus:ring-accent/30" />
                   <button onClick={handleModify} disabled={loading || !instruction.trim()}
@@ -779,10 +759,6 @@ export function StrategyBuilderDialog({ open, onClose, onSavedId, mode = 'create
                 <div className="grid grid-cols-2 gap-2">
                   <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="策略名称，如：我的反包策略"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="策略名称，如：我的xx策略"
                     className="h-9 px-3 rounded-lg bg-base border-0 ring-1 ring-border/30 text-sm font-medium text-foreground placeholder:text-muted/30 focus:outline-none focus:ring-2 focus:ring-accent/30" />
                   <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="一句话描述策略逻辑"

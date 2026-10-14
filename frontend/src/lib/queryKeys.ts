@@ -125,10 +125,6 @@ export const QK = {
   tradingStrategies:     ['trading', 'strategies'] as const,
   tradingStrategyRuns:   (strategyId: string) => ['trading', 'strategy-runs', strategyId] as const,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 模拟盘 (多账户: 键按账户隔离; paperAll 作账户无关失效前缀)
   paperAll:             ['paper'] as const,
   apiTokens:            ['settings', 'api-tokens'] as const,
@@ -185,10 +181,6 @@ export const SSE_INVALIDATE_PREFIXES = [
   'limit-ladder',
   'trading',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 概念/行业分析的全市场快照 (#419): 后端读最新日内缓存, 行情更新后需重取,
   // 否则停留页面时板块聚合数值一直停留旧值。仅两页打开时才实际发请求。
   'market-snapshot',

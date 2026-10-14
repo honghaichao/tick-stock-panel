@@ -245,10 +245,6 @@ export function EditExtDialog({ config, onClose }: { config: ExtDataConfig; onCl
             disabled={!valid || update.isPending}
             className="px-4 py-1.5 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent disabled:opacity-40 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             className="px-4 py-1.5 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent disabled:opacity-40 transition-colors"
           >
             {update.isPending ? '保存中…' : '保存'}

@@ -586,10 +586,6 @@ function rankNav(rank?: OverviewMarket['concept_rank']): NavItem[] {
   return toNavItems(leaders)
 }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -626,10 +622,6 @@ export function Dashboard() {
     /** 打开来源榜: 仅高亮来源榜的行 */
     source?: 'gain' | 'loss' | 'amount' | 'active' | 'concept' | 'industry' | 'alert'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     source?: PreviewSource
     /** 切股导航列表 (来自来源榜) */
     navList?: NavItem[]
@@ -774,10 +766,6 @@ export function Dashboard() {
           <div className="text-sm text-danger">看板加载失败</div>
           <button onClick={() => overview.refetch()} className="mt-3 rounded-btn bg-accent px-3 py-1.5 text-xs font-medium text-base">重试</button>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           <button onClick={() => overview.refetch()} className="mt-3 rounded-btn bg-accent px-3 py-1.5 text-xs font-medium text-white">重试</button>
         </div>
       </div>
@@ -849,10 +837,6 @@ export function Dashboard() {
           <Gauge className="h-4 w-4 text-accent" />
           <h1 className="text-base font-semibold text-foreground">市场看板</h1>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           <h1 className="text-[16px] leading-6 font-semibold text-foreground">市场看板</h1>
           <span
             className="rounded-full border px-2 py-0.5 text-[10px] font-medium"
@@ -891,10 +875,6 @@ export function Dashboard() {
 
       {/* 自选实时模式提示: 大盘看板为盘后数据, 仅自选股实时。避免用户误读为全市场实时。 */}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           {!dashEditing ? (
             <button
               onClick={() => setDashEditing(true)}
@@ -931,10 +911,6 @@ export function Dashboard() {
             当前为「自选实时」模式,看板展示的大盘数据为<strong className="text-foreground">盘后快照</strong>(最新有数据日),并非盘中实时;
             仅自选股({data.quote_status?.watchlist_symbol_count ?? 0} 只)支持实时监控。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             仅自选({data.quote_status?.watchlist_symbol_count ?? 0} 只)支持实时监控。
             <span className="ml-1 text-accent">全市场实时依赖数据源支持</span>
           </div>
@@ -1051,10 +1027,6 @@ export function Dashboard() {
         </aside>
       </div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       <DashboardGrid ctx={widgetCtx} items={dashItems} onItemsChange={setDashItems} editing={dashEditing} />
 
       <StockPreviewDialog
@@ -1114,10 +1086,6 @@ function FetchDataCard({
           <p className="mt-1 text-[11px] text-warning/80 leading-relaxed">
             ⓘ 获取数据后即可进行策略定制、回测验证、选股扫描等本地分析功能。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             ⓘ 获取数据后即可进行策略定制、回测验证、策略扫描等本地分析功能。
           </p>
           <p className="mt-1 text-[11px] text-muted leading-relaxed">
@@ -1200,10 +1168,6 @@ function WelcomeFetchModal({
         </motion.div>
         <h3 className="mt-4 text-base font-semibold text-foreground">首次使用,需先获取行情数据</h3>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <h3 className="mt-4 text-[16px] leading-6 font-semibold text-foreground">首次使用,需先获取行情数据</h3>
         <p className="mt-2 text-xs text-secondary leading-relaxed">
           {isTickflowProvider

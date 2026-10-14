@@ -215,7 +215,6 @@ def run_backtest(
 
     end_date = date.fromisoformat(end) if end else date.today()
 
-# --- THEIR (origin/main) ---
     # 缺省结束日用北京日期; 服务器本地 date.today() 会在 UTC/美西主机少取一天。
     end_date = date.fromisoformat(end) if end else cn_today()
     start_date = (
@@ -281,7 +280,6 @@ async def execute_tool(
             if engine is not None and not engine.has(strategy_id):
                 return {"ok": False, "error": f"策略 {strategy_id} 不存在"}
 
-# --- THEIR (origin/main) ---
                 # 附带可用 id, 模型一次即可自行修正(先列再选), 不必再来回试探
                 try:
                     available = ", ".join(

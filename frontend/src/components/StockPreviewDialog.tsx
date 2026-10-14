@@ -620,10 +620,6 @@ export function StockPreviewDialog({ symbol, name, onClose, triggerInfo, navList
       )}
     </AnimatePresence>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { Suspense, lazy, useEffect, useState } from 'react'
 import type { Props } from './StockPreviewDialogContent'
 

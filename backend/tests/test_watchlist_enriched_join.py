@@ -7,7 +7,6 @@
 旧 bug: `df_e.filter(is_in(stock_symbols))` 以 enriched 为主表, 会把不在缓存
 universe 里的自选股静默丢弃.
 
-# --- THEIR (origin/main) ---
 universe 里的自选静默丢弃.
 """
 from __future__ import annotations
@@ -146,7 +145,6 @@ def test_all_watchlist_missing_from_enriched(monkeypatch):
 def test_partial_coverage_preserves_count(monkeypatch):
     """多只自选, 部分覆盖: 返回行数必须 == 自选股票数."""
 
-# --- THEIR (origin/main) ---
     """多只自选, 部分覆盖: 返回行数必须 == 自选只数."""
     syms = ["600519", "000001", "999888", "888999"]
     monkeypatch.setattr(wl_api.watchlist, "list_symbols",
@@ -584,7 +582,6 @@ def test_empty_watchlist_returns_no_rows(monkeypatch):
     res = wl_api.watchlist_enriched(_make_request(repo), ext_columns=None)
     assert res == {"rows": [], "as_of": None, "elapsed_ms": 0}
 
-# --- THEIR (origin/main) ---
     assert res == {"rows": [], "as_of": None, "elapsed_ms": 0,
                    "dates": {"stock": None, "etf": None, "index": None}}
 

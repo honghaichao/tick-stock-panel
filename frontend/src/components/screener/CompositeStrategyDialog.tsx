@@ -22,10 +22,6 @@ const SRC_MAP: Record<string, string> = { builtin: '内置', custom: '自定义'
 const BADGE_CLS: Record<string, string> = {
   builtin: 'bg-accent/10 text-accent border-accent/20',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 const SRC_MAP: Record<string, string> = { custom: '自定义', ai: 'AI' }
 const BADGE_CLS: Record<string, string> = {
   ai: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
@@ -199,10 +195,6 @@ export function CompositeStrategyDialog({ open, onClose, onSavedId, editStrategy
               <span className="text-[10px] text-muted/60">
                 引用多个子策略, 合并选股与回测信号
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 引用多个子策略, 合并策略与回测信号
               </span>
               <button onClick={onClose} className="ml-auto text-muted hover:text-foreground">

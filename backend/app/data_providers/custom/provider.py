@@ -35,7 +35,6 @@ _REQUIRED = {
     # full_minute (全量分钟) 与 minute 同形: 当日窗口批量拉取, 字段映射一致
     "full_minute": {"symbol", "datetime", "open", "high", "low", "close", "volume", "amount"},
 
-# --- THEIR (origin/main) ---
     "minute": {"symbol", "datetime", "open", "high", "low", "close", "volume"},
     # full_minute (全量分钟) 与 minute 同形: 当日窗口批量拉取, 字段映射一致
     "full_minute": {"symbol", "datetime", "open", "high", "low", "close", "volume"},

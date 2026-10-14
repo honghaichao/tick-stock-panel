@@ -144,10 +144,6 @@ function connectSSE(url: string): void {
           localStorage.removeItem(RECONNECT_KEY)
           localStorage.removeItem(JOB_KEY_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           finishTaskRegistry()
         }
       }
@@ -180,10 +176,6 @@ function connectSSE(url: string): void {
     localStorage.removeItem(RECONNECT_KEY)
     localStorage.removeItem(JOB_KEY_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     finishTaskRegistry()
   })
 
@@ -204,10 +196,6 @@ function connectSSE(url: string): void {
       localStorage.removeItem(RECONNECT_KEY)
       localStorage.removeItem(JOB_KEY_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       finishTaskRegistry()
       return
     }
@@ -221,10 +209,6 @@ function connectSSE(url: string): void {
         localStorage.removeItem(RECONNECT_KEY)
         localStorage.removeItem(JOB_KEY_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         finishTaskRegistry()
         current = { ...current, isPending: false, error: '连接中断, 重连多次失败' }
         emit()
@@ -298,10 +282,6 @@ export function stopOptimize(): void {
     localStorage.removeItem(RECONNECT_KEY)
     localStorage.removeItem(JOB_KEY_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     finishTaskRegistry()
   } else if (eventSource) {
     // 保持连接等 job 事件; 兜底: 5s 后仍没 key 就强关并清 localStorage,
@@ -313,10 +293,6 @@ export function stopOptimize(): void {
         localStorage.removeItem(RECONNECT_KEY)
         localStorage.removeItem(JOB_KEY_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         finishTaskRegistry()
       }
     }, 5000)
@@ -336,10 +312,6 @@ export function tryReconnectOptimize(): boolean {
   const qs = localStorage.getItem(RECONNECT_KEY)
   if (!qs) return false
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 /** 换设备接回: 本地无键时从服务端注册表找 running 任务, 回填本地键并走原有重连。 */
 async function adoptFromServer() {
   if (current && !current.error && !current.result) return // 本机已有活动任务

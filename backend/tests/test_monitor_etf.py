@@ -1,7 +1,6 @@
 from app.strategy.monitor import MonitorRuleEngine
 from app.strategy import monitor_rules
 
-# --- THEIR (origin/main) ---
 from app.strategy import monitor_rules
 from app.strategy.monitor import MonitorRuleEngine
 

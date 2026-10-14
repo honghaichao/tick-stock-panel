@@ -122,10 +122,6 @@ async function refreshTerminalRun(
     if (current.runId !== runId || connectionToken !== token) return
     localStorage.removeItem(ACTIVE_RUN_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     finishTaskRegistry()
     update({
       run,
@@ -140,10 +136,6 @@ async function refreshTerminalRun(
     if (current.runId !== runId || connectionToken !== token) return
     localStorage.removeItem(ACTIVE_RUN_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     finishTaskRegistry()
     const run = current.run && fallbackStatus
       ? { ...current.run, status: fallbackStatus, error: fallbackError || current.run.error }
@@ -268,10 +260,6 @@ export async function startMining(payload: Parameters<typeof api.miningStart>[0]
   closeEvents()
   localStorage.removeItem(ACTIVE_RUN_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   finishTaskRegistry()
   const token = connectionToken
   update({
@@ -290,10 +278,6 @@ export async function startMining(payload: Parameters<typeof api.miningStart>[0]
     if (connectionToken !== token || current.runId !== null) return
     localStorage.setItem(ACTIVE_RUN_KEY, run.run_id)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     trackRun(run.run_id)
     update({
       runId: run.run_id,
@@ -322,10 +306,6 @@ export async function startAutoMining(payload: Parameters<typeof api.miningAutoS
   closeEvents()
   localStorage.removeItem(ACTIVE_RUN_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   finishTaskRegistry()
   const token = connectionToken
   update({
@@ -346,10 +326,6 @@ export async function startAutoMining(payload: Parameters<typeof api.miningAutoS
       const run = data.run
       localStorage.setItem(ACTIVE_RUN_KEY, run.run_id)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       trackRun(run.run_id)
       update({
         runId: run.run_id,
@@ -449,10 +425,6 @@ export async function attachMiningRun(runId: string): Promise<boolean> {
     } else {
       localStorage.setItem(ACTIVE_RUN_KEY, runId)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       trackRun(runId)
       connect(runId)
     }
@@ -461,10 +433,6 @@ export async function attachMiningRun(runId: string): Promise<boolean> {
     if (current.runId !== runId || connectionToken !== token) return false
     localStorage.removeItem(ACTIVE_RUN_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     finishTaskRegistry()
     update({
       isPending: false,
@@ -479,10 +447,6 @@ export function tryReconnectMining(): boolean {
   const runId = localStorage.getItem(ACTIVE_RUN_KEY)
   if (!runId) return false
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 /** 换设备接回: 本地无键时从服务端注册表找 running 任务, 回填本地键并走原有 attach。 */
 async function adoptFromServer() {
   if (current.runId) return // 本机已有活动任务
@@ -507,10 +471,6 @@ export function clearMiningTask() {
   closeEvents()
   localStorage.removeItem(ACTIVE_RUN_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   finishTaskRegistry()
   current = {
     runId: null,

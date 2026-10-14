@@ -2,7 +2,6 @@
 
 选股页可以选历史日期 (DatePicker), run_all / 单策略运行都会以 as_of 调
 
-# --- THEIR (origin/main) ---
 策略页可以选历史日期 (DatePicker), run_all / 单策略运行都会以 as_of 调
 _load_enriched_history(as_of, required_history_bars)。缓存命中路径
 (repo.get_enriched_history) 从整份缓存的交易日序列取最后 N+1 个交易日作起点,

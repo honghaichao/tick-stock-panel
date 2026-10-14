@@ -614,7 +614,6 @@ class MiningCandidateService:
             '"""Trusted factor-rank strategy published from a mining run."""\n'
             "from app.strategy.builtin.factor_rank_research import "
 
-# --- THEIR (origin/main) ---
             "from app.strategy.research.factor_rank_research import "
             "FactorRankResearchMatrixStrategy\n\n"
             f"META = {meta!r}\n\n"

@@ -151,7 +151,6 @@ def test_start_records_states_events_progress_and_worker_payload(
         "succeeded",
     ]
 
-# --- THEIR (origin/main) ---
     _wait_for_event_types(
         manager, run_id, ["queued", "running", "progress", "succeeded"]
     )
@@ -259,7 +258,6 @@ def test_cancel_while_waiting_for_capacity_never_calls_runner(
             "cancelled",
         ]
 
-# --- THEIR (origin/main) ---
         _wait_for_event_types(
             manager, run_id, ["queued", "cancelling", "cancelled"]
         )
@@ -286,7 +284,6 @@ def test_cancel_running_job_wins_over_worker_success(make_manager) -> None:
     event_types = [event["type"] for event in manager.store.read_events(run_id)]
     assert event_types == ["queued", "running", "cancelling", "cancelled"]
 
-# --- THEIR (origin/main) ---
     _wait_for_event_types(manager, run_id, ["queued", "running", "cancelling", "cancelled"])
     assert manager.store.read_summary(run_id) == {}
 
@@ -304,7 +301,6 @@ def test_runner_exception_marks_failed_and_appends_error_event(make_manager) -> 
     events = manager.store.read_events(run_id)
     assert [event["type"] for event in events] == ["queued", "running", "error"]
 
-# --- THEIR (origin/main) ---
     events = _wait_for_event_types(manager, run_id, ["queued", "running", "error"])
     assert events[-1]["payload"] == {
         "status": "failed",
@@ -341,7 +337,6 @@ def test_budget_exhausted_result_uses_distinct_success_status(make_manager) -> N
     assert manager.store.read_summary(run_id) == result
     assert manager.store.read_events(run_id)[-1]["type"] == ("succeeded_with_budget_exhausted")
 
-# --- THEIR (origin/main) ---
     _wait_for_event_types(
         manager, run_id, ["queued", "running", "succeeded_with_budget_exhausted"]
     )

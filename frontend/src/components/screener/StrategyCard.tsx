@@ -67,10 +67,6 @@ const SRC_MAP: Record<string, string> = { builtin: '内置', custom: '自定义'
 const BADGE_CLS_MAP: Record<string, string> = {
   builtin: 'bg-secondary/10 text-muted border-border',
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 const SRC_MAP: Record<string, string> = { custom: '自定义', ai: 'AI', composite: '叠加' }
 const BADGE_CLS_MAP: Record<string, string> = {
   ai: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
@@ -122,10 +118,6 @@ export function StrategyCard({
   const srcLabel = cardSize === 'mini' ? (SRC_MAP[source ?? ''] ?? '内') : (SRC_MAP[source ?? ''] ?? '内置')
   const badgeCls = BADGE_CLS_MAP[source ?? 'builtin'] ?? BADGE_CLS_MAP.builtin
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const srcLabel = cardSize === 'mini' ? (SRC_MAP[source ?? ''] ?? '自') : (SRC_MAP[source ?? ''] ?? '自定义')
   const badgeCls = BADGE_CLS_MAP[source ?? 'custom'] ?? BADGE_CLS_MAP.custom
 

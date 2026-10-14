@@ -11,7 +11,6 @@
   - 信号列名加前缀 ``csg_`` 避免与内置 ``signal_`` 列冲突。
   - 回测/选股/监控都按列名找信号，因此注入列后零特殊处理即可三处生效。
 
-# --- THEIR (origin/main) ---
   - 回测/策略/监控都按列名找信号，因此注入列后零特殊处理即可三处生效。
   - 字段白名单 + 固定运算符集，杜绝任意表达式注入。
   - 第一版只支持 AND（多条件同时满足）。
@@ -440,7 +439,6 @@ def build_expressions(signals: list[dict], allow_shift: bool = True) -> dict[str
             conds = sig["conditions"]
             col_name = column_name(sig["id"])
 
-# --- THEIR (origin/main) ---
             col_name = resolve_column(sig)
             parts: list[pl.Expr] = []
             for c in conds:
@@ -810,7 +808,6 @@ def signal_names(data_dir: Path) -> dict[str, str]:
         if sid and name:
             names[column_name(sid)] = name
 
-# --- THEIR (origin/main) ---
             # 显式 column (迁移自内置的 signal_*) 优先于默认 csg_ 前缀
             names[resolve_column(s)] = name
             names[intraday_column_name(sid)] = name

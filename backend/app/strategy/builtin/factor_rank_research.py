@@ -208,7 +208,6 @@ def _limit_top_rank(
 
 MATRIX_STRATEGY = FactorRankResearchMatrixStrategy()
 
-# --- THEIR (origin/main) ---
 """兼容转发: 研究模板已迁移至 ``app.strategy.research.factor_rank_research``。
 
 旧版用户策略文件 import 本路径时透明转发到新模块, 升级零改动。

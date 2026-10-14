@@ -25,7 +25,6 @@ from app.strategy.engine import StrategyDataContext, StrategyEngine
 # 测试通过仓库内的参考实现夹具加载, 覆盖同一份策略逻辑。
 STRATEGY_FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "strategies"
 
-# --- THEIR (origin/main) ---
 STRATEGY_FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "strategies_minute"
 _spec = importlib.util.spec_from_file_location(
     "minute_red_streak_fixture", STRATEGY_FIXTURE_DIR / "minute_red_streak.py"

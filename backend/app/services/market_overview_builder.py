@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import math
 
-# --- THEIR (origin/main) ---
 import copy
 import json
 import math
@@ -78,7 +77,6 @@ def _score(value: float, low: float, high: float) -> int:
         return 50
     return max(0, min(100, round((value - low) / (high - low) * 100)))
 
-# --- THEIR (origin/main) ---
 # 注: 原 _score(value, low, high) 已迁至 app.services.emotion_score.score_of ——
 # 情绪评分的区间与权重现由用户可配置, 归一化函数须与配置同处一个模块。
 # regime_builder 保留同名实现 (其区间是 A 股分位数校准的另一套口径, 不共用)。
@@ -236,7 +234,6 @@ def _read_ext_rows(data_dir, config: ExtConfig, dimension_field: str) -> list[di
             cols.append(col)
     return df.select(cols).to_dicts()
 
-# --- THEIR (origin/main) ---
     rows = df.select(cols).to_dicts()
     if sig is not None:
         if len(_EXT_ROWS_CACHE) >= _EXT_ROWS_CACHE_MAX:
@@ -597,7 +594,6 @@ def build_market_overview(
     else:
         emotion_label = "冰点"
 
-# --- THEIR (origin/main) ---
 
     # 情绪评分 (维度/权重/区间/档位) 走可配置口径: 定义在 app.services.emotion_score,
     # 用户可在看板「情绪雷达」卡片上改权重与区间。指标名即该模块的 term.key。

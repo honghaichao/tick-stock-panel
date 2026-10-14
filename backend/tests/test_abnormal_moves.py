@@ -123,7 +123,6 @@ def test_benchmark_momentum_today_excludes_today_rows(tmp_path) -> None:
     # 指数监控盘写入的今日行不能当昨收 (否则实时涨跌被重复叠加)
     today = date.today()
 
-# --- THEIR (origin/main) ---
     # 指数监控盘写入的今日行不能当昨收 (否则实时涨跌被重复叠加)。
     # 脏行日期必须与实现同用 cn_today(): 实现按北京日切「今天」,
     # 用宿主 date.today() 在 UTC 16-24 点窗口会与北京日错开一天,

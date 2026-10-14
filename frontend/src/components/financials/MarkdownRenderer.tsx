@@ -139,10 +139,6 @@ export function MarkdownRenderer({ content }: { content: string }) {
       const text = hMatch[2]
       const sizeCls = level === 1 ? 'text-base' : level === 2 ? 'text-sm' : 'text-xs'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       const sizeCls = level === 1 ? 'text-[16px] leading-6' : level === 2 ? 'text-sm' : 'text-xs'
       const mtCls = level <= 2 ? 'mt-6' : 'mt-5'
       blocks.push(
@@ -186,10 +182,6 @@ export function MarkdownRenderer({ content }: { content: string }) {
                 ))}
               </colgroup>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         // 宽表(>4 列, 如筛选结果)与窄表(财务报告的 维度/判断 表)分开处理:
         // 窄表 table-fixed + 末列加宽, 单元格可折行; 宽表列多而内容短,
         // 挤压会把标的/代码折成多行(600127.S / H), 改为按内容取宽 + 单元格不折行 + 横向滚动。
@@ -223,10 +215,6 @@ export function MarkdownRenderer({ content }: { content: string }) {
                     {row.map((cell, ci) => (
                       <td key={ci} className="px-2.5 py-1.5 text-foreground align-top break-words">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                       <td key={ci} className={`px-2.5 py-1.5 text-foreground align-top ${wide ? 'whitespace-nowrap' : 'break-words'}`}>
                         {renderInline(cell, `td-${key}-${ri}-${ci}`)}
                       </td>

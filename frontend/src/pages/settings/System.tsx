@@ -11,10 +11,6 @@ import { api } from '@/lib/api'
 import { QK } from '@/lib/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { Settings2, Trash2, RefreshCw, Bell, Volume2, ExternalLink, ZoomIn, Minus, Plus } from 'lucide-react'
 import { usePreferences } from '@/lib/useSharedQueries'
 import { api } from '@/lib/api'
@@ -368,10 +364,6 @@ export function SettingsSystemPanel() {
           <Info className="h-4 w-4 text-accent" />
           <h3 className="text-sm font-medium text-foreground">关于</h3>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           <ZoomIn className="h-4 w-4 text-accent" />
           <h3 className="text-sm font-medium text-foreground">界面</h3>
         </div>
@@ -403,10 +395,6 @@ export function SettingsSystemPanel() {
           </a>
         </div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
             <div className="text-sm text-foreground">界面缩放</div>
             <div className="text-[11px] text-muted truncate">
               整个界面等比缩放, 立即生效并记忆 (80%–150%)

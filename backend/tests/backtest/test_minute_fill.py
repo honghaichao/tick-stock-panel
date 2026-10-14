@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-# --- THEIR (origin/main) ---
 from datetime import date, datetime, timedelta
 
 import numpy as np
@@ -24,7 +23,6 @@ import pytest
 
 from app.backtest.engine import BacktestEngine
 
-# --- THEIR (origin/main) ---
 from app.backtest.engine import BacktestEngine, MatcherConfig
 from app.backtest.matrix import build_market_matrix
 from app.backtest.minute_trigger import build_minute_entry_reference, build_minute_exit_reference

@@ -2352,7 +2352,6 @@ def build_market_matrix_from_signals(
             use = ~np.isfinite(resolved_reference_price) & np.isfinite(values) & (values > 0)
             resolved_reference_price[use] = values[use]
 
-# --- THEIR (origin/main) ---
         # polars_expr / 长表路径不传 reference_price, 回退用 panel 均线。
         # enriched maN 含当根收盘; 盘中成交不可能知道当日收盘, 代数剔除
         # 与 build_minute_entry_reference / 卖出侧同一纪律 (#388 只修了

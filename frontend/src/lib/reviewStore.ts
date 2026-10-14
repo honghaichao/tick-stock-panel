@@ -96,10 +96,6 @@ export async function startReviewGeneration(
     for await (const evt of api.reviewStream(asOf, focus)) {
       if (abortCtrl.signal.aborted) break
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       if (signal.aborted) break
       if (evt.type === 'meta') {
         doneMeta = evt
@@ -122,10 +118,6 @@ export async function startReviewGeneration(
     // 流正常结束但无 done 事件,按 done 处理
     if (buf && !failed) {
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     // 流正常结束但无 done 事件,按 done 处理; 被中止的流半途内容不归档,
     // 状态由中止发起方 (查看历史/取消按钮) 自行设定, 这里不动
     if (buf && !failed && !signal.aborted) {
@@ -139,10 +131,6 @@ export async function startReviewGeneration(
   } catch (e: any) {
     if (!abortCtrl.signal.aborted) {
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     if (!signal.aborted) {
       state = { ...state, error: friendlyStreamError(e?.message) || '复盘失败', phase: 'error' }
       notify()
@@ -158,10 +146,6 @@ export function abortReviewGeneration(): void {
   abortCtrl?.abort()
   abortCtrl = null
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 }
 
 /** 取消当前生成并回到 idle (取消按钮): 中止流 + 清空面板, 半途内容不归档。 */

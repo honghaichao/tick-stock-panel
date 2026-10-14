@@ -18,7 +18,6 @@ _SYSTEM_TEMPLATE = """\
 状态、关键价位、风险因素与条件情景。
 - 你没有写权限, 不要声称已执行任何操作, 所有查询都是只读的。
 
-# --- THEIR (origin/main) ---
 - 查询类工具直接执行; 动作类工具(create_signal_strategy 生成信号 / \
 run_backtest 回测 / add_to_watchlist 加自选 / sync_data 数据补全)会先弹出确认卡, \
 用户点「确认」后才会执行 — 拒绝或超时意味着未执行, 不要重复尝试, 改为给出手动操作建议。
@@ -33,7 +32,6 @@ get_sector_rotation; 异动: get_abnormal。
 - 选股与因子: list_strategies + run_strategy 执行策略; list_factors + \
 get_factor_values 查因子排名; 需要验证假设时 run_backtest。
 
-# --- THEIR (origin/main) ---
 - 扩展内容: 用户上传/拉取的扩展数据表用 list_ext_tables 列表、query_ext_table 读行 \
 (filter=字段:值1|值2 过滤, sort=字段:desc 排序, 时序表可给 start_date/end_date); \
 自定义策略与信号经 list_signals / run_strategy 同样可问答。

@@ -102,10 +102,6 @@ async function connectSSE(url: string): Promise<void> {
         emit()
         localStorage.removeItem(RECONNECT_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         finishTaskRegistry()
       }
       return
@@ -156,10 +152,6 @@ async function connectSSE(url: string): Promise<void> {
     eventSource = null
     localStorage.removeItem(RECONNECT_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     finishTaskRegistry()
   })
 
@@ -179,10 +171,6 @@ async function connectSSE(url: string): Promise<void> {
       eventSource = null
       localStorage.removeItem(RECONNECT_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       finishTaskRegistry()
       return
     }
@@ -271,10 +259,6 @@ export function startBacktest(params: {
   // 存 reconnect 信息 (刷新后用)
   localStorage.setItem(RECONNECT_KEY, qs)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // 存 reconnect 信息 (刷新后用) + 上报注册表 (其他设备可接回)
   localStorage.setItem(RECONNECT_KEY, qs)
   reportTaskRunning(TASK_KIND, { qs }, params.strategy_id)
@@ -311,10 +295,6 @@ export async function stopBacktest(): Promise<void> {
   }
   localStorage.removeItem(RECONNECT_KEY)
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   finishTaskRegistry()
 }
 
@@ -329,10 +309,6 @@ export function tryReconnect(): boolean {
   const qs = localStorage.getItem(RECONNECT_KEY)
   if (!qs) return false
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 /** 换设备接回: 本地无键时从服务端注册表找 running 任务, 回填本地键并走原有重连。 */
 async function adoptFromServer() {
   if (current && !current.error && !current.result) return // 本机已有活动任务

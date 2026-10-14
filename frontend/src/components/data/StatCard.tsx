@@ -1,10 +1,6 @@
 import { motion } from 'framer-motion'
 import { Loader2, CheckCircle2, Settings, Table2 } from 'lucide-react'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { Loader2, CheckCircle2, Settings, Table2, Download } from 'lucide-react'
 import { formatNumber } from '@/lib/format'
 import { fmtDate } from '@/lib/format'

@@ -125,10 +125,6 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
         symbol_map: submittedSymbolMap,
         code_map: submittedCodeMap,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         fields: marketLevel
           ? userF
           : [
@@ -192,10 +188,6 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
       && fields.some((f) => f.name.trim())
       && matchStatus !== 'none'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       && (marketLevel || matchStatus !== 'none')
       && (sourceMode !== 'url' || url.trim()),
   )
@@ -359,10 +351,6 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
             <div>
               <h3 className="text-base font-semibold text-foreground">新增扩展数据</h3>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               <h3 className="text-[16px] leading-6 font-semibold text-foreground">新增扩展数据</h3>
               <p className="text-[11px] mt-1 inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-md font-medium">
                 接入自有数据，与标的自动关联（第三方接口或 CSV/Excel），支持概念、人气、资金流、舆情、研报评分标签等场景
@@ -518,10 +506,6 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
                   disabled={detecting || !url.trim()}
                   className="h-8 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-medium text-base hover:bg-accent/90 disabled:opacity-40 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   className="h-8 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-40 transition-colors"
                 >
                   {detecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
@@ -728,10 +712,6 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
                   onClick={addField}
                   className="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-base hover:bg-accent/90 transition-colors"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                   className="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 transition-colors"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -866,10 +846,6 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
               disabled={!valid || create.isPending}
               className="px-5 py-2 rounded-lg bg-accent text-base text-xs font-medium hover:bg-accent/90 disabled:opacity-40 transition-colors shadow-sm shadow-accent/20"
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
               className="px-5 py-2 rounded-lg bg-accent text-white text-xs font-medium hover:bg-accent/90 disabled:opacity-40 transition-colors shadow-sm shadow-accent/20"
             >
               {create.isPending ? '创建中…' : '创建'}

@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 _APP_NAME = "TickFlow 股票面板"
 
-# --- THEIR (origin/main) ---
 _APP_NAME = "TSP"
 _BASE_PORT = 3018
 _PORT_PROBE_RANGE = 50  # 从 3018 起最多试 50 个端口
@@ -184,7 +183,6 @@ def _pid_alive(pid: int) -> bool:
         except OSError:
             return False
 
-# --- THEIR (origin/main) ---
         # Windows 的 os.kill 没有 POSIX 探测语义: 除 CTRL_C/CTRL_BREAK 外
         # 任何信号值 (含 0) 都是 TerminateProcess 无条件杀进程。存活探测
         # 必须用 OpenProcess + GetExitCodeProcess, 否则单实例检查会误杀
@@ -373,7 +371,6 @@ def main() -> int:
         logger.exception("桌面客户端启动失败")
         _show_crash("TickFlow 启动失败", traceback.format_exc())
 
-# --- THEIR (origin/main) ---
         _show_crash("TSP 启动失败", traceback.format_exc())
         return 1
     finally:

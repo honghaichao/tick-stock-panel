@@ -4,7 +4,6 @@
 StrategyBacktestService.run() 的 minute_filter 分支:
 逐日回放 (与实盘选股同一条 StrategyEngine.run 路径) → 信号分钟收盘入场
 
-# --- THEIR (origin/main) ---
 逐日回放 (与实盘策略同一条 StrategyEngine.run 路径) → 信号分钟收盘入场
 → 涨停拒买 → 日K矩阵离场 → 交易记录携带分钟时间戳。
 

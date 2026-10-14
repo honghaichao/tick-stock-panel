@@ -22,10 +22,6 @@ import {
   Puzzle,
   KeyRound,
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   Coins,
   Route,
 } from 'lucide-react'
@@ -45,10 +41,6 @@ const HIGHLIGHTS = [
   { icon: LineChart,   title: '看板与自选', desc: '市场全景看板、涨跌分布、情绪雷达,自定义自选列表', tint: 'text-accent' },
   { icon: ScanSearch,  title: '策略选股',   desc: '内置多套选股策略,一键扫描全市场命中标的', tint: 'text-bull' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   { icon: ScanSearch,  title: '策略',   desc: '内置多套策略,一键扫描全市场命中标的', tint: 'text-bull' },
   { icon: TrendingUp,  title: '个股分析',   desc: 'AI 四维分析个股,关键价位、技术形态一目了然', tint: 'text-warning' },
   { icon: Flame,       title: '连板梯队',   desc: '涨停梯队、封板强度、炸板监控,情绪温度计', tint: 'text-warning' },
@@ -88,10 +80,6 @@ export function Onboarding() {
   return (
     <div className="relative min-h-screen bg-base overflow-hidden flex flex-col">
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     <div className="relative min-h-full bg-base overflow-hidden flex flex-col">
       {/* 背景光晕 —— 品牌 + 主色渐变 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -247,10 +235,6 @@ function WelcomeStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => voi
       <p className="mt-3 text-sm text-secondary leading-relaxed max-w-md mx-auto">
         一个本地化的 A 股量化分析面板 —— 行情、选股、回测、监控、财务一体化。
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         一个本地化的 A 股量化分析面板 —— 行情、策略、回测、监控、财务一体化。
         花一分钟配置,即可开始使用。
       </p>
@@ -298,10 +282,6 @@ function WelcomeStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => voi
 
 // ===== Step 2: 配置第三方数据源 (默认内置源; 可添加自有数据源) =====
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 // ===== Step 2: 配置数据源 =====
 // 面板行 = 数据源的全部信息聚合 (图标 / 名称 / 能力 / Key / 说明), 取代"卡片只读 + 表单另排"
 // 的上下分离结构。三个源均为第三方数据服务 (与步骤 0 免责声明同口径): 归属只在名称行以弱化
@@ -318,10 +298,6 @@ const DATASET_LABELS: Record<string, string> = {
 }
 
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   full_minute: '全量分钟',
   depth5: '五档',
   financial: '财务',
@@ -372,10 +348,6 @@ function DataSourceStep({ onNext, onBack }: { onNext: () => void; onBack: () => 
   const tfConfigured = settings.data?.mode === 'free' || settings.data?.mode === 'api_key'
   const fuyaoConfigured = !!plugins.find(p => p.name === 'fuyao')?.api_key_masked
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // Key 表单状态按数据源名分槽; expanded = 已配置源点开「替换」后的展开态
   const [inputs, setInputs] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string | null>>({})
@@ -448,10 +420,6 @@ function DataSourceStep({ onNext, onBack }: { onNext: () => void; onBack: () => 
       copy: '仅存本地 (secrets.json),先验证后保存。保存成功后仅「实时行情」与「除权因子」切换到 fuyao,其余数据集保持 TickFlow。',
       register: { label: '前往 fuyao 官网申请 Key', url: 'https://fuyao.aicubes.cn' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   const rows: SourceRow[] = [
     {
       name: 'tickflow',
@@ -512,10 +480,6 @@ function DataSourceStep({ onNext, onBack }: { onNext: () => void; onBack: () => 
 
       {/* 数据源卡片 (只读展示): 不在向导中切换, 保留设置页完整能力 */}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         下方数据服务均由第三方提供。TickFlow 不填 Key 即可用,填写后按档位解锁更多能力;
         其余服务填写 Key 后启用。所有 Key 仅存本地,保存前会先验证。
       </p>
@@ -652,10 +616,6 @@ function DataSourceStep({ onNext, onBack }: { onNext: () => void; onBack: () => 
       })}
 
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <div className="mt-4 overflow-hidden rounded-card border border-border/70 bg-surface/60 backdrop-blur-sm">
           <div className="divide-y divide-border/40">
             {rows.map(row => {
@@ -915,10 +875,6 @@ function ResultStep({ onNext, onBack }: { onNext: () => void; onBack: () => void
         进入本步时已按默认优先级
         <span className="text-foreground font-medium"> TickFlow → fuyao → stock-sdk </span>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <span className="text-foreground font-medium"> TickFlow → fuyao </span>
         自动设置各数据集的路由:前者可用的能力归前者,没有则顺延下一个可用源。后续可随时在
         <span className="text-foreground font-medium"> 设置 → 数据源 </span>按数据集改选。
@@ -1054,10 +1010,6 @@ function FinishStep({ onNext, onBack, pending }: { onNext: () => void; onBack: (
     { icon: TrendingUp, text: '「个股分析」:输入代码,AI 四维分析 + 关键价位' },
     { icon: ScanSearch, text: '「选股」页:内置多套策略,一键扫描全市场' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     { icon: ScanSearch, text: '「策略」页:内置多套策略,一键扫描全市场' },
     { icon: ShieldCheck, text: '「回测」页:用历史数据验证策略表现,用数据说话' },
   ]

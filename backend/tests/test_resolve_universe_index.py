@@ -1,6 +1,5 @@
 """_resolve_universe 指数过滤测试。"""
 
-# --- THEIR (origin/main) ---
 """_resolve_universe 维表单一来源 + 指数过滤测试。"""
 import polars as pl
 import pytest
@@ -21,7 +20,6 @@ def test_resolve_universe_excludes_index_symbols(repo, monkeypatch, tmp_path):
             return False
 
 
-# --- THEIR (origin/main) ---
 class _Capset:
     def __init__(self, has_batch: bool = False):
         self._has_batch = has_batch

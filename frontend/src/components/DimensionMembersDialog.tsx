@@ -19,10 +19,6 @@ import { QK } from '@/lib/queryKeys'
 import { fmtBigNum, fmtPct, fmtPrice, priceColorClass } from '@/lib/format'
 import { useChartTheme } from '@/lib/theme'
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 import { lazy, Suspense } from 'react'
 import type { NavItem } from '@/lib/listNav'
 
@@ -92,10 +88,6 @@ function stockSymbol(row: Record<string, any>): string {
   return String(row.symbol ?? row.code ?? row['股票代码'] ?? row['代码'] ?? '')
 }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 // 懒加载壳: target 为空时不挂载内容 → lightweight-charts 不随各列表页首屏加载
 const DimensionMembersDialogContent = lazy(() =>
   import('./DimensionMembersDialogContent').then(m => ({ default: m.DimensionMembersDialogContent })),
@@ -560,10 +552,6 @@ function IntradayChart({ points, kind }: { points: DimensionIntradayPoint[]; kin
       <div ref={containerRef} className="w-full" />
     </div>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
     <Suspense fallback={null}>
       <DimensionMembersDialogContent
         key={`${target.sourceField}:${target.value}:${target.date ?? ''}`}

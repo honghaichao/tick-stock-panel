@@ -4,7 +4,6 @@ import sys
 
 __version__ = "0.3.0"
 
-# --- THEIR (origin/main) ---
 import json
 import sys
 from pathlib import Path

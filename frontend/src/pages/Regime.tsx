@@ -663,10 +663,6 @@ export function Regime() {
           <Activity className="h-5 w-5 text-accent" />
           <h1 className="text-base font-semibold text-foreground">市场环境</h1>
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
           <h1 className="text-[16px] leading-6 font-semibold text-foreground">市场环境</h1>
           <span className="text-xs text-muted">
             {view === 'phase' ? '涨停情绪 · 市场阶段 · 主线脉络' : '每日环境状态 · 赚钱效应 · 趋势分析'}
@@ -1016,10 +1012,6 @@ export function Regime() {
                 <tr><td colSpan={5} className="py-4 text-center text-[10px] text-muted">
                   {mainline.isLoading ? '加载中…' : '暂无主线数据 — 点击「重算」回填, 或检查过滤设置'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                 <tr><td colSpan={5} className="py-4 text-center text-[10px]">
                   {mainline.isLoading ? <span className="text-muted">加载中…</span>
                     : mainline.isError ? (
@@ -1125,10 +1117,6 @@ export function Regime() {
         <div className="rounded-card border border-dashed border-border p-8 text-center text-sm text-muted">
           {history.isLoading ? '加载中…' : '暂无环境数据，请先运行盘后管道或点击「重算」'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
         <div className="rounded-card border border-dashed border-border p-8 text-center text-sm">
           {history.isLoading ? <span className="text-muted">加载中…</span>
             : history.isError ? (

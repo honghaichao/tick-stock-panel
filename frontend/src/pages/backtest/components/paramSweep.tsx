@@ -108,10 +108,6 @@ export function useParamSweep(strategies: StrategyDetail[], onStrategyChange?: (
       else if (p.type === 'select') grid[p.id] = p.options ?? []
       else grid[p.id] = { min: Number(s.min), max: Number(s.max), step: Number(s.step) }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
       else if (p.type === 'float' || p.type === 'int') grid[p.id] = { min: Number(s.min), max: Number(s.max), step: Number(s.step) }
       // string 等类型不支持范围展开, 跳过不可扫描参数
     }

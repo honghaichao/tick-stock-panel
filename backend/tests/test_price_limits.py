@@ -317,7 +317,6 @@ def test_daily_limit_prices_ignore_zero_placeholder_and_match_realtime():
     assert realtime["signal_limit_up"][0] is False
     assert mild["signal_limit_up"][-1] is realtime["signal_limit_up"][0]
 
-# --- THEIR (origin/main) ---
     # 实时路径不注入信号列 (定义注入在 compute_enriched_today 末尾), 按引擎判定价对拍
     assert realtime["limit_up_price"][0] == pytest.approx(10.995)
     assert realtime["consecutive_limit_ups"][0] == 0
@@ -352,7 +351,6 @@ def test_realtime_limit_prices_ignore_stale_instrument_date():
 
     assert result["signal_limit_down"][0] is False
 
-# --- THEIR (origin/main) ---
     # 过期维表 → 回退理论跌停价 9.005 (而非权威 9.105), 9.10 未触及 → 不判跌停
     assert result["limit_down_price"][0] == pytest.approx(9.005)
     assert result["consecutive_limit_downs"][0] == 0

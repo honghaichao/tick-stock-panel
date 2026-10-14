@@ -17,7 +17,6 @@ from app.backtest.matrix import build_market_data_matrix
 from app.strategy.builtin.factor_rank_research import FactorRankResearchMatrixStrategy
 from app.strategy.engine import StrategyEngine
 
-# --- THEIR (origin/main) ---
 from app.strategy.engine import StrategyEngine
 from app.strategy.research.factor_rank_research import FactorRankResearchMatrixStrategy
 

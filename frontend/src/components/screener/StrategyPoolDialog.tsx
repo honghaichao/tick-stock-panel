@@ -16,10 +16,6 @@ const SOURCE_CLS: Record<string, string> = {
   ai: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   // 叠加策略归入「自定义」分组展示, 徽标与 StrategyCard 一致用 teal 区分
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   custom: 'bg-amber-400/10 text-amber-400 border-amber-400/30',
   ai: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   // 叠加策略独立「叠加」分组, 徽标与 StrategyCard 一致用 teal 区分
@@ -45,10 +41,6 @@ const TABS: { id: SourceTab; label: string }[] = [
   { id: 'custom', label: '自定义' },
   { id: 'ai', label: 'AI' },
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
 type SourceTab = 'all' | 'custom' | 'ai' | 'composite'
 
 const TABS: { id: SourceTab; label: string }[] = [
@@ -128,10 +120,6 @@ export function StrategyPoolDialog({ pool, onConfirm, onClose }: Props) {
       return available.filter(s => s.source === 'custom' || s.source === 'composite')
     }
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
   // research_only 草稿(AI 来源)单独列出, 供「发布」操作; 不进待选列表。
   // 发布闸(/{id}/publish)仅接受 source=ai, 非 AI 的 research 项(如内置研究模板
   // factor_rank_research)混入会渲染出必然失败的「发布」按钮, 故此处排除。
@@ -288,10 +276,6 @@ export function StrategyPoolDialog({ pool, onConfirm, onClose }: Props) {
                         ? available.filter(s => s.source === 'custom' || s.source === 'composite').length
                         : available.filter(s => s.source === tab.id).length
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                       : available.filter(s => s.source === tab.id).length
                     return (
                       <button
@@ -374,10 +358,6 @@ export function StrategyPoolDialog({ pool, onConfirm, onClose }: Props) {
                         <span className={`text-[8px] px-1 py-px rounded border leading-tight shrink-0 ${SOURCE_CLS[s.source] ?? SOURCE_CLS.builtin}`}>
                           {SOURCE_LABEL[s.source] ?? '内置'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                         <span className={`text-[8px] px-1 py-px rounded border leading-tight shrink-0 ${SOURCE_CLS[s.source] ?? SOURCE_CLS.custom}`}>
                           {SOURCE_LABEL[s.source] ?? '自定义'}
                         </span>
@@ -438,10 +418,6 @@ export function StrategyPoolDialog({ pool, onConfirm, onClose }: Props) {
                             <span className={`text-[8px] px-1 py-px rounded border leading-tight shrink-0 ${SOURCE_CLS[src] ?? SOURCE_CLS.builtin}`}>
                               {SOURCE_LABEL[src] ?? '内置'}
 
-// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
-// --- OUR (HEAD) ---
-// --- THEIR (origin/main) ---
-// === end REVIEW ===
                             <span className={`text-[8px] px-1 py-px rounded border leading-tight shrink-0 ${SOURCE_CLS[src] ?? SOURCE_CLS.custom}`}>
                               {SOURCE_LABEL[src] ?? '自定义'}
                             </span>
