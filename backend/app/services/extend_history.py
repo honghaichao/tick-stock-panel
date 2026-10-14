@@ -19,11 +19,15 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from app.services import kline_sync
 from app.services.pipeline_jobs import job_store
 from app.tickflow.capabilities import Cap, CapabilitySet
-from app.tickflow.repository import KlineRepository
+from app.tickflow.repository import (
+    KlineRepository,
+    _kline_minute_glob_list,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,29 +41,31 @@ def _invalidate(table: str | None = None) -> None:
     invalidate_data_cache(table)
 
 
-def _resolve_universe(capset: CapabilitySet, repo=None) -> list[str]:
-    """解析标的池 — 与 daily_pipeline 同口径: instruments 维表 + 自选 (单一来源)。
+def _resolve_universe(capset: CapabilitySet) -> list[str]:
+    """解析标的池 — 与 daily_pipeline 独立的副本。"""
+    if capset.has(Cap.KLINE_DAILY_BATCH):
+        try:
+            from app.tickflow.pools import get_pool
+            all_a = get_pool("CN_Equity_A", refresh=True)
+            if all_a:
+                return sorted(all_a)
+        except Exception as e:
+            logger.warning("CN_Equity_A pool unavailable: %s", e)
 
-    不再拉 CN_Equity_A 池 (含 SW1 聚合兜底); 维表由盘后管道同步维护。
-    repo 传入时过滤自选里的指数 symbol (指数日K走独立存储)。
-    """
-    from pathlib import Path
-
-    import polars as pl
-
+    from app.tickflow.pools import DEMO_SYMBOLS, get_pool as _get_pool
     from app.config import settings
-    from app.tickflow.pools import get_pool
-
-    base: set[str] = set(get_pool("watchlist"))
-    inst_path = Path(settings.data_dir) / "instruments" / "instruments.parquet"
+    from pathlib import Path
+    import polars as pl
+    base: set[str] = set(DEMO_SYMBOLS)
+    base.update(_get_pool("watchlist"))
+    d = Path(settings.data_dir)
+    inst_path = d / "instruments" / "instruments.parquet"
     if inst_path.exists():
         try:
             inst = pl.read_parquet(inst_path, columns=["symbol"])
             base.update(inst["symbol"].to_list())
-        except Exception as e:  # noqa: BLE001
-            logger.warning("instruments 维表读取失败, 标的池仅剩自选: %s", e)
-    if repo is not None:
-        base -= set(repo.get_index_symbol_set())
+        except Exception as e:
+            logger.warning("instruments supplement failed: %s", e)
     return sorted(base)
 
 
@@ -69,17 +75,22 @@ def _refresh_single_view(repo: KlineRepository, name: str) -> None:
     paths = {
         "kline_daily": f"{d}/kline_daily/**/*.parquet",
         "kline_enriched": f"{d}/kline_daily_enriched/**/*.parquet",
-        "kline_minute": f"{d}/kline_minute/**/*.parquet",
+        # kline_minute: consolidation 后用 date=*/part.parquet (单文件布局);
+        # 旧 nested 布局 (date=X/symbol=Y/part.parquet) 自动检测存在才加。
+        # DuckDB read_parquet list 模式要求每个 glob 都至少匹配 1 个文件,
+        # 否则 0 匹配即报错 (会重启失败), 因此动态构建。
+        "kline_minute": _kline_minute_glob_list(Path(d)),
         "adj_factor": f"{d}/adj_factor/**/*.parquet",
         "instruments": f"{d}/instruments/**/*.parquet",
     }
     path = paths.get(name)
     if not path:
         return
+    path_arg = f"'{path}'" if isinstance(path, str) else str(path)
     try:
         repo.db.execute(
             f"CREATE OR REPLACE VIEW {name} AS "
-            f"SELECT * FROM read_parquet('{path}', union_by_name=true)"
+            f"SELECT * FROM read_parquet({path_arg}, union_by_name=true)"
         )
     except Exception as e:
         logger.warning("refresh view %s failed: %s", name, e)
@@ -129,7 +140,7 @@ def run_extend_history(
 
     # 2. 解析标的池
     emit("extend_history", 5, "解析标的池…")
-    universe = _resolve_universe(capset, repo)
+    universe = _resolve_universe(capset)
     if not universe:
         return {"error": "标的池为空"}
     emit("extend_history", 8, f"标的池: {len(universe)} 只")
