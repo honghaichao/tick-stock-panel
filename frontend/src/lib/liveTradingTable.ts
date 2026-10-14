@@ -72,3 +72,42 @@ export function deriveRunDays(startedAt: string | null | undefined, now: Date = 
   if (diff < 0) return 0
   return Math.floor(diff / 86_400_000)
 }
+
+
+
+/**
+ * 追加 (PR2 拆分): 从原 LiveTrading.tsx 55-86 行迁出.
+ * re-export 路径不变, ./LiveTrading 仍可导入 (供 expand.test / split.test).
+ */
+export function strategyIsExpanded(
+  s: LiveStrategyApi,
+  userExpanded: Record<string, boolean>,
+): boolean {
+  // 用户对每个 strategy 展开/收起的偏好。Map 内未出现的 strategy,
+  // 默认按"是否有任一 schedule 启用"展开 (active=展开, stopped=收敛)。
+  // 单独提为模块级纯函数便于测试。
+  if (s.id in userExpanded) return userExpanded[s.id]
+  return s.schedules.some(sc => sc.enabled)
+}
+
+/**
+ * 把实盘策略列表拆成 "启用中 / 已停用" 两组:
+ *  - 已停用 = 声明了至少 1 个 schedule, 但全部 disabled (与 StrategyRow.fullyStopped 同义);
+ *  - 其他 (含 0 schedules 的占位策略) 都归入启用中, 由 UI 自行提示。
+ * 提为模块级纯函数便于测试。
+ */
+export function splitStrategiesByStatus(strategies: LiveStrategyApi[]): {
+  active: LiveStrategyApi[]
+  stopped: LiveStrategyApi[]
+} {
+  const active: LiveStrategyApi[] = []
+  const stopped: LiveStrategyApi[] = []
+  for (const s of strategies) {
+    const enabledCount = s.schedules.filter(sc => sc.enabled).length
+    if (s.schedules.length > 0 && enabledCount === 0) stopped.push(s)
+    else active.push(s)
+  }
+  return { active, stopped }
+}
+
+// ── 小工具 ──────────────────────────────────────────
