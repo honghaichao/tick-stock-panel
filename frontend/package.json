@@ -1,9 +1,6 @@
 {
   "name": "tickflow-stock-panel-frontend",
   "private": true,
-  "version": "0.3.0",
-
------ THEIR (origin/main) -----
   "version": "0.3.6",
   "type": "module",
   "scripts": {
@@ -17,14 +14,6 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@tanstack/react-query": "^5.55.0",
-    "@tanstack/react-virtual": "^3.13.12",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.1",
-    "echarts": "^5.5.0",
-    "echarts-for-react": "^3.0.2",
-
------ THEIR (origin/main) -----
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@tanstack/query-sync-storage-persister": "^5.104.1",
