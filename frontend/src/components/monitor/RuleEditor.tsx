@@ -9,6 +9,12 @@ import { boardTag } from '@/components/stock-table/primitives'
 import { resolveWatchlistGroupColor } from '@/lib/watchlist-group-colors'
 import { SignalPicker } from '@/components/screener/SignalPicker'
 import { MONITOR_INTRADAY_SIGNAL_OPTIONS, SIGNAL_OPTIONS, cnSignal } from '@/lib/signals'
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+import { MONITOR_INTRADAY_SIGNAL_OPTIONS } from '@/lib/signals'
 import { usePreferences, useQuoteStatus } from '@/lib/useSharedQueries'
 
 interface Props {
@@ -169,6 +175,12 @@ export function RuleEditor({ rule, preset, simple, onClose, onSaved }: Props) {
   })
   const [strategyQuery, setStrategyQuery] = useState('')
   const [strategyCategory, setStrategyCategory] = useState<'all' | 'builtin' | 'custom' | 'ai' | 'composite'>('all')
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  const [strategyCategory, setStrategyCategory] = useState<'all' | 'custom' | 'ai' | 'composite'>('all')
   // 标的搜索资产类型: ETF 一并搜股票; 指数只搜指数; 否则只搜股票。
   const symbolAssetTypes = assetType === 'etf' ? 'stock,etf' : assetType === 'index' ? 'index' : 'stock'
   const symbolSearch = useQuery({
@@ -403,6 +415,15 @@ export function RuleEditor({ rule, preset, simple, onClose, onSaved }: Props) {
     ...SIGNAL_OPTIONS.map(key => ({ key, label: cnSignal(key) })),
     ...(options.data?.builtin_signals ?? []).filter(option => MONITOR_INTRADAY_SIGNAL_OPTIONS.includes(option.key)),
   ]
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // 日线信号已全部定义驱动 → custom_signals; builtin_signals 仅剩盘中信号
+  const monitorBuiltinSignals = (options.data?.builtin_signals ?? []).filter(
+    option => MONITOR_INTRADAY_SIGNAL_OPTIONS.includes(option.key),
+  )
   // 指数: 隐藏涨跌停/连板类 (指数无这些列) 与分时信号 (无本地分钟K, 会静默不触发)
   const INDEX_HIDDEN_SIGNALS = (key: string) =>
     key.includes('limit') || MONITOR_INTRADAY_SIGNAL_OPTIONS.includes(key)
@@ -545,6 +566,12 @@ export function RuleEditor({ rule, preset, simple, onClose, onSaved }: Props) {
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-1.5 rounded-btn bg-elevated text-secondary text-xs cursor-pointer">取消</button>
           <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-accent text-base text-xs font-medium disabled:opacity-50 cursor-pointer">
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+          <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-accent text-white text-xs font-medium disabled:opacity-50 cursor-pointer">
             <Save className="h-3.5 w-3.5" />加入监控
           </button>
         </div>
@@ -988,6 +1015,12 @@ export function RuleEditor({ rule, preset, simple, onClose, onSaved }: Props) {
 
           <div className="space-y-2">
             <span className="text-[11px] text-muted">基础过滤 (与策略选股口径对齐, 留空不过滤)</span>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            <span className="text-[11px] text-muted">基础过滤 (与策略口径对齐, 留空不过滤)</span>
             <div className="grid gap-2 sm:grid-cols-3">
               <label className="space-y-1">
                 <span className="text-[10px] text-muted/70">股价区间 (元)</span>
@@ -1410,6 +1443,12 @@ export function RuleEditor({ rule, preset, simple, onClose, onSaved }: Props) {
             <div
               className="mb-2 text-[11px] text-muted"
               title="评分范围仅过滤选股结果与买入信号，卖出信号不受限制"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+              title="评分范围仅过滤策略结果与买入信号，卖出信号不受限制"
             >
               评分范围
             </div>
@@ -1460,6 +1499,12 @@ export function RuleEditor({ rule, preset, simple, onClose, onSaved }: Props) {
                 <div key={group} className="rounded-btn border border-border bg-base p-2.5">
                   <div className="mb-2 text-[10px] font-medium text-secondary">
                     {group === 'signal' ? '交易信号' : '选股结果'}
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                    {group === 'signal' ? '交易信号' : '策略结果'}
                   </div>
                   <div className="space-y-2">
                     {STRATEGY_NOTIFY_EVENT_OPTIONS.filter(option => option.group === group).map(option => (
@@ -1616,6 +1661,12 @@ export function RuleEditor({ rule, preset, simple, onClose, onSaved }: Props) {
       <div className="flex justify-end gap-2">
         <button onClick={onClose} className="px-4 py-1.5 rounded-btn bg-elevated text-secondary text-xs cursor-pointer">取消</button>
         <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-accent text-base text-xs font-medium disabled:opacity-50 cursor-pointer">
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-accent text-white text-xs font-medium disabled:opacity-50 cursor-pointer">
           <Save className="h-3.5 w-3.5" />保存
         </button>
       </div>

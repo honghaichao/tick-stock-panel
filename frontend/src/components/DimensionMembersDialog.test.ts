@@ -4,6 +4,12 @@ import { test } from 'node:test'
 
 const source = readFileSync(
   new URL('./DimensionMembersDialog.tsx', import.meta.url),
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  new URL('./DimensionMembersDialogContent.tsx', import.meta.url),
   'utf8',
 )
 

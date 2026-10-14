@@ -38,6 +38,28 @@ def _wait_for_status(
     pytest.fail(f"run {run_id} did not reach {status}")
 
 
+def _wait_for_event_types(
+    manager: MiningJobManager,
+    run_id: str,
+    expected: list[str],
+    *,
+    timeout: float = 2.0,
+) -> list[dict[str, Any]]:
+    """轮询到事件序列收敛后返回。
+
+    manager 各终态路径先 transition_status 再 append_event (两次独立写入),
+    状态可见时终态事件可能尚未落盘 —— 状态到达后立即断言事件序列会偶发读到
+    缺末尾事件的状态。终态后不会再有新事件, 轮询必然收敛。
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        events = manager.store.read_events(run_id)
+        if [event["type"] for event in events] == expected:
+            return events
+        time.sleep(0.005)
+    pytest.fail(f"run {run_id} events did not converge to {expected}")
+
+
 @pytest.fixture
 def isolated_limiter(monkeypatch: pytest.MonkeyPatch) -> HeavyJobLimiter:
     limiter = HeavyJobLimiter(capacity=2, cancel_poll_interval=0.005)
@@ -128,6 +150,11 @@ def test_start_records_states_events_progress_and_worker_payload(
         "progress",
         "succeeded",
     ]
+
+# --- THEIR (origin/main) ---
+    _wait_for_event_types(
+        manager, run_id, ["queued", "running", "progress", "succeeded"]
+    )
 
 
 def test_start_accepts_valid_persistent_run_id(make_manager) -> None:
@@ -231,6 +258,11 @@ def test_cancel_while_waiting_for_capacity_never_calls_runner(
             "cancelling",
             "cancelled",
         ]
+
+# --- THEIR (origin/main) ---
+        _wait_for_event_types(
+            manager, run_id, ["queued", "cancelling", "cancelled"]
+        )
     finally:
         isolated_limiter.release("mining")
 
@@ -253,6 +285,9 @@ def test_cancel_running_job_wins_over_worker_success(make_manager) -> None:
     _wait_for_status(manager, run_id, "cancelled")
     event_types = [event["type"] for event in manager.store.read_events(run_id)]
     assert event_types == ["queued", "running", "cancelling", "cancelled"]
+
+# --- THEIR (origin/main) ---
+    _wait_for_event_types(manager, run_id, ["queued", "running", "cancelling", "cancelled"])
     assert manager.store.read_summary(run_id) == {}
 
 
@@ -268,6 +303,9 @@ def test_runner_exception_marks_failed_and_appends_error_event(make_manager) -> 
     assert failed["error"] == "mining exploded"
     events = manager.store.read_events(run_id)
     assert [event["type"] for event in events] == ["queued", "running", "error"]
+
+# --- THEIR (origin/main) ---
+    events = _wait_for_event_types(manager, run_id, ["queued", "running", "error"])
     assert events[-1]["payload"] == {
         "status": "failed",
         "message": "mining exploded",
@@ -302,6 +340,11 @@ def test_budget_exhausted_result_uses_distinct_success_status(make_manager) -> N
     _wait_for_status(manager, run_id, "succeeded_with_budget_exhausted")
     assert manager.store.read_summary(run_id) == result
     assert manager.store.read_events(run_id)[-1]["type"] == ("succeeded_with_budget_exhausted")
+
+# --- THEIR (origin/main) ---
+    _wait_for_event_types(
+        manager, run_id, ["queued", "running", "succeeded_with_budget_exhausted"]
+    )
 
 
 def test_recover_interrupted_delegates_to_store(make_manager) -> None:

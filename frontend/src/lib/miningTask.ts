@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { api, type MiningResult, type MiningRun, type MiningRunProgress, type MiningRunStatus } from './api'
+import { fetchRunningTask, reportTaskFinished, reportTaskRunning } from './taskRegistry'
 
 export interface MiningTask {
   runId: string | null
@@ -14,6 +15,24 @@ export interface MiningTask {
 }
 
 const ACTIVE_RUN_KEY = 'mining_active_run_id'
+
+// 跨设备接回: run 创建时上报注册表, 终态关闭; attach 命中非终态时重报 running
+// (幂等, 同时刷新 updated_at 防孤儿误回收)。重连/轮询逻辑本身零改动。
+const TASK_KIND = 'mining' as const
+
+/** 终态/重置: 关闭注册表项并清本地活跃 run 键。 */
+function finishTaskRegistry() {
+  const runId = localStorage.getItem(ACTIVE_RUN_KEY)
+  if (runId) reportTaskFinished(TASK_KIND, { run_id: runId })
+  localStorage.removeItem(ACTIVE_RUN_KEY)
+}
+
+/** run 创建/接管: 记本地键 + 上报 running。 */
+function trackRun(runId: string) {
+  localStorage.setItem(ACTIVE_RUN_KEY, runId)
+  reportTaskRunning(TASK_KIND, { run_id: runId })
+}
+
 const TERMINAL_STATES = new Set<MiningRunStatus>([
   'succeeded',
   'succeeded_with_budget_exhausted',
@@ -102,6 +121,12 @@ async function refreshTerminalRun(
     }
     if (current.runId !== runId || connectionToken !== token) return
     localStorage.removeItem(ACTIVE_RUN_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    finishTaskRegistry()
     update({
       run,
       progress: run.progress ?? current.progress,
@@ -114,6 +139,12 @@ async function refreshTerminalRun(
   } catch (error) {
     if (current.runId !== runId || connectionToken !== token) return
     localStorage.removeItem(ACTIVE_RUN_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    finishTaskRegistry()
     const run = current.run && fallbackStatus
       ? { ...current.run, status: fallbackStatus, error: fallbackError || current.run.error }
       : current.run
@@ -236,6 +267,12 @@ function connect(runId: string) {
 export async function startMining(payload: Parameters<typeof api.miningStart>[0]) {
   closeEvents()
   localStorage.removeItem(ACTIVE_RUN_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  finishTaskRegistry()
   const token = connectionToken
   update({
     runId: null,
@@ -252,6 +289,12 @@ export async function startMining(payload: Parameters<typeof api.miningStart>[0]
     const run = await api.miningStart(payload)
     if (connectionToken !== token || current.runId !== null) return
     localStorage.setItem(ACTIVE_RUN_KEY, run.run_id)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    trackRun(run.run_id)
     update({
       runId: run.run_id,
       run,
@@ -278,6 +321,12 @@ export async function startMining(payload: Parameters<typeof api.miningStart>[0]
 export async function startAutoMining(payload: Parameters<typeof api.miningAutoStart>[0]) {
   closeEvents()
   localStorage.removeItem(ACTIVE_RUN_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  finishTaskRegistry()
   const token = connectionToken
   update({
     runId: null,
@@ -296,6 +345,12 @@ export async function startAutoMining(payload: Parameters<typeof api.miningAutoS
     if (data.started && data.run) {
       const run = data.run
       localStorage.setItem(ACTIVE_RUN_KEY, run.run_id)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      trackRun(run.run_id)
       update({
         runId: run.run_id,
         run,
@@ -393,12 +448,24 @@ export async function attachMiningRun(runId: string): Promise<boolean> {
       await refreshTerminalRun(runId, run.status, run, token)
     } else {
       localStorage.setItem(ACTIVE_RUN_KEY, runId)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      trackRun(runId)
       connect(runId)
     }
     return true
   } catch (error) {
     if (current.runId !== runId || connectionToken !== token) return false
     localStorage.removeItem(ACTIVE_RUN_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    finishTaskRegistry()
     update({
       isPending: false,
       reconnecting: false,
@@ -411,6 +478,27 @@ export async function attachMiningRun(runId: string): Promise<boolean> {
 export function tryReconnectMining(): boolean {
   const runId = localStorage.getItem(ACTIVE_RUN_KEY)
   if (!runId) return false
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+/** 换设备接回: 本地无键时从服务端注册表找 running 任务, 回填本地键并走原有 attach。 */
+async function adoptFromServer() {
+  if (current.runId) return // 本机已有活动任务
+  const task = await fetchRunningTask(TASK_KIND)
+  const runId = typeof task?.payload?.run_id === 'string' ? task.payload.run_id : ''
+  if (!runId || localStorage.getItem(ACTIVE_RUN_KEY)) return
+  trackRun(runId)
+  void attachMiningRun(runId)
+}
+
+export function tryReconnectMining(): boolean {
+  const runId = localStorage.getItem(ACTIVE_RUN_KEY)
+  if (!runId) {
+    void adoptFromServer()
+    return false
+  }
   void attachMiningRun(runId)
   return true
 }
@@ -418,6 +506,12 @@ export function tryReconnectMining(): boolean {
 export function clearMiningTask() {
   closeEvents()
   localStorage.removeItem(ACTIVE_RUN_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  finishTaskRegistry()
   current = {
     runId: null,
     isPending: false,

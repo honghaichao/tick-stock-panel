@@ -24,6 +24,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from app.services import auth
+from app.services.api_gateway import is_local_network as _is_local_network
 
 logger = logging.getLogger(__name__)
 

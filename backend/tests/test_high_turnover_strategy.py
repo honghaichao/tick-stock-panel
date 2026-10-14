@@ -2,10 +2,28 @@ from __future__ import annotations
 
 from datetime import date
 
+# --- THEIR (origin/main) ---
+import importlib.util
+from datetime import date
+from pathlib import Path
+
 import polars as pl
 
 from app.backtest.matrix import build_market_data_matrix
 from app.strategy.builtin import high_turnover_surge
+
+# --- THEIR (origin/main) ---
+
+_FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
+
+
+def _load_fixture(name: str):
+    spec = importlib.util.spec_from_file_location(f"{name}_fixture", _FIXTURES / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+high_turnover_surge = _load_fixture("high_turnover_surge")
 
 
 def test_high_turnover_surge_uses_percent_value_turnover_rate():

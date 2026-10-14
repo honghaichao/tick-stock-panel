@@ -13,6 +13,12 @@ export function EmptyState({ icon: Icon = Construction, title, hint }: Props) {
       <div className="text-center max-w-md">
         <Icon className="mx-auto h-10 w-10 text-muted" strokeWidth={1.5} />
         <h2 className="mt-4 text-base font-medium text-foreground">{title}</h2>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        <h2 className="mt-4 text-[16px] leading-6 font-medium text-foreground">{title}</h2>
         {hint && <p className="mt-2 text-sm text-secondary leading-relaxed">{hint}</p>}
       </div>
     </div>

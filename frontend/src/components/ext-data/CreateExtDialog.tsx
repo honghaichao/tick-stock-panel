@@ -33,6 +33,8 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
   const [label, setLabel] = useState('')
   const [description, setDescription] = useState('')
   const [mode, setMode] = useState<'snapshot' | 'timeseries'>('snapshot')
+  // 市场级表: 行 = 全市场每日一条, 无标的列 (市场环境/情绪指数类), 跳过标的关联
+  const [marketLevel, setMarketLevel] = useState(false)
   const [fields, setFields] = useState<ExtDataField[]>([])
   const [detectedSourceNames, setDetectedSourceNames] = useState<string[]>([])
   const [error, setError] = useState('')
@@ -122,6 +124,22 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
         description: description.trim() || undefined,
         symbol_map: submittedSymbolMap,
         code_map: submittedCodeMap,
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        fields: marketLevel
+          ? userF
+          : [
+            { name: 'symbol', dtype: 'string', label: '标的代码' },
+            { name: 'code', dtype: 'string', label: '代码' },
+            ...userF,
+          ],
+        description: description.trim() || undefined,
+        symbol_map: marketLevel ? {} : submittedSymbolMap,
+        code_map: marketLevel ? {} : submittedCodeMap,
+        market_level: marketLevel,
       })
 
       if (sourceMode === 'url' && (savePull || importNow || enablePull)) {
@@ -173,6 +191,12 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
       && label.trim()
       && fields.some((f) => f.name.trim())
       && matchStatus !== 'none'
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      && (marketLevel || matchStatus !== 'none')
       && (sourceMode !== 'url' || url.trim()),
   )
 
@@ -186,6 +210,15 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
     let status: 'none' | 'partial' | 'full' = 'none'
 
     setDetectedSourceNames(detected.map(f => f.name))
+
+    // 市场级表: 不做标的识别, 直接采认全部检测字段
+    if (marketLevel) {
+      setFields(detected)
+      setSymbolMap({})
+      setCodeMap({})
+      setMatchStatus('full')
+      return
+    }
 
     if (symCands.length === 1 && codeCands.length === 1) {
       sm = { type: 'mapped', col: symCands[0] }
@@ -325,6 +358,12 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-semibold text-foreground">新增扩展数据</h3>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+              <h3 className="text-[16px] leading-6 font-semibold text-foreground">新增扩展数据</h3>
               <p className="text-[11px] mt-1 inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-md font-medium">
                 接入自有数据，与标的自动关联（第三方接口或 CSV/Excel），支持概念、人气、资金流、舆情、研报评分标签等场景
               </p>
@@ -395,6 +434,31 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
                 )
               })}
             </div>
+
+            {/* 市场级: 行=全市场一条, 无标的列 (择时状态/情绪指数类) */}
+            <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-border/60 bg-elevated/40 px-2.5 py-1.5">
+              <input
+                type="checkbox"
+                checked={marketLevel}
+                onChange={e => {
+                  setMarketLevel(e.target.checked)
+                  if (e.target.checked) {
+                    setSymbolMap({})
+                    setCodeMap({})
+                    setMatchStatus('full')
+                  } else {
+                    setMatchStatus('none')
+                  }
+                }}
+                className="h-3.5 w-3.5 shrink-0"
+              />
+              <span className="text-[10px] text-secondary">
+                市场级数据
+                <span className="ml-1 text-muted" title="行 = 全市场每日一条, 无标的代码列。适用于市场环境/情绪指数/择时状态等序列, 跳过标的关联; 通过 /rows 与 /values 接口消费">
+                  每行是全市场一条 (无标的列), 跳过标的关联
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="grid grid-cols-[1fr_1fr] gap-3">
@@ -453,6 +517,12 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
                   onClick={handleDetectUrl}
                   disabled={detecting || !url.trim()}
                   className="h-8 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-medium text-base hover:bg-accent/90 disabled:opacity-40 transition-colors"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                  className="h-8 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-40 transition-colors"
                 >
                   {detecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                   测试识别
@@ -657,6 +727,12 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={addField}
                   className="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-base hover:bg-accent/90 transition-colors"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                  className="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 transition-colors"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   添加字段
@@ -789,6 +865,12 @@ export function CreateExtDialog({ onClose }: { onClose: () => void }) {
               onClick={() => create.mutate()}
               disabled={!valid || create.isPending}
               className="px-5 py-2 rounded-lg bg-accent text-base text-xs font-medium hover:bg-accent/90 disabled:opacity-40 transition-colors shadow-sm shadow-accent/20"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+              className="px-5 py-2 rounded-lg bg-accent text-white text-xs font-medium hover:bg-accent/90 disabled:opacity-40 transition-colors shadow-sm shadow-accent/20"
             >
               {create.isPending ? '创建中…' : '创建'}
             </button>

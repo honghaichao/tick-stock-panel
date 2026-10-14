@@ -54,6 +54,48 @@ def _latest_enriched_date(repo) -> date | None:
         return None
     return cache["date"].max()
 
+# --- THEIR (origin/main) ---
+    latest = cache["date"].max()
+    # 盘中实时缓存可能已进入新交易日, 而历史缓存还停在上次重建时
+    live_date = getattr(repo, "_enriched_cache_date", None)
+    if live_date is not None and live_date > latest:
+        return live_date
+    return latest
+
+
+_PCT_COLS = ["symbol", "date", "change_pct"]
+
+
+def _change_pct_range(repo, start: date, end: date) -> pl.DataFrame | None:
+    """区间内个股涨跌幅(小数制)。
+
+    交易时段实时 enriched 每个 tick 落盘都会换 generation, get_enriched_range
+    的按代校验因此在盘中几乎总返回 None。轮动只读涨跌幅, 校验失败时退回内存
+    历史缓存, 并用当日实时缓存覆盖今天的行(历史缓存里的今天是重建时的旧快照)。
+    """
+    df = repo.get_enriched_range(start, end, columns=_PCT_COLS)
+    if df is not None and not df.is_empty():
+        return df
+
+    hist = repo._enriched_history_cache
+    if hist is None or hist.is_empty() or not set(_PCT_COLS) <= set(hist.columns):
+        return None
+    hist = hist.select(_PCT_COLS).filter(
+        (pl.col("date") >= start) & (pl.col("date") <= end)
+    )
+    live, live_date = repo.get_enriched_latest()
+    if (
+        live_date is not None
+        and start <= live_date <= end
+        and not live.is_empty()
+        and set(_PCT_COLS) <= set(live.columns)
+    ):
+        hist = pl.concat(
+            [hist.filter(pl.col("date") != live_date), live.select(_PCT_COLS)],
+            how="vertical_relaxed",
+        )
+    return hist
+
 
 def _load_concept_map_df(repo, kind: str = "concept") -> tuple[pl.DataFrame, int]:
     """构建并缓存 {symbol_upper → 维度成员} 的已展开 polars 映射表。
@@ -160,6 +202,9 @@ def build_rps_rotation(repo, days: int = 12, kind: str = "concept", level: int |
     df = repo.get_enriched_range(
         start, latest, columns=["symbol", "date", "change_pct"]
     )
+
+# --- THEIR (origin/main) ---
+    df = _change_pct_range(repo, start, latest)
     if df is None or df.is_empty():
         return {"dates": [], "columns": {}, "concept_count": 0}
 

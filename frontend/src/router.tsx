@@ -3,6 +3,14 @@ import { createBrowserRouter, Navigate, useSearchParams } from 'react-router-dom
 import { Layout } from './components/Layout'
 import { Onboarding } from './pages/Onboarding'
 import { Auth } from './pages/Auth'
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+import { lazy, Suspense } from 'react'
+import { createBrowserRouter, Navigate, useSearchParams } from 'react-router-dom'
+import { Layout } from './components/Layout'
 import { useSettings } from './lib/useSharedQueries'
 import { Logo } from './components/Logo'
 import { ExtensionBoundary } from './extensions/ExtensionBoundary'
@@ -32,12 +40,29 @@ const StockAnalysis = lazy(() => import('./pages/StockAnalysis').then(m => ({ de
 const Signals = lazy(() => import('./pages/Signals').then(m => ({ default: m.Signals })))
 const Review = lazy(() => import('./pages/Review').then(m => ({ default: m.Review })))
 const LimitUpLadder = lazy(() => import('./pages/LimitUpLadder').then(m => ({ default: m.LimitUpLadder })))
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+const Data = lazy(() => import('./pages/Data').then(m => ({ default: m.Data })))
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
+const AnalysisDetail = lazy(() => import('./pages/AnalysisDetail').then(m => ({ default: m.AnalysisDetail })))
 const Indices = lazy(() => import('./pages/Indices').then(m => ({ default: m.Indices })))
 const Branding = lazy(() => import('./pages/Branding').then(m => ({ default: m.Branding })))
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })))
 const Regime = lazy(() => import('./pages/Regime').then(m => ({ default: m.Regime })))
 const AbnormalMoves = lazy(() => import('./pages/AbnormalMoves').then(m => ({ default: m.AbnormalMoves })))
 const Dev = lazy(() => import('./pages/Dev').then(m => ({ default: m.Dev })))
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+const Dev = lazy(() => import('./pages/Dev').then(m => ({ default: m.Dev })))
+// Onboarding 只在首次使用时进入, Auth 只在登录页用到 — 均改按需加载
+const Onboarding = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })))
+const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })))
 
 const CORE_ROUTE_PATHS = new Set([
   '/',
@@ -62,6 +87,14 @@ const CORE_ROUTE_PATHS = new Set([
   '/indices',
   '/regime',
   '/abnormal',
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  '/data',
+  '/indices',
+  '/regime',
   '/branding',
   '/settings',
   '/dev',
@@ -98,6 +131,12 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
   if (settings.isLoading) {
     return (
       <div className="min-h-screen bg-base grid place-items-center">
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      <div className="min-h-full bg-base grid place-items-center">
         <div className="flex flex-col items-center gap-3 text-muted">
           <Logo size={28} className="text-foreground" />
           <div className="text-xs">加载中…</div>
@@ -117,6 +156,37 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
 export const router = createBrowserRouter([
   { path: '/onboarding', element: <Onboarding /> },
   { path: '/login', element: <Auth /> },
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+// 按需路由的加载占位 (与 OnboardingGuard 的加载态同风格)
+function RouteFallback() {
+  return (
+    <div className="min-h-full bg-base grid place-items-center">
+      <Logo size={28} className="text-foreground" />
+    </div>
+  )
+}
+
+export const router = createBrowserRouter([
+  {
+    path: '/onboarding',
+    element: (
+      <Suspense fallback={<RouteFallback />}>
+        <Onboarding />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/login',
+    element: (
+      <Suspense fallback={<RouteFallback />}>
+        <Auth />
+      </Suspense>
+    ),
+  },
   {
     path: '/',
     element: (
@@ -149,6 +219,14 @@ export const router = createBrowserRouter([
       { path: 'indices', element: <Indices /> },
     { path: 'regime', element: <Regime /> },
       { path: 'abnormal', element: <AbnormalMoves /> },
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      { path: 'data', element: <Data /> },
+      { path: 'indices', element: <Indices /> },
+    { path: 'regime', element: <Regime /> },
       { path: 'branding', element: <Branding /> },
       { path: 'settings', element: <Settings /> },
       // 隐藏路由：开发者工具（不暴露在菜单，仅供调试）

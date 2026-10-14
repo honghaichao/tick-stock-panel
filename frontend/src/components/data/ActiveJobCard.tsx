@@ -87,6 +87,12 @@ export function ActiveJobCard({ job }: { job: PipelineJob }) {
         {!isDone && (
           <div className="font-mono text-2xl font-bold tracking-tight">
             {job.progress}<span className="text-base text-muted">%</span>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            {job.progress}<span className="text-[16px] leading-6 text-muted">%</span>
           </div>
         )}
       </div>
@@ -122,6 +128,22 @@ export function ActiveJobCard({ job }: { job: PipelineJob }) {
             <Pill label="除权因子" value={cell('sync_adj', `${job.result.adj_factor_symbols ?? 0} 只`)} />
             <Pill label="enriched" value={cell(null, `${job.result.enriched_days ?? 0} 行`)} />
             <Pill label="分钟K" value={cell('sync_minute', `${job.result.minute_rows ?? 0} 行`)} />
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        // 按结果里实际存在的字段渲染: 独立除权因子同步没有日K/分钟K字段, 不显示 "0 天"
+        const pills: { label: string; value: string }[] = []
+        if (job.result.universe_size != null) pills.push({ label: '标的池', value: String(job.result.universe_size) })
+        if (job.result.daily_days != null) pills.push({ label: '日 K', value: cell(null, `${job.result.daily_days} 天`) })
+        if (job.result.adj_factor_symbols != null) pills.push({ label: '除权因子', value: cell('sync_adj', `${job.result.adj_factor_symbols} 只`) })
+        if (job.result.enriched_days != null) pills.push({ label: 'enriched', value: cell(null, `${job.result.enriched_days} 行`) })
+        if (job.result.minute_rows != null) pills.push({ label: '分钟K', value: cell('sync_minute', `${job.result.minute_rows} 行`) })
+        if (pills.length === 0) return null
+        return (
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+            {pills.map(p => <Pill key={p.label} {...p} />)}
           </div>
         )
       })()}

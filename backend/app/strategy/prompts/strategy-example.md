@@ -149,5 +149,8 @@ def filter_history(df: pl.DataFrame, params: dict) -> pl.DataFrame:
 │    反包容忍误差 [0.005]                    │
 │                                            │
 │  ⭐ 评分权重    📈 交易参数                 │
+
+----- THEIR (origin/main) -----
+│  ⭐ 策略权重    📈 交易参数                 │
 └────────────────────────────────────────────┘
 ```

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { StrategyBacktestResult } from './api'
+import { fetchRunningTask, reportTaskFinished, reportTaskRunning } from './taskRegistry'
 
 /**
  * 全局回测任务管理 (SSE 模式 + 任务缓存 + 重连支持)。
@@ -38,6 +39,17 @@ let taskSeq = 0
 let eventSource: EventSource | null = null
 
 const RECONNECT_KEY = 'backtest_reconnect'
+
+// 跨设备接回: 启动时上报注册表, 终态关闭; 其他设备 tryReconnect 无本地键时
+// 从注册表回填。重连/SSE 逻辑本身零改动。
+const TASK_KIND = 'backtest' as const
+
+/** 终态: 关闭注册表项 (其他设备不再视为进行中) 并清本地重连键。 */
+function finishTaskRegistry() {
+  const qs = localStorage.getItem(RECONNECT_KEY)
+  if (qs) reportTaskFinished(TASK_KIND, { qs })
+  localStorage.removeItem(RECONNECT_KEY)
+}
 
 function emit() {
   listeners.forEach(fn => fn())
@@ -89,6 +101,12 @@ async function connectSSE(url: string): Promise<void> {
         current = { ...current, isPending: false, error: message, reconnecting: false }
         emit()
         localStorage.removeItem(RECONNECT_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        finishTaskRegistry()
       }
       return
     }
@@ -137,6 +155,12 @@ async function connectSSE(url: string): Promise<void> {
     es.close()
     eventSource = null
     localStorage.removeItem(RECONNECT_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    finishTaskRegistry()
   })
 
   es.addEventListener('error', (e: MessageEvent) => {
@@ -154,6 +178,12 @@ async function connectSSE(url: string): Promise<void> {
       es.close()
       eventSource = null
       localStorage.removeItem(RECONNECT_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      finishTaskRegistry()
       return
     }
     // 无 data: 连接异常断开。EventSource 会自动重连, 但需给出可见状态并有界放弃,
@@ -241,6 +271,14 @@ export function startBacktest(params: {
   // 存 reconnect 信息 (刷新后用)
   localStorage.setItem(RECONNECT_KEY, qs)
 
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // 存 reconnect 信息 (刷新后用) + 上报注册表 (其他设备可接回)
+  localStorage.setItem(RECONNECT_KEY, qs)
+  reportTaskRunning(TASK_KIND, { qs }, params.strategy_id)
+
   connectSSE(`/api/backtest/strategy/stream?${qs}`)
 }
 
@@ -272,6 +310,12 @@ export async function stopBacktest(): Promise<void> {
     emit()
   }
   localStorage.removeItem(RECONNECT_KEY)
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  finishTaskRegistry()
 }
 
 /** 清除任务状态 (隐藏提示) */
@@ -284,6 +328,29 @@ export function clearBacktest(): void {
 export function tryReconnect(): boolean {
   const qs = localStorage.getItem(RECONNECT_KEY)
   if (!qs) return false
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+/** 换设备接回: 本地无键时从服务端注册表找 running 任务, 回填本地键并走原有重连。 */
+async function adoptFromServer() {
+  if (current && !current.error && !current.result) return // 本机已有活动任务
+  const task = await fetchRunningTask(TASK_KIND)
+  const qs = typeof task?.payload?.qs === 'string' ? task.payload.qs : ''
+  if (!qs || localStorage.getItem(RECONNECT_KEY)) return
+  localStorage.setItem(RECONNECT_KEY, qs)
+  tryReconnect()
+}
+
+/** 恢复: 从 localStorage 读取 reconnect 信息, 重新连接 (刷新后调用);
+ *  本地无键时异步尝试从服务端注册表接回 (换设备场景)。 */
+export function tryReconnect(): boolean {
+  const qs = localStorage.getItem(RECONNECT_KEY)
+  if (!qs) {
+    void adoptFromServer()
+    return false
+  }
   // 有未完成的任务, 重连
   const id = ++taskSeq
   current = { id, isPending: true, result: null, progress: null, error: null, reconnecting: false }

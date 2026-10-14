@@ -53,6 +53,13 @@ def _financial_is_custom() -> bool:
     return custom_sources.provider_has_dataset(provider, "financial")
 
 
+def _financial_capability_label() -> str:
+    """门禁日志标签: "财务数据 ← fuyao" / "…(档位不足)", 便于判断该切哪个源。"""
+    from app.data_providers.capabilities import capability_gate
+    _, label = capability_gate("financial")
+    return label
+
+
 def _fetch_table(
     table: str,
     symbols: list[str],
@@ -63,6 +70,9 @@ def _fetch_table(
     is_custom = _financial_is_custom()
     if not is_custom and not capset.has(Cap.FINANCIAL):
         logger.info("sync_%s skipped: no FINANCIAL capability", table)
+
+# --- THEIR (origin/main) ---
+        logger.info("sync_%s skipped: %s 不可用", table, _financial_capability_label())
         return pl.DataFrame()
     if not symbols:
         logger.warning("sync_%s skipped: no symbols", table)
@@ -252,6 +262,9 @@ def sync_all(data_dir: Path, capset: CapabilitySet) -> dict[str, int]:
     """同步所有财务表。返回 {table: rows}。"""
     if not capset.has(Cap.FINANCIAL) and not _financial_is_custom():
         logger.info("sync_all financials skipped: no FINANCIAL capability")
+
+# --- THEIR (origin/main) ---
+        logger.info("sync_all financials skipped: %s 不可用", _financial_capability_label())
         return {}
 
     symbols = _get_symbols(data_dir)
@@ -333,6 +346,9 @@ class FinancialScheduler:
         self._capset = capset
         if not capset.has(Cap.FINANCIAL) and not _financial_is_custom():
             logger.info("FinancialScheduler skipped: no FINANCIAL capability")
+
+# --- THEIR (origin/main) ---
+            logger.info("FinancialScheduler skipped: %s 不可用", _financial_capability_label())
             return
         # 从持久化恢复上次同步时间: 重启后前端仍能显示真实最后同步时间,而非"尚未同步"
         try:

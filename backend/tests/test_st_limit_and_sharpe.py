@@ -10,6 +10,11 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+# --- THEIR (origin/main) ---
+import importlib.util
+from datetime import date, timedelta
+from pathlib import Path
+
 import polars as pl
 import pytest
 
@@ -17,6 +22,27 @@ from app.backtest.factor import FactorBacktestService
 from app.backtest.matrix import build_market_data_matrix
 from app.indicators.pipeline import compute_limit_signals
 from app.strategy.builtin.near_limit_up import MATRIX_STRATEGY
+
+# --- THEIR (origin/main) ---
+
+_FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
+
+
+def _load_fixture(name: str):
+    spec = importlib.util.spec_from_file_location(f"{name}_fixture", _FIXTURES / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+_near_limit_up = _load_fixture("near_limit_up")
+MATRIX_STRATEGY = _near_limit_up.MATRIX_STRATEGY
+
+
+@pytest.fixture(autouse=True)
+def _migrated_signal_definitions(monkeypatch):
+    """注入迁移自内置的信号定义 (信号列定义驱动, 不依赖运行目录)。"""
+    from tests.signal_seeds import install_pipeline_caches
+    install_pipeline_caches(monkeypatch)
 
 
 def test_near_limit_pct_st_only_on_main_board():

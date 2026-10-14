@@ -44,6 +44,14 @@ _BUILTIN = Path(__file__).resolve().parents[1] / "app" / "strategy" / "builtin"
 def _engine() -> StrategyEngine:
     return StrategyEngine(strategy_dirs=[_BUILTIN, _BUILTIN.parent / "custom"])
 
+# --- THEIR (origin/main) ---
+_FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
+_RESEARCH = Path(__file__).resolve().parents[1] / "app" / "strategy" / "research"
+
+
+def _engine() -> StrategyEngine:
+    return StrategyEngine(strategy_dirs=[_FIXTURES, _RESEARCH, _FIXTURES.parent / "custom"])
+
 
 def _resolve_research_plan(engine: StrategyEngine, asset_type: str = "stock"):
     research = engine.get("factor_rank_research")

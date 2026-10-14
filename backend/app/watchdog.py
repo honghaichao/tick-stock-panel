@@ -39,6 +39,9 @@ def default_probe(write_lock: threading.Lock | None = None) -> None:
         # 持锁几十秒, 旧 1s 阈值让看门狗把"忙"当"僵死"直接自杀, 自愈变成自毁。
         # 30s 仍能在真死锁 (collect 闸 / 写锁永久挂起) 触发, 兜底不变。
         acquired = write_lock.acquire(timeout=30.0)
+
+# --- THEIR (origin/main) ---
+        acquired = write_lock.acquire(timeout=1.0)
         if not acquired:
             raise TimeoutError("repository write lock unavailable")
         write_lock.release()
@@ -75,6 +78,11 @@ class HealthWatchdog:
                     asyncio.to_thread(self._probe), timeout=self._probe_timeout_s
                 )
                 self._consecutive_failures = 0
+            except asyncio.CancelledError:
+                # 取消必须穿透: stop() 靠 task.cancel() 结束本循环, 若被下面的
+                # BaseException 分支吞掉, 取消会被误计为一次"探测失败"且循环
+                # 继续运行 — stop() 的 await self._task 永久等待 (关闭死锁)。
+                raise
             except BaseException as exc:  # 探测任何异常都算失败 (含 to_thread 超时)
                 self._consecutive_failures += 1
                 logger.error(

@@ -58,6 +58,13 @@ def get_settings() -> dict:
     from app.services.ai_provider import (
         ai_configured,
         current_ai_model,
+
+# --- THEIR (origin/main) ---
+        current_ai_context_window,
+        current_ai_max_output_tokens,
+        current_ai_model,
+        current_ai_protocol,
+        current_ai_round_checkpoint,
         current_codex_command,
         current_codex_model,
         current_codex_reasoning_effort,
@@ -82,6 +89,13 @@ def get_settings() -> dict:
         "onboarding_completed": preferences.get_onboarding_completed(),
         # AI 配置
         "ai_provider": ai_provider,
+
+# --- THEIR (origin/main) ---
+        # 配置文件位置 (AI 与数据源 Key 统一存放, 支持外部编辑后热加载)
+        "secrets_path": str(secrets_store.file_path()),
+        # AI 配置
+        "ai_provider": ai_provider,
+        "ai_protocol": current_ai_protocol(),
         "ai_base_url": secrets_store.get_ai_config("ai_base_url", settings.ai_base_url),
         "ai_api_key_masked": secrets_store.mask(secrets_store.get_ai_key()),
         "has_ai_key": bool(secrets_store.get_ai_key()),
@@ -95,6 +109,7 @@ def get_settings() -> dict:
         "ai_user_agent": secrets_store.get_ai_config("ai_user_agent", settings.ai_user_agent),
         "ai_max_output_tokens": current_ai_max_output_tokens(),
         "ai_context_window": current_ai_context_window(),
+        "ai_round_checkpoint": current_ai_round_checkpoint(),
     }
 
 
@@ -144,6 +159,10 @@ def save_tickflow_key(req: TickflowKeyIn, request: Request) -> dict:
     """
     from app.tickflow.policy import (
         base_tier_name, is_invalid_key,
+
+# --- THEIR (origin/main) ---
+        base_tier_name,
+        is_invalid_key,
     )
 
     key = req.api_key.strip()
@@ -251,12 +270,58 @@ class AiSettingsIn(BaseModel):
     base_url: str = ""
     api_key: str | None = None
     model: str = ""
+    protocol: str = ""              # chat_completions | responses; 空=保持原值
     reasoning_effort: str = Field(default="high", max_length=64)
     codex_command: str = ""
     codex_reasoning_effort: str = ""
     user_agent: str = ""
     max_output_tokens: int | None = None   # 输出上限, 钳制所有任务的 max_tokens
     context_window: int | None = None      # 输入上下文窗口上限 (约 token)
+    round_checkpoint: int | None = None    # 助手工具轮次检查点; 0=不检查
+
+
+class AiTestIn(BaseModel):
+    """草稿连通性测试入参 — 只读表单值, 与保存完全解耦。"""
+
+    provider: str = "openai_compat"
+    base_url: str = ""
+    api_key: str | None = None      # 留空回退已保存 Key (改模型/协议不必重输)
+    model: str = ""
+    protocol: str = ""
+
+
+@router.post("/ai/test")
+async def test_ai_settings(req: AiTestIn) -> dict:
+    """用当前表单值发一次最小请求验证连通性, 不保存/不修改任何配置。
+
+    与 POST /ai (保存) 解耦: 测试失败不影响已保存配置, 状态栏也不会把
+    未验证的草稿展示为已生效。错误保留 200 包体 (ok=false), 由前端内联
+    展示在测试结果徽章, 不触发全局 toast。
+    """
+    from app.services.ai_provider import (
+        RESPONSES_PROTOCOL,
+        _format_openai_error,
+        _is_openai_transport_error,
+        probe_ai_config,
+    )
+
+    provider = req.provider or "openai_compat"
+    api_key = (req.api_key or "").strip() or (secrets_store.get_ai_key() or "")
+    protocol = req.protocol if req.protocol == RESPONSES_PROTOCOL else ""
+    try:
+        text = await probe_ai_config(
+            provider=provider,
+            api_key=api_key,
+            base_url=req.base_url.strip(),
+            model=req.model.strip(),
+            protocol=protocol,
+        )
+    except Exception as exc:  # noqa: BLE001 — 连通性测试: 任何异常都转为结果回报
+        detail = str(exc) or repr(exc)
+        if _is_openai_transport_error(exc):
+            detail = _format_openai_error(exc)
+        return {"ok": False, "error": detail, "error_type": type(exc).__name__}
+    return {"ok": True, "model": req.model.strip() or provider, "response": text[:80]}
 
 
 @router.post("/ai")
@@ -268,6 +333,18 @@ def save_ai_settings(req: AiSettingsIn) -> dict:
         ai_configured,
         current_ai_model,
         current_ai_provider,
+
+# --- THEIR (origin/main) ---
+        CHAT_COMPLETIONS_PROTOCOL,
+        OPENAI_PROVIDER,
+        RESPONSES_PROTOCOL,
+        ai_configured,
+        current_ai_context_window,
+        current_ai_max_output_tokens,
+        current_ai_model,
+        current_ai_protocol,
+        current_ai_provider,
+        current_ai_round_checkpoint,
         current_codex_command,
         current_codex_model,
         current_codex_reasoning_effort,
@@ -299,6 +376,12 @@ def save_ai_settings(req: AiSettingsIn) -> dict:
         if req.base_url:
             updates["ai_base_url"] = req.base_url
             settings.ai_base_url = req.base_url
+        if req.protocol:
+            # 协议仅对 openai/openai_compat 有意义; 非法值 fail-loud, 避免静默落错协议。
+            if req.protocol not in (CHAT_COMPLETIONS_PROTOCOL, RESPONSES_PROTOCOL):
+                raise HTTPException(status_code=400, detail=f"不支持的协议: {req.protocol}")
+            updates["ai_protocol"] = req.protocol
+            settings.ai_protocol = req.protocol
         if req.api_key is not None:
             if req.api_key:
                 updates["ai_api_key"] = req.api_key
@@ -326,6 +409,12 @@ def save_ai_settings(req: AiSettingsIn) -> dict:
             raise HTTPException(status_code=400, detail="上下文窗口必须为正整数")
         updates["ai_context_window"] = req.context_window
         settings.ai_context_window = req.context_window
+    if req.round_checkpoint is not None:
+        # 0=关闭检查点(不询问), 正值须 ≥5 防误填 1/2 造成每轮都弹卡
+        if req.round_checkpoint != 0 and req.round_checkpoint < 5:
+            raise HTTPException(status_code=400, detail="轮次检查点须为 0(不检查)或不小于 5 的整数")
+        updates["ai_round_checkpoint"] = req.round_checkpoint
+        settings.ai_round_checkpoint = req.round_checkpoint
 
     if updates:
         secrets_store.save(updates)
@@ -334,6 +423,7 @@ def save_ai_settings(req: AiSettingsIn) -> dict:
     return {
         "ok": True,
         "ai_provider": provider,
+        "ai_protocol": current_ai_protocol(),
         "ai_model": current_ai_model(),
         "ai_openai_model": current_openai_model(),
         "ai_reasoning_effort": current_openai_reasoning_effort(),
@@ -343,6 +433,7 @@ def save_ai_settings(req: AiSettingsIn) -> dict:
         "ai_configured": ai_configured(provider),
         "ai_max_output_tokens": current_ai_max_output_tokens(),
         "ai_context_window": current_ai_context_window(),
+        "ai_round_checkpoint": current_ai_round_checkpoint(),
     }
 
 
@@ -367,6 +458,12 @@ def clear_ai_settings() -> dict:
     secrets_store.clear("ai_provider", "ai_base_url", "ai_api_key", "ai_model", "ai_codex_command", "ai_codex_reasoning_effort", "ai_max_output_tokens", "ai_context_window")
     # 同步重置运行时内存(provider 回默认值,其余置空)
     settings.ai_provider = "openai_compat"
+
+# --- THEIR (origin/main) ---
+    secrets_store.clear("ai_provider", "ai_protocol", "ai_base_url", "ai_api_key", "ai_model", "ai_codex_command", "ai_codex_reasoning_effort", "ai_max_output_tokens", "ai_context_window")
+    # 同步重置运行时内存(provider 回默认值,其余置空)
+    settings.ai_provider = "openai_compat"
+    settings.ai_protocol = "chat_completions"
     settings.ai_base_url = ""
     settings.ai_api_key = ""
     settings.ai_model = ""
@@ -375,7 +472,57 @@ def clear_ai_settings() -> dict:
     settings.ai_max_output_tokens = 8192
     settings.ai_context_window = 64000
 
+# --- THEIR (origin/main) ---
+    settings.ai_max_output_tokens = 16384
+    settings.ai_context_window = 128000
+
     return {"ok": True}
+
+
+@router.get("/ai/sponsor-models")
+async def list_sponsor_models() -> dict:
+    """代理获取赞助商(RunningHub)的模型列表。
+
+    其网关按 Origin 头过滤: 浏览器跨域请求只会拿到国产模型子集,
+    服务端请求无 Origin 头可取全量, 故由后端代理转发。
+
+    /v1/models 除 id 外还携带 pricing (discountRate/分层单价) 与
+    context_length; 精简为 items 下发供前端展示折扣徽章与价格,
+    models 保持纯 id 列表向后兼容。
+    """
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get("https://llm.runninghub.ai/v1/models")
+            res.raise_for_status()
+            data = res.json()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"获取模型列表失败: {exc}") from exc
+
+    def _amount(pricing: dict, dim: str) -> float | None:
+        value = (pricing.get(dim) or {}).get("amount")
+        return float(value) if isinstance(value, (int, float)) else None
+
+    items: list[dict] = []
+    for raw in data.get("data", []):
+        if not isinstance(raw, dict):
+            continue
+        model_id = raw.get("id")
+        if not isinstance(model_id, str) or not model_id:
+            continue
+        pricing = raw.get("pricing") if isinstance(raw.get("pricing"), dict) else {}
+        rate = pricing.get("discountRate")
+        context_length = raw.get("context_length")
+        items.append({
+            "id": model_id,
+            "context_length": context_length if isinstance(context_length, int) else None,
+            "discount_rate": float(rate) if isinstance(rate, (int, float)) else 1.0,
+            "input_price": _amount(pricing, "input"),
+            "output_price": _amount(pricing, "output"),
+        })
+    items.sort(key=lambda x: x["id"])
+    return {"models": [item["id"] for item in items], "items": items}
 
 
 # ===== 偏好设置 =====
@@ -390,6 +537,9 @@ def _minute_history_days() -> int | None:
     """当前分钟源的 1 分钟历史深度(交易日); None = 深历史(tickflow 基准)。
 
     provider 可选类属性 minute_history_days 声明 (如 stock-sdk = 5,
+
+# --- THEIR (origin/main) ---
+    provider 可选类属性 minute_history_days 声明 (如浅源 = 5,
     免费分时接口只保留最近 5 个交易日); 未声明或走 tickflow 时视为深历史。
     前端分时档位/默认值据此收窄。
     """
@@ -556,6 +706,7 @@ def get_preferences() -> dict:
         "monitor_ext_fields": preferences.get_monitor_ext_fields(),
         "nav_order": preferences.get_nav_order(),
         "nav_hidden": preferences.get_nav_hidden(),
+        "dashboard_layout": preferences.get_dashboard_layout(),
         "screener_auto_run": preferences.get_screener_auto_run(),
         "limit_ladder_monitor_enabled": preferences.get_limit_ladder_monitor_enabled(),
         "depth_polling_interval": preferences.get_depth_polling_interval(),
@@ -723,6 +874,26 @@ def save_data_source(req: CustomSourceIn) -> dict:
     from app.data_providers import custom as custom_sources
     config = req.model_dump()
     config["name"] = (config.get("name") or "").lower()
+
+# --- THEIR (origin/main) ---
+    """创建或更新一个自定义数据源 yaml, 保存后自动 reload。
+
+    先验后存 (对齐插件 Key 的先探后存语义): 用与加载同一套校验试建临时
+    provider, 不通过直接 400 且不落盘 — 否则 YAML 写入但 load_all 校验失败,
+    源从列表静默消失, 前端还弹"已保存"成功提示 (用户反馈: 全量分钟缺
+    amount 映射被拒, 以为存上了)。
+    """
+    from app.data_providers import custom as custom_sources
+    config = req.model_dump()
+    config["name"] = (config.get("name") or "").lower()
+    probe = None
+    try:
+        probe = custom_sources.create_provider(config)  # 失败自抛 ValueError(含全部校验原因)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    finally:
+        if probe is not None:
+            probe.close()  # 临时探针(仅校验用), 不留连接资源
     try:
         custom_sources.save_config(config["name"], config)
         custom_sources.load_all()
@@ -872,6 +1043,22 @@ def update_nav_hidden(req: NavHiddenIn) -> dict:
     from app.services import preferences
     saved = preferences.set_nav_hidden(req.nav_hidden)
     return {"nav_hidden": saved}
+
+
+class DashboardLayoutIn(BaseModel):
+    """看板自定义布局; layout=null 恢复默认。"""
+    layout: dict | None = None
+
+
+@router.put("/preferences/dashboard-layout")
+def update_dashboard_layout(req: DashboardLayoutIn) -> dict:
+    """保存看板自定义布局(网格 blob); null = 清除回默认布局。"""
+    from app.services import preferences
+    try:
+        saved = preferences.set_dashboard_layout(req.layout)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return {"dashboard_layout": saved}
 
 
 @router.put("/preferences/watchlist-columns")
@@ -1157,6 +1344,48 @@ class MainlineFilterIn(BaseModel):
     exclude_st: bool | None = None
 
 
+class EmotionScoreConfigIn(BaseModel):
+    """情绪评分口径 (维度权重 / 子项权重与归一化区间 / 档位阈值)。
+
+    config 为整棵树或 null — 传 null 表示恢复出厂口径。不做逐字段白名单:
+    结构由 emotion_score.merge_config 归一化 (未知 key 丢弃、缺项补默认、
+    阈值乱序自动重排), 用户改坏权重也不会让看板算不出分。
+    """
+
+    config: dict | None = None
+
+
+@router.get("/emotion-score/config")
+def get_emotion_score_config() -> dict:
+    """情绪评分口径: 当前配置 + 出厂默认 + 维度顺序 + 档位名。
+
+    看板「情绪雷达」卡片的配置对话框一次拉全 —— 前端不硬编码任何权重/区间/
+    阈值字面量, 表单全部由本接口返回的结构渲染。
+    """
+    from app.services import preferences
+    from app.services.emotion_score import public_config
+
+    payload = public_config(preferences.get_emotion_score_config())
+    payload["customized"] = preferences.get_emotion_score_config() is not None
+    return payload
+
+
+@router.put("/emotion-score/config")
+def update_emotion_score_config(req: EmotionScoreConfigIn) -> dict:
+    """保存情绪评分口径; config 传 null/{} = 恢复出厂。
+
+    形状校验在 preferences 层 (经 emotion_score.merge_config), 值的合法性
+    (负权重/区间倒置/阈值乱序) 由计算时归一化兜底, 故此处不做逐字段白名单。
+    """
+    from app.services import preferences
+    from app.services.emotion_score import public_config
+
+    saved = preferences.set_emotion_score_config(req.config)
+    payload = public_config(saved)
+    payload["customized"] = saved is not None
+    return payload
+
+
 @router.put("/preferences/mainline-filter")
 def update_mainline_filter(req: MainlineFilterIn) -> dict:
     """更新市场主线过滤配置。部分更新; 修改后需重算主线(POST /api/regime/mainline/recompute)生效。
@@ -1212,6 +1441,9 @@ def update_feishu_webhook(req: FeishuWebhookPrefsIn) -> dict:
     from app.services import preferences
     from app.services import webhook_adapter
 
+# --- THEIR (origin/main) ---
+    from app.services import preferences, webhook_adapter
+
     url = (req.url or "").strip()
     if url and not webhook_adapter.is_valid_feishu_url(url):
         raise HTTPException(
@@ -1237,6 +1469,9 @@ def update_wecom_webhook(req: WecomWebhookPrefsIn) -> dict:
     """
     from app.services import preferences
     from app.services import webhook_adapter
+
+# --- THEIR (origin/main) ---
+    from app.services import preferences, webhook_adapter
 
     url = (req.url or "").strip()
     if url and not webhook_adapter.is_valid_wecom_url(url):
@@ -1343,6 +1578,9 @@ def test_webhook(req: WebhookTestIn) -> dict:
     """
     from app.services import preferences
     from app.services import webhook_adapter
+
+# --- THEIR (origin/main) ---
+    from app.services import preferences, webhook_adapter
 
     title = "TickFlow Stock Panel 推送测试"
     body = "如果你看到这条消息，说明推送配置正确 🎉"
@@ -1906,6 +2144,9 @@ def update_review_schedule(req: ReviewScheduleIn, request: Request) -> dict:
 
     # 动态操作 APScheduler job
     from app.jobs.daily_pipeline import _register_review_job, REVIEW_JOB_ID
+
+# --- THEIR (origin/main) ---
+    from app.jobs.daily_pipeline import REVIEW_JOB_ID, _register_review_job
     scheduler = getattr(request.app.state, "scheduler", None)
     if scheduler:
         if sched["enabled"]:
@@ -1943,3 +2184,41 @@ def update_review_push(req: ReviewPushIn) -> dict:
     if req.mode is not None:
         mode = preferences.set_review_push_mode(req.mode)
     return {"review_push_channels": saved, "review_push_mode": mode}
+
+
+# ================================================================
+# API Token 管理 (open-platform-plan §4) — 仅 UI 会话可达
+# (挂在 /api/settings 前缀下, 受访问密码保护; Token 通道无对应 scope,
+#  网关规则表里没有本组端点, Bearer 调用会被 403 拒绝)
+# ================================================================
+class ApiTokenCreateIn(BaseModel):
+    name: str
+    scopes: list[str]
+
+
+@router.get("/api-tokens")
+def api_tokens_list(request: Request) -> dict:
+    from app.services import api_tokens as svc
+
+    return {"tokens": svc.list_tokens(request.app.state.repo.store.data_dir)}
+
+
+@router.post("/api-tokens")
+def api_tokens_create(body: ApiTokenCreateIn, request: Request) -> dict:
+    """创建 Token — 明文只在本次响应出现一次, 前端弹窗提示立即保存。"""
+    from app.services import api_tokens as svc
+
+    try:
+        record, plaintext = svc.create_token(request.app.state.repo.store.data_dir, body.name, body.scopes)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return {"token": record, "plaintext": plaintext}
+
+
+@router.delete("/api-tokens/{token_id}")
+def api_tokens_revoke(token_id: str, request: Request) -> dict:
+    from app.services import api_tokens as svc
+
+    if not svc.revoke_token(request.app.state.repo.store.data_dir, token_id):
+        raise HTTPException(status_code=404, detail=f"Token '{token_id}' 不存在")
+    return {"status": "revoked", "id": token_id}

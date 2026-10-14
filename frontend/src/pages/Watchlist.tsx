@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, RefreshCw, Star, X, Search, LayoutGrid, List, Rows3, BarChart3, Settings2, Plus, Check, Filter, Eye, EyeOff, Minus, ChevronsUp, Clock, RotateCcw, FileUp, FolderOpen, FolderMinus, FolderPlus } from 'lucide-react'
 import { api, type KlineRow, type MinuteKlineRow, type WatchlistGroup, type WatchlistGroupColor } from '@/lib/api'
 import { fetchMinuteBatchIncremental } from '@/lib/minuteBatchIncremental'
+import { extendMinuteTail } from '@/lib/minuteTailExtend'
 import { QK } from '@/lib/queryKeys'
 import { storage } from '@/lib/storage'
 import { fmtPrice, fmtPct, fmtBigNum, priceColorClass, formatExtNumber } from '@/lib/format'
@@ -785,6 +786,7 @@ export function Watchlist() {
   const list = useQuery({
     queryKey: QK.watchlist,
     queryFn: api.watchlistList,
+    staleTime: 30_000,  // 清单慢变 (增删后 mutation 会失效), 减少切页重拉
   })
 
   const groupList = useQuery({
@@ -824,6 +826,26 @@ export function Watchlist() {
   )
   const minuteSymbolsKey = minuteSymbols.join(',')
 
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // symbol 派生只依赖 enriched.data: 旧写法 symbols 每次渲染都是新引用 (击穿 memo)
+  // 且 filter×find 为 O(n²), 实时行情每 tick 重渲染时放大为每秒全量比较。
+  // 指数无本地分钟K数据, 分时批量请求剔除指数 symbol (省请求, 避免逐只 404)
+  const enrichedRows = enriched.data?.rows
+  const { symbols, symbolsKey, minuteSymbols, minuteSymbolsKey } = useMemo(() => {
+    const rows = enrichedRows ?? []
+    const syms = rows.map((r: any) => r.symbol)
+    const nonIndex = rows.filter((r: any) => r.asset_type !== 'index').map((r: any) => r.symbol)
+    return {
+      symbols: syms,
+      symbolsKey: syms.join(','),
+      minuteSymbols: nonIndex,
+      minuteSymbolsKey: nonIndex.join(','),
+    }
+  }, [enrichedRows])
+
   // 实时行情状态 (提前到此处: 分时轮询判断需要 realtimeRunning)
   const quoteStatus = useQuoteStatus()
   const realtimeRunning = quoteStatus.data?.running ?? false
@@ -834,6 +856,9 @@ export function Watchlist() {
     queryFn: () => api.klineDailyBatch(symbols, candleDays),
     enabled: dailyKVisible && symbols.length > 0 && !groupCardsOpen,
     staleTime: 5 * 60_000,  // 5 分钟内不重请求
+    // 改蜡烛天数/增删自选时沿用上一份批量数据 (按 symbol 查表渲染, 旧键不会被读到),
+    // 避免整列蜡烛闪空 — 与 Screener 批量查询同款
+    placeholderData: (prev: any) => prev,
   })
 
   // 当日蜡烛实时修补: 历史 K 线按 staleTime 周期拉取 (见 queryKeys 注释), 最后一根
@@ -891,6 +916,18 @@ export function Watchlist() {
       const tickFresh = Date.now() - enriched.dataUpdatedAt < 10_000
       return tickFresh ? 30_000 : intradayRefreshInterval * 1000
     },
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      // 非连续竞价时段 (盘后/周末/节假日) 分钟K不可变, 降为 60s 兜底而非按用户间隔空转;
+      // 字段缺失 (旧后端) 时保持原行为
+      if (quoteStatus.data?.is_trading_hours === false) return 60_000
+      const tickFresh = Date.now() - enriched.dataUpdatedAt < 10_000
+      return tickFresh ? 30_000 : intradayRefreshInterval * 1000
+    },
+    placeholderData: (prev: any) => prev,
   })
 
   // 分时图 SSE 续画: enriched 行情列每 tick 刷新 (SSE 触发), 前端本地续写分钟序列
@@ -936,6 +973,21 @@ export function Watchlist() {
       }
     }
     return patched
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // 新鲜度守卫 (见 extendMinuteTail): 只对行情日期为当日的资产类型续画 — ETF
+  // 未开实时拉取时 enriched close 是旧日K回退值, 拼到当日分钟K尾部会画错价。
+  const minuteData = useMemo(() => {
+    if (!intradayVisible) return {}
+    return extendMinuteTail(
+      minuteBatch.data?.data ?? {},
+      enriched.data?.rows,
+      enriched.data?.dates,
+      new Date(),
+    )
   }, [intradayVisible, minuteBatch.data, enriched.data])
 
   const addMutation = useMutation({
@@ -1101,6 +1153,12 @@ export function Watchlist() {
   const watchlistContentLoading = list.isLoading || (allSymbols.length > 0 && enriched.isLoading)
 
   // 实时监控圆点: 仅 Free/低档 "按自选股实时监控" 模式 (mode === 'watchlist') 下显示;
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // 实时监控圆点: 仅 Free/低档 "按自选实时监控" 模式 (mode === 'watchlist') 下显示;
   // 全市场模式 (mode === 'full_market') 全部标的都在监控, 标圆点无意义, 故不显示。
   // 后端自选实时模式实际只监控自选页前 N 个 (N = watchlist_symbol_count), 顺序与 allSymbols 一致。
   const realtimeMode = quoteStatus.data?.mode
@@ -1348,6 +1406,12 @@ export function Watchlist() {
     <div className="flex flex-col h-full">
       <PageHeader
         title="自选股"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        title="自选"
         titleExtra={
           <span className="inline-flex items-center gap-1.5">
             {/* 计数胶囊: 显示数/总数, mono 字体突出数字 */}
@@ -1630,6 +1694,12 @@ export function Watchlist() {
             <EmptyState
               icon={Star}
               title="自选股为空"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+              title="自选为空"
               hint="点击右上角搜索添加标的，或用导入按钮从券商自选 CSV / 截图批量导入、粘贴代码。"
             />
           ) : rowsInSelectedGroup.length === 0 ? (
@@ -1947,6 +2017,12 @@ export function Watchlist() {
               <h3 className="text-sm font-medium text-foreground mb-2">确认清空自选</h3>
               <p className="text-xs text-secondary mb-5">
                 将移除全部 {allSymbols.length} 只自选股，此操作不可恢复。
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                将移除全部 {allSymbols.length} 只自选，此操作不可恢复。
               </p>
               <div className="flex items-center justify-end gap-2">
                 <button

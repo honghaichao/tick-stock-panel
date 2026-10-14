@@ -19,6 +19,13 @@ import { QK } from '@/lib/queryKeys'
 import { fmtBigNum, fmtPct, fmtPrice, priceColorClass } from '@/lib/format'
 import { useChartTheme } from '@/lib/theme'
 
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+import { lazy, Suspense } from 'react'
+import type { NavItem } from '@/lib/listNav'
+
 export type DimensionKind = 'concept' | 'industry'
 
 export interface DimensionMembersTarget {
@@ -29,6 +36,14 @@ export interface DimensionMembersTarget {
   date?: string
 }
 
+export interface Props {
+  target: DimensionMembersTarget | null
+  onClose: () => void
+  onStockClick?: (symbol: string, name?: string, navList?: NavItem[]) => void
+}
+
+// 由 sourceField 判定维度类别 — 纯函数留在壳层, widgets/ScreenerTable/Watchlist
+// 对本模块的静态引用因此不含 lightweight-charts
 export function dimensionKindForSourceField(sourceField: string): DimensionKind | null {
   const separator = sourceField.indexOf('.')
   const field = (separator >= 0 ? sourceField.slice(separator + 1) : sourceField).trim().toLowerCase()
@@ -76,6 +91,15 @@ function stockName(row: Record<string, any>): string {
 function stockSymbol(row: Record<string, any>): string {
   return String(row.symbol ?? row.code ?? row['股票代码'] ?? row['代码'] ?? '')
 }
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+// 懒加载壳: target 为空时不挂载内容 → lightweight-charts 不随各列表页首屏加载
+const DimensionMembersDialogContent = lazy(() =>
+  import('./DimensionMembersDialogContent').then(m => ({ default: m.DimensionMembersDialogContent })),
+)
 
 export function DimensionMembersDialog({ target, onClose, onStockClick }: Props) {
   if (!target) return null
@@ -535,5 +559,18 @@ function IntradayChart({ points, kind }: { points: DimensionIntradayPoint[]; kin
     <div className="px-2 pb-2 pt-1">
       <div ref={containerRef} className="w-full" />
     </div>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    <Suspense fallback={null}>
+      <DimensionMembersDialogContent
+        key={`${target.sourceField}:${target.value}:${target.date ?? ''}`}
+        target={target}
+        onClose={onClose}
+        onStockClick={onStockClick}
+      />
+    </Suspense>
   )
 }

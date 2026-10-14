@@ -7,6 +7,19 @@ import { api, type CustomSignal, type CustomSignalCondition, type CustomSignalFi
 import { QK } from '@/lib/queryKeys'
 import { useDialogBackdrop } from '@/lib/useDialogBackdrop'
 
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Loader2, Save, Sparkles, X } from 'lucide-react'
+import { api, type CustomSignal } from '@/lib/api'
+import { QK } from '@/lib/queryKeys'
+import { useDialogBackdrop } from '@/lib/useDialogBackdrop'
+import { ConditionEditor } from './ConditionEditor'
+
 interface Props {
   open: boolean
   signal?: CustomSignal | null
@@ -121,6 +134,13 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
   const addCond = () => setDraft(d => ({ ...d, conditions: [...d.conditions, { left: 'close', op: '>', right: '0', leftDays: 0, rightDays: 0 }] }))
   const removeCond = (idx: number) => setDraft(d => ({ ...d, conditions: d.conditions.filter((_, i) => i !== idx) }))
 
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  const updateConditions = (conditions: CustomSignal['conditions']) =>
+    setDraft(d => ({ ...d, conditions }))
+
   return (
     <AnimatePresence>
       {open && (
@@ -181,6 +201,16 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] text-muted">条件（多条件为「且」关系）</span>
                   <div className="flex items-center gap-2 shrink-0">
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                <ConditionEditor
+                  conditions={draft.conditions}
+                  onChange={updateConditions}
+                  options={{ fields, groups, stringFields, operators, stringOperators, maxDays }}
+                  headerExtra={
                     <button
                       onClick={() => setAiOpen(o => !o)}
                       className={`inline-flex items-center gap-1 text-[11px] cursor-pointer transition-colors ${aiOpen ? 'text-amber-400' : 'text-amber-400/80 hover:text-amber-400'}`}
@@ -229,6 +259,13 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
                     )
                   })}
                 </div>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                  }
+                />
                 {aiOpen && (
                   <div className="rounded-card border border-amber-400/30 bg-amber-400/5 p-3 space-y-2">
                     <div className="flex items-center gap-2">
@@ -255,6 +292,12 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
                             onClick={generateByAI}
                             disabled={aiLoading}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-amber-500/90 text-base text-xs font-medium disabled:opacity-50 cursor-pointer"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-amber-500/90 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
                           >
                             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                             {aiLoading ? '生成中…' : '生成条件'}
@@ -275,6 +318,12 @@ export function CustomSignalDialog({ open, signal, defaultKind = 'exit', onClose
             <div className="flex justify-end gap-2 border-t border-border/50 px-5 py-4">
               <button onClick={onClose} className="px-4 py-1.5 rounded-btn bg-elevated text-secondary text-xs">取消</button>
               <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-amber-500/90 text-base text-xs font-medium disabled:opacity-50">
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+              <button onClick={() => save.mutate()} disabled={save.isPending} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-btn bg-amber-500/90 text-white text-xs font-medium disabled:opacity-50">
                 <Save className="h-3.5 w-3.5" />保存
               </button>
             </div>

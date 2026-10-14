@@ -32,6 +32,12 @@ import {
 } from '@/lib/useSharedQueries'
 import { useToggleRealtimeQuotes, useUpdateQuoteInterval } from '@/lib/useSharedMutations'
 import { MissingCapChip, routeCapUsable, routeProviderDisplay, type RouteCapId } from '@/lib/capability-labels'
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+import { MissingCapChip, routeCap, routeCapUsable, routeProviderDisplay, type RouteCapId } from '@/lib/capability-labels'
 import { QK } from '@/lib/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
 import { useAdjFactorSyncGate } from '@/components/AdjFactorSyncGate'
@@ -48,6 +54,14 @@ import { ExtendHistoryPanel } from '@/components/data/ExtendHistoryPanel'
 import { RepairDailyPanel } from '@/components/data/RepairDailyPanel'
 import { EnrichedRebuildPanel } from '@/components/data/EnrichedRebuildPanel'
 import { MinuteSyncConfig } from '@/components/data/MinuteSyncConfig'
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+import { FinancialSyncPanel } from '@/components/data/FinancialSyncPanel'
+import { MinuteSyncConfig } from '@/components/data/MinuteSyncConfig'
+import { AdjFactorSyncConfig } from '@/components/data/AdjFactorSyncConfig'
 import { RegimeConfigCard } from '@/components/data/RegimeConfigCard'
 import { PipelineScopeConfig } from '@/components/data/PipelineScopeConfig'
 import { PageSettingsModal, getCardVisibility, getCardOrder, type CardKey } from '@/components/data/PageSettingsModal'
@@ -66,6 +80,8 @@ export function Data() {
 
   const caps = useCapabilities()
   const settings = useSettings()
+  // 测试端点仅探测 TickFlow 通道 — 未配置 TickFlow Key 时隐藏入口
+  const hasTickflowKey = settings.data?.has_tickflow_key ?? settings.data?.mode === 'api_key'
 
   const status = useDataStatus({
     refetchInterval: (query) => {
@@ -126,6 +142,12 @@ export function Data() {
     mutationFn: api.dataClear,
     onSuccess: () => {
       // 清库删除全部 parquet + alerts, 各页 (看板/自选/选股/指数/财务/个股/连板/监控) 缓存
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      // 清库删除全部 parquet + alerts, 各页 (看板/自选/策略/指数/财务/个股/连板/监控) 缓存
       // 数据均已失效, 故广域失效所有 query 令其重取 —— 数据已清空, 全量刷新是正确行为而非误伤。
       qc.invalidateQueries()
       setShowClearConfirm(false)
@@ -268,6 +290,19 @@ export function Data() {
     ...(indexAuto ? ['指数'] : []),
     ...(etfAuto ? ['ETF'] : []),
     ...((hasMinuteCap && minuteAuto) ? ['分钟K'] : []),
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // 管道步骤 + 各步能力路由 (路由徽标数据源 = 能力矩阵, 单一权威; 指标为本地计算无路由)
+  const pipelineSteps: { label: string; cap?: RouteCapId }[] = [
+    { label: '日K', cap: 'daily' },
+    ...(hasAdjCap ? [{ label: '复权', cap: 'adj_factor' as const }] : []),
+    { label: '指标' },
+    ...(indexAuto ? [{ label: '指数', cap: 'daily' as const }] : []),
+    ...(etfAuto ? [{ label: 'ETF', cap: 'daily' as const }] : []),
+    ...((hasMinuteCap && minuteAuto) ? [{ label: '分钟K', cap: 'minute' as const }] : []),
   ]
 
   // 数据画像卡片显隐(由页面设置弹窗控制,存 localStorage)
@@ -456,6 +491,8 @@ export function Data() {
             customProvider={routeProviderDisplay(matrix.data, 'adj_factor')}
             auto
             onShowFields={() => setSchemaTable('adj_factor')}
+            onSettings={() => setOpenSettings(v => v === 'adj_factor' ? null : 'adj_factor')}
+            settingsOpen={openSettings === 'adj_factor'}
           />
         )
       case 'enriched':
@@ -558,6 +595,16 @@ export function Data() {
             subLabel={`历史股本 · ${historicalShareRows.toLocaleString()} 条`}
             onSettings={hasData ? () => setOpenSettings(v => v === 'financials' ? null : 'financials') : undefined}
             settingsOpen={openSettings === 'financials'}
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            // 财务不在盘后管道内, 顶部「立即同步」不含它 —— 给出独立的拉取入口
+            onPull={() => setOpenSettings(v => v === 'financial-sync' ? null : 'financial-sync')}
+            pullTitle="手动拉取财务数据"
+            onSettings={hasData ? () => setOpenSettings(v => v === 'financials' ? null : 'financials') : undefined}
+            settingsOpen={openSettings === 'financials' || openSettings === 'financial-sync'}
           />
         )
       }
@@ -600,6 +647,17 @@ export function Data() {
               onClick={() => adjGate.guard(() => startSync.mutate())}
               disabled={isStarting}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-gradient-to-r from-accent/25 to-accent/10 border border-accent/30 text-accent text-xs font-medium hover:from-accent/35 hover:to-accent/20 disabled:opacity-40 transition-all duration-150"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            <button
+              onClick={() => adjGate.guard(() => startSync.mutate())}
+              disabled={isStarting}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-btn bg-gradient-to-r from-accent/25 to-accent/10 border border-accent/30 text-accent text-xs font-medium hover:from-accent/35 hover:to-accent/20 disabled:opacity-40 transition-all duration-150 ${
+                !hasData && !isLoading && !isStarting && !isRunning ? 'animate-breath-sync' : ''
+              }`}
             >
               {(isStarting || isRunning) ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -642,6 +700,7 @@ export function Data() {
                 <Plus className="h-3.5 w-3.5" />
                 扩展数据
               </button>
+              {hasTickflowKey && (
               <button
                 onClick={() => setShowEndpointTest(true)}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-btn text-secondary hover:text-accent hover:bg-accent/8 text-xs transition-colors duration-150"
@@ -649,6 +708,7 @@ export function Data() {
                 <Wifi className="h-3.5 w-3.5" />
                 测试端点
               </button>
+              )}
               <button
                 onClick={() => setOpenSettings('page-settings')}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-btn text-secondary hover:text-accent hover:bg-accent/8 text-xs transition-colors duration-150"
@@ -742,6 +802,12 @@ export function Data() {
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5 text-[10px] text-muted pb-2 border-b border-border/50">
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                <div className="flex items-center gap-1.5 text-[10px] text-muted pb-2 border-b border-border/50 flex-wrap">
                   <span className="text-accent/60 font-medium">盘前</span>
                   <span>个股维表</span>
                   <span className="text-border">→</span>
@@ -750,6 +816,26 @@ export function Data() {
                     <span key={step} className="contents">
                       {i > 0 && <span className="text-border">→</span>}
                       <span>{step}</span>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                    <span key={step.label} className="contents">
+                      {i > 0 && <span className="text-border">→</span>}
+                      <span
+                        className="inline-flex items-center gap-0.5"
+                        title={step.cap
+                          ? `路由: ${routeCap(matrix.data, step.cap)?.effective_display ?? '—'}`
+                          : '本地计算'}
+                      >
+                        {step.label}
+                        {step.cap && (
+                          <span className="text-muted/60">
+                            ·{routeCap(matrix.data, step.cap)?.effective_display ?? '…'}
+                          </span>
+                        )}
+                      </span>
                     </span>
                   ))}
                 </div>
@@ -1042,6 +1128,11 @@ export function Data() {
             />
           </SettingsModal>
         )}
+        {openSettings === 'financial-sync' && (
+          <SettingsModal title="财务数据 · 手动拉取" onClose={() => setOpenSettings(null)} width="max-w-lg">
+            <FinancialSyncPanel />
+          </SettingsModal>
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -1150,6 +1241,12 @@ export function Data() {
                   onClick={() => syncIndexDaily.mutate()}
                   disabled={!hasDailyBatchCap || !!activeJobId || syncIndexDaily.isPending}
                   className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-btn bg-accent/90 text-base text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-btn bg-accent/90 text-white text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
                 >
                   {syncIndexDaily.isPending ? (
                     <>
@@ -1173,6 +1270,18 @@ export function Data() {
         {openSettings === 'minute' && (
           <SettingsModal title="分钟 K · 同步设置" onClose={() => setOpenSettings(null)}>
             <MinuteSyncConfig hasCap={hasMinuteCap} onJobStart={(jobId) => { setActiveJobId(jobId); setOpenSettings(null) }} />
+          </SettingsModal>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {openSettings === 'adj_factor' && (
+          <SettingsModal title="除权因子 · 同步设置" onClose={() => setOpenSettings(null)}>
+            <AdjFactorSyncConfig
+              hasCap={hasAdjCap}
+              providerDisplay={routeProviderDisplay(matrix.data, 'adj_factor')}
+              onJobStart={(jobId) => { setActiveJobId(jobId); setOpenSettings(null) }}
+            />
           </SettingsModal>
         )}
       </AnimatePresence>
@@ -1226,6 +1335,12 @@ export function Data() {
                   onClick={() => stopSync.mutate()}
                   disabled={stopSync.isPending}
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-base text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                  className="px-3 py-1.5 rounded-btn bg-danger/90 text-white text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
                 >
                   {stopSync.isPending ? '停止中…' : '确认停止'}
                 </button>
@@ -1290,6 +1405,12 @@ export function Data() {
                   onClick={() => clearData.mutate()}
                   disabled={clearData.isPending}
                   className="px-3 py-1.5 rounded-btn bg-danger/90 text-base text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                  className="px-3 py-1.5 rounded-btn bg-danger/90 text-white text-sm font-medium hover:bg-danger disabled:opacity-50 transition-colors"
                 >
                   {clearData.isPending ? '清除中…' : '清除数据'}
                 </button>

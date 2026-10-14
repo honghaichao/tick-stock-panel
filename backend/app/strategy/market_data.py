@@ -17,6 +17,8 @@ from typing import Any
 
 import polars as pl
 
+from app.market_time import cn_today
+
 logger = logging.getLogger(__name__)
 
 # 完整历史默认区间下界(A股数据远晚于此, 仅作"全量"占位)。
@@ -72,6 +74,12 @@ def get_index_daily(symbol, start=None, end=None, columns=None):
         return pl.DataFrame()
     s = _norm_date(start, _FULL_START)
     e = _norm_date(end, date.today())
+
+# --- THEIR (origin/main) ---
+    # 窗口右端必须是北京今天: 策略对照指数/ETF 的分区日期是北京交易日。
+    # 美西主机整个 A 股交易时段、UTC 主机北京 00:00-08:00, date.today() 比北京早一天,
+    # 未传 end 时会把当日官方 K 排除在窗口外。
+    e = _norm_date(end, cn_today())
     try:
         return _get_repo().get_index_daily(symbol, s, e, columns)
     except Exception as exc:
@@ -86,6 +94,9 @@ def get_etf_daily(symbol, start=None, end=None, columns=None):
         return pl.DataFrame()
     s = _norm_date(start, _FULL_START)
     e = _norm_date(end, date.today())
+
+# --- THEIR (origin/main) ---
+    e = _norm_date(end, cn_today())
     try:
         return _get_repo().get_etf_daily(symbol, s, e, columns)
     except Exception as exc:
@@ -100,6 +111,9 @@ def get_daily(symbol, start=None, end=None, columns=None):
         return pl.DataFrame()
     s = _norm_date(start, _FULL_START)
     e = _norm_date(end, date.today())
+
+# --- THEIR (origin/main) ---
+    e = _norm_date(end, cn_today())
     repo = _get_repo()
     try:
         asset_type = repo.resolve_asset_type(symbol)

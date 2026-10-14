@@ -12,6 +12,9 @@ from app.strategy.engine import StrategyDataContext, StrategyEngine
 
 BUILTIN_DIR = Path(__file__).resolve().parents[1] / "app" / "strategy" / "builtin"
 
+# --- THEIR (origin/main) ---
+BUILTIN_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
+
 
 class _FakeRepo:
     """最小 repo 桩: 只实现 screener 数据上下文需要的资产取数接口。"""

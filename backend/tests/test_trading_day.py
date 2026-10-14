@@ -10,6 +10,9 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 
+# --- THEIR (origin/main) ---
+from datetime import date, datetime, time as dt_time, timezone, timedelta
+
 import pytest
 
 from app.services import trading_day
@@ -234,6 +237,10 @@ def test_minute_refresh_gate_passes_when_trading(monkeypatch):
 def test_fuyao_provider_trading_days_conversion(monkeypatch):
     from app.plugins.fuyao import provider as fp
     from app.plugins.fuyao.provider import FuyaoProvider
+
+# --- THEIR (origin/main) ---
+    from app.plugins.fuyao.provider import FuyaoProvider
+    from app.plugins.fuyao import provider as fp
 
     class _CalClient:
         def trading_days(self):

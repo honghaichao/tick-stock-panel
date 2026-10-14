@@ -386,6 +386,12 @@ export function ExtDimensionAnalysis({
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-base font-semibold text-foreground">{menu?.template === 'table' || menu?.template === 'ranking' ? '明细列表' : currentGroup?.key ?? `选择${activeKindLabel}`}</h3>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                      <h3 className="text-[16px] leading-6 font-semibold text-foreground">{menu?.template === 'table' || menu?.template === 'ranking' ? '明细列表' : currentGroup?.key ?? `选择${activeKindLabel}`}</h3>
                       <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent">{tableRows.length} 条</span>
                     </div>
                     <p className="mt-1 text-xs text-muted">列来自菜单 detail_columns：{displayColumns.map(f => f.label || f.field).join(' / ') || '暂无字段'}</p>

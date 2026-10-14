@@ -18,6 +18,12 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: true,  // 允许任意 host (trycloudflare 隧道)
     // dev.sh / dev.ps1 会用 CLI --host 覆盖
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    host: '0.0.0.0',   // dev.sh / dev.ps1 会用 CLI --host 覆盖
     port: 3011,
     proxy: {
       // dev 时 /api 转发到与启动脚本相同的 FastAPI 地址

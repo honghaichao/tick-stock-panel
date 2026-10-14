@@ -14,11 +14,31 @@ import {
   ArrowDown,
   History,
   Plus,
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  Bot,
+  Database,
+  FlaskConical,
+  Gift,
+  History,
+  Plus,
+  Puzzle,
   SendHorizontal,
   Settings2,
   Sparkles,
   Square,
   Trash2,
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  Star,
+  Trash2,
+  TrendingUp,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -45,6 +65,10 @@ const EASE_SMOOTH: [number, number, number, number] = [0.16, 1, 0.3, 1]
 const WIDTH_STORAGE_KEY = 'assistant.width.v1'
 const DEFAULT_WIDTH = 720
 const MIN_WIDTH = 480
+
+const RH_PROMO_URL = 'https://www.runninghub.ai/zh-cn/call-api/llm/models?source=github&inviteCode=edt5wh7c'
+const RH_PROMO_DISMISS_KEY = 'assistant.rh_promo.dismissed_at.v1'
+const RH_PROMO_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000
 
 function loadWidth(): number {
   try {
@@ -169,6 +193,61 @@ function DrawerPanel({
   )
 }
 
+/** RunningHub 推广条: 嵌在抽屉标题行中间, 单行跑马灯横向滚动(悬停暂停),
+ * 琥珀色高亮(深浅主题各取一档), 可点击跳转邀请链接。
+ * 点 X 后一周(7 天)内不再显示 —— 时间戳持久化到 localStorage; DrawerPanel 随抽屉
+ * 开合挂载/卸载, 每次点开对话框重新检查是否已到期, 到期后自动恢复。 */
+function RhPromoBanner() {
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      const ts = Number(localStorage.getItem(RH_PROMO_DISMISS_KEY))
+      return Number.isFinite(ts) && Date.now() - ts < RH_PROMO_SNOOZE_MS
+    } catch { return false }
+  })
+  if (dismissed) return null
+  const snooze = () => {
+    setDismissed(true)
+    try { localStorage.setItem(RH_PROMO_DISMISS_KEY, String(Date.now())) } catch { /* 存储不可用时仅本次关闭 */ }
+  }
+  const copy = (key: string) => (
+    <a
+      key={key}
+      href={RH_PROMO_URL}
+      target="_blank"
+      rel="noreferrer"
+      className="flex shrink-0 items-center gap-1 pr-8 text-[10px] leading-relaxed text-secondary transition-colors hover:text-foreground"
+    >
+      <span className="font-medium text-amber-600 dark:text-amber-400">Claude、ChatGPT、Gemini</span>
+      <span>等国际模型直连稳定不掉线，</span>
+      <span className="font-medium text-amber-600 dark:text-amber-400">DeepSeek v4.1 Flash 6 折</span>
+      <span>，</span>
+      <span className="font-medium text-amber-600 dark:text-amber-400">注册赠送 1000 RH 积分</span>
+      <span>🎁</span>
+    </a>
+  )
+  // 窗口(overflow-hidden)裁剪滚动内容, 礼包图标与 X 按钮在窗口外, 永不被文字盖住;
+  // 轨道 w-max 按内容撑宽, 份数为偶数时 translateX(-50%) 恰好位移整份文案宽度,
+  // 循环回跳视觉无缝。4 份保证极宽抽屉下窗口内也始终有内容。
+  return (
+    <div className="group flex min-w-0 flex-1 items-center gap-1.5 rounded-btn border border-amber-400/30 bg-amber-400/15 py-1 pl-2 pr-1 dark:border-amber-400/25 dark:bg-amber-400/10">
+      <Gift className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex w-max animate-[rh-marquee_26s_linear_infinite] whitespace-nowrap motion-reduce:animate-none group-hover:[animation-play-state:paused]">
+          {['a', 'b', 'c', 'd'].map(copy)}
+        </div>
+      </div>
+      <button
+        onClick={snooze}
+        title="关闭推广 (一周内不再显示)"
+        aria-label="关闭推广 (一周内不再显示)"
+        className="shrink-0 rounded-btn p-0.5 text-muted transition-colors hover:bg-elevated hover:text-foreground"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  )
+}
+
 function DrawerHeader({
   status,
   sessions,
@@ -190,11 +269,28 @@ function DrawerHeader({
         <span
           className="max-w-36 truncate rounded-btn bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted"
           title={`供应商: ${status.provider}`}
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      <span className="shrink-0 text-sm font-semibold text-foreground">AI 助手</span>
+      {status?.model && (
+        <span
+          className="min-w-0 truncate rounded-btn bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted"
+          title={`模型: ${status.model}\n供应商: ${status.provider ?? '-'}`}
         >
           {status.model}
         </span>
       )}
       <div className="ml-auto flex items-center gap-0.5">
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      <RhPromoBanner />
+      <div className="ml-auto flex shrink-0 items-center gap-0.5">
         <div className="relative">
           <IconButton title="历史会话" onClick={() => setMenuOpen(v => !v)} disabled={sending}>
             <History className="h-4 w-4" />
@@ -348,6 +444,14 @@ function MessageList({
   )
 }
 
+/** 空会话建议分组的图标 (后端 suggests 的 group 字段驱动, 未匹配时兜底)。 */
+const SUGGEST_GROUP_ICONS: Record<string, typeof TrendingUp> = {
+  行情与大盘: TrendingUp,
+  我的与个股: Star,
+  策略与信号: FlaskConical,
+  数据与扩展: Database,
+}
+
 function EmptyState({ status, suggests }: { status: AssistantStatus | null; suggests: QuickSuggest[] }) {
   const navigate = useNavigate()
 
@@ -409,6 +513,68 @@ function EmptyState({ status, suggests }: { status: AssistantStatus | null; sugg
             {suggest.label}
           </button>
         ))}
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    return (
+      <p className="pt-8 text-center text-xs text-muted">
+        问我任何关于行情、个股、策略、扩展数据或数据能力的问题。
+      </p>
+    )
+  }
+
+  // 按后端 group 字段分区, 保持原始顺序; 未分组的建议归入「更多」。
+  const groups = new Map<string, QuickSuggest[]>()
+  for (const suggest of suggests) {
+    const key = suggest.group || '更多'
+    groups.set(key, [...(groups.get(key) ?? []), suggest])
+  }
+
+  return (
+    <div className="space-y-4 pb-2 pt-2">
+      <div className="rounded-card border border-border bg-gradient-to-b from-accent/10 to-transparent px-4 py-4 text-center">
+        <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-accent/15 text-accent">
+          <Bot className="h-4.5 w-4.5" />
+        </div>
+        <p className="mt-2 text-sm font-medium text-foreground">有什么可以帮你？</p>
+        <p className="mt-1 text-xs text-muted">基于本地真实数据回答 · 每次取数都可展开核对</p>
+      </div>
+
+      {[...groups.entries()].map(([group, items]) => {
+        const GroupIcon = SUGGEST_GROUP_ICONS[group] ?? Sparkles
+        return (
+          <div key={group} className="space-y-2">
+            <div className="flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-muted">
+              <GroupIcon className="h-3.5 w-3.5" />
+              {group}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {items.map(suggest => (
+                <button
+                  key={suggest.id}
+                  type="button"
+                  onClick={() => sendMessage(suggest.prompt)}
+                  className="max-w-full shrink-0 cursor-pointer rounded-card border border-border bg-base/60 px-3 py-2 text-left text-xs text-secondary transition-all duration-150 ease-smooth hover:border-accent/40 hover:bg-elevated hover:text-foreground"
+                >
+                  {suggest.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      <div className="rounded-card border border-dashed border-border bg-base/40 px-3.5 py-3 text-xs">
+        <div className="flex items-center gap-1.5 font-medium text-foreground">
+          <Puzzle className="h-3.5 w-3.5 text-accent" />
+          扩展内容同样可以问
+        </div>
+        <p className="mt-1 leading-relaxed text-secondary">
+          扩展数据表、自定义策略与信号等扩展内容都能问答互动, 比如「我的扩展数据表里有什么」「看看最新一张的数据」。
+          AI 助手本身也是一个 custom 扩展模块。
+        </p>
       </div>
     </div>
   )

@@ -136,6 +136,9 @@ def _real_service(
     monitor_invalidator=None,
 ) -> tuple[MiningCandidateService, StrategyEngine]:
     builtin_dir = Path(__file__).resolve().parents[1] / "app" / "strategy" / "builtin"
+
+# --- THEIR (origin/main) ---
+    builtin_dir = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "strategies"
     custom_dir = tmp_path / "strategies" / "custom"
     engine = StrategyEngine(strategy_dirs=[builtin_dir, custom_dir])
     service = MiningCandidateService(

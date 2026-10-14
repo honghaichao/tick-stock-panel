@@ -24,6 +24,18 @@ export const color = {
   ok: 'text-emerald-400',
 
   /** 评分权重异常警告 — amber 色系 */
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  /** 策略条件区 section 标题色 */
+  filterSection: 'text-sky-400',
+
+  /** 策略权重正常指示 — emerald 色系 */
+  ok: 'text-emerald-400',
+
+  /** 策略权重异常警告 — amber 色系 */
   scoreWarn: 'text-amber-400',
 
   /** 交易参数区 section 标题色 */

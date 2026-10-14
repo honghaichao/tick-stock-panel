@@ -55,6 +55,9 @@ def build_step1(
 策略名称：{name}{id_line}
 策略描述：{description}
 选股方向：{DIRECTION_CN.get(direction, direction)}
+
+# --- THEIR (origin/main) ---
+策略方向：{DIRECTION_CN.get(direction, direction)}
 执行后端：{execution_backend}
 {bf_line}策略规则：
 {rules}

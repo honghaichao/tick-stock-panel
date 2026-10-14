@@ -52,6 +52,7 @@ export const QK = {
 
   // Backtest
   backtestStatus:       ['backtest-status'] as const,
+  backtestCandidates:   ['backtest-candidates'] as const,
   factorColumns:        ['backtest-factor-columns'] as const,
   factorLibrary:        (assetType: string) => ['factors-library', assetType] as const,
   miningRuns:           ['backtest-mining-runs'] as const,
@@ -76,6 +77,7 @@ export const QK = {
   dimensionIntraday:    (id: string, field: string, value: string, date?: string) => ['dimension-intraday', id, field, value, date] as const,
   analysisMenus:        ['analysis-menus'] as const,
   analysisMenu:         (id: string) => ['analysis-menu', id] as const,
+  extPages:             ['ext-pages'] as const,
 
   // Kline
   kline:                (symbol: string, start: string, end: string, extColumns?: string) =>
@@ -122,6 +124,22 @@ export const QK = {
   tradingPnlMetrics:     (strategyId: string | null) => ['trading', 'pnl-metrics', strategyId ?? 'all'] as const,
   tradingStrategies:     ['trading', 'strategies'] as const,
   tradingStrategyRuns:   (strategyId: string) => ['trading', 'strategy-runs', strategyId] as const,
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // 模拟盘 (多账户: 键按账户隔离; paperAll 作账户无关失效前缀)
+  paperAll:             ['paper'] as const,
+  apiTokens:            ['settings', 'api-tokens'] as const,
+  paperAccounts:        ['paper', 'accounts'] as const,
+  paperOverview:        (acc: string) => ['paper', 'overview', acc] as const,
+  paperOrders:          (acc: string) => ['paper', 'orders', acc] as const,
+  paperTrades:          (acc: string) => ['paper', 'trades', acc] as const,
+  paperNav:             (acc: string) => ['paper', 'nav', acc] as const,
+  paperStats:           (acc: string) => ['paper', 'stats', acc] as const,
+  paperCompare:         ['paper', 'compare'] as const,
+  paperAutoRules:       (acc: string) => ['paper', 'auto-rules', acc] as const,
   alerts:               (source?: string) => ['alerts', source ?? ''] as const,
 
   // AI 大盘复盘
@@ -166,4 +184,12 @@ export const SSE_INVALIDATE_PREFIXES = [
   'overview-market',
   'limit-ladder',
   'trading',
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  // 概念/行业分析的全市场快照 (#419): 后端读最新日内缓存, 行情更新后需重取,
+  // 否则停留页面时板块聚合数值一直停留旧值。仅两页打开时才实际发请求。
+  'market-snapshot',
 ] as const

@@ -20,6 +20,12 @@ interface Props {
   periodStart: string
   periodEnd: string
   /** 有序候选列表 (选股分析全部标的): 提供后支持左右键/顶栏按钮切标的 */
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  /** 有序候选列表 (策略分析全部标的): 提供后支持左右键/顶栏按钮切标的 */
   navList?: NavItem[]
   /** 切标的回调: 收到目标 symbol/name, 由调用方更新选中状态 */
   onNavigate?: (symbol: string, name?: string) => void
@@ -27,6 +33,12 @@ interface Props {
 }
 
 /** 「选股分析」行的标的级K线弹窗 (单笔回放见 TradeKlineModal) */
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+/** 「策略分析」行的标的级K线弹窗 (单笔回放见 TradeKlineModal) */
 export function PicksSymbolKlineModal({ symbol, result, periodStart, periodEnd, navList, onNavigate, onClose }: Props) {
   const backdrop = useDialogBackdrop(onClose)
 

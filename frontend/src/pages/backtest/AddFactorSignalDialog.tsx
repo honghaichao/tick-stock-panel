@@ -176,6 +176,12 @@ export function AddFactorSignalDialog({
         </label>
         <p className="text-[10px] leading-relaxed text-muted">
           保存后成为 csg_ 信号列：选股、回测、盘后监控可用；因子列由历史路径自动补算（与检验同一条计算管线），盘中实时快照无滚动窗口、该信号盘中不触发。
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+          保存后成为 csg_ 信号列：策略、回测、盘后监控可用；因子列由历史路径自动补算（与检验同一条计算管线），盘中实时快照无滚动窗口、该信号盘中不触发。
         </p>
       </div>
 
@@ -186,6 +192,12 @@ export function AddFactorSignalDialog({
           onClick={() => save.mutate()}
           disabled={save.isPending || !selected || !thresholdValid || !name.trim()}
           className="inline-flex items-center gap-1.5 rounded-btn bg-amber-500/90 px-3 py-1.5 text-xs font-medium text-base transition-colors hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+          className="inline-flex items-center gap-1.5 rounded-btn bg-amber-500/90 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Zap className="h-3.5 w-3.5" />
           {save.isPending ? '保存中…' : '保存信号'}

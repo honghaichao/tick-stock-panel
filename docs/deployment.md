@@ -17,6 +17,9 @@ docker run -d --name tsp -p 3018:3018 -v ${PWD}/data:/app/data ghcr.io/shy3130/t
 
 - 需要配置时:从 `.env.example` 复制出 `.env`,命令里加 `--env-file .env`。
 - 镜像默认**不含** stock-sdk 插件(合规考虑),也不含 `legacy-cpu` / `backtest` extras —— 老 CPU(无 AVX2)或需要 vectorbt 回测时,请用方式 B 通过 `BACKEND_EXTRAS` 自构建。
+
+----- THEIR (origin/main) -----
+- 镜像默认不含 `legacy-cpu` / `backtest` extras —— 老 CPU(无 AVX2)或需要 vectorbt 回测时,请用方式 B 通过 `BACKEND_EXTRAS` 自构建。
 - 跑自己改过的代码:fork 后到仓库 Actions 页启用 workflow(fork 默认禁用),构建出的 `ghcr.io/<你的用户名>/tick-stock-panel` 用法相同。
 - 想要 compose 全套挂载(`.env` / `tiers.yaml` / 数据卷):参考根目录 `docker-compose.yml`,把 `build:` 段换成 `image: ghcr.io/shy3130/tick-stock-panel:latest`。
 

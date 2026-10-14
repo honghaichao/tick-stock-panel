@@ -77,6 +77,12 @@ function buildModel(sessions: MinuteKlineSession[]) {
     const dayAverages: (number | null)[] = []
     // 量柱着色基准: 前一分钟 close; 当日第一根用 session 昨收。
     // 不用 row.open — stock-sdk 历史日无真实分钟 open(为 null), close-vs-open 会全偏。
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    // 不用 row.open — 部分分钟源历史日无真实 open(为 null), close-vs-open 会全偏。
     let prevRef: number | null = session.prev_close
     for (const time of FULL_DAY_TIMES) {
       const point = rowsByTime.get(time)

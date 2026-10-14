@@ -9,6 +9,17 @@ import { SIGNAL_OPTIONS, cnSignal } from '@/lib/signals'
 interface SignalPickerOptions {
   /** 渲染尺寸: dialog = 选股弹窗紧凑样式; panel = 回测页设置抽屉样式 */
   variant?: 'dialog' | 'panel'
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+
+/** 展示与过滤可选项 (全部可选, 有默认值) */
+interface SignalPickerOptions {
+  /** 渲染尺寸: dialog = 策略弹窗紧凑样式; panel = 回测页设置抽屉样式 */
+  variant?: 'dialog' | 'panel'
+  /** 额外信号选项 (监控页传入盘中信号); 策略/回测不传 — 全部信号来自定义 */
   builtinSignals?: { key: string; label: string }[]
   disabledSignals?: string[]
   disabledSignalHint?: string
@@ -16,6 +27,13 @@ interface SignalPickerOptions {
    * 是否按 kind 过滤自定义信号 (csg_*)。默认 true (选股/回测: 入场区只显示 entry)。
    * 监控规则页设 false: 报警语义是"命中即报", 不分入场出场, 自定义信号全部显示
    * (与内置信号一致: builtinSignals 透传时本就不按 kind 过滤)。
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+   * 是否按 kind 过滤自定义信号。默认 true (策略/回测: 入场区只显示 entry)。
+   * 监控规则页设 false: 报警语义是"命中即报", 不分入场出场, 信号全部显示。
    */
   filterCustomByKind?: boolean
 }
@@ -26,6 +44,16 @@ interface Props {
   /** 选中变化回调 */
   onChange: (next: string[]) => void
   /** 买点 / 卖点 — 决定自定义信号的过滤与配色主题 */
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+  /** 当前选中的信号列名列表 (csg_* / 迁移定义的 signal_*) */
+  signals: string[]
+  /** 选中变化回调 */
+  onChange: (next: string[]) => void
+  /** 买点 / 卖点 — 决定信号的过滤与配色主题 */
   kind: 'entry' | 'exit'
   options?: SignalPickerOptions
 }
@@ -39,6 +67,21 @@ interface Props {
  */
 export function SignalPicker({ signals, onChange, kind, options }: Props) {
   const { variant = 'panel', builtinSignals, disabledSignals = [], disabledSignalHint, filterCustomByKind = true } = options ?? {}
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+ * 买卖触发器信号选择 — 策略页弹窗 / 回测页共用。
+ *
+ * - 全部信号来自用户定义 (/api/custom-signals), 按解析列名 (csg_* 或迁移
+ *   定义的 signal_*) 作为选中值; 按 kind 过滤 (entry / exit / both),
+ *   除非 filterCustomByKind=false
+ * - builtinSignals 仅在监控页传入 (盘中信号)
+ * - entry 蓝色主题, exit 橙色主题; 右上角 PenLine 角标标识可编辑的定义信号
+ */
+export function SignalPicker({ signals, onChange, kind, options }: Props) {
+  const { variant = 'panel', builtinSignals = [], disabledSignals = [], disabledSignalHint, filterCustomByKind = true } = options ?? {}
   const customSignalsQuery = useQuery({ queryKey: QK.customSignals, queryFn: api.customSignalsList })
 
   const customOptions = useMemo(() => {
@@ -46,6 +89,16 @@ export function SignalPicker({ signals, onChange, kind, options }: Props) {
       .filter(s => s.enabled && (!filterCustomByKind || s.kind === kind || s.kind === 'both'))
     const names: Record<string, string> = {}
     for (const cs of list) names[`csg_${cs.id}`] = cs.name
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      .filter(s => s.enabled && s.timeframe !== 'intraday')
+      .filter(s => !filterCustomByKind || s.kind === kind || s.kind === 'both')
+    // 列名 = 显式 column (迁移定义沿用 signal_*) 或默认 csg_{id}
+    const names: Record<string, string> = {}
+    for (const cs of list) names[cs.column ?? `csg_${cs.id}`] = cs.name
     return { list, names }
   }, [customSignalsQuery.data, kind, filterCustomByKind])
 
@@ -71,6 +124,15 @@ export function SignalPicker({ signals, onChange, kind, options }: Props) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {builtinOptions.map(option => {
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {builtinSignals.map(option => {
         const disabled = disabledSignals.includes(option.key) && !signals.includes(option.key)
         return (
           <button
@@ -87,12 +149,24 @@ export function SignalPicker({ signals, onChange, kind, options }: Props) {
       })}
       {customOptions.list.map(cs => {
         const id = `csg_${cs.id}`
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        const id = cs.column ?? `csg_${cs.id}`
         return (
           <button
             key={id}
             type="button"
             onClick={() => toggle(id)}
             title="自定义信号"
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            title="信号库定义, 可在信号库编辑"
             className={`${btnCls} relative ${signals.includes(id) ? active : idle}`}
           >
             {customOptions.names[id]}

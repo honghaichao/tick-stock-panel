@@ -453,6 +453,29 @@ function PluginKeyConfig({ plugin }: { plugin: PluginDataSourceItem }) {
         Key 仅存本地 (secrets.json 优先, 环境变量 {plugin.api_key_env} 兜底),不会上传任何第三方,请妥善保管。
       </p>
 
+      {/* 积分计费警示框 + Key/积分管理入口 (manifest billing/billing_note/key_manage_url 声明) */}
+      {plugin.billing === 'points' && (
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-warning/35 bg-warning/[0.07] px-3 py-2.5">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <div className="text-[11px] leading-relaxed text-warning/90">
+            <span className="font-medium">该数据源按积分计费。</span>
+            {plugin.billing_note
+              || '各能力取数均消耗积分;拉取越频繁、范围越大,消耗越高,具体以商城「积分明细」为准。'}
+          </div>
+        </div>
+      )}
+      {plugin.key_manage_url && (
+        <a
+          href={plugin.key_manage_url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-accent hover:underline mb-4"
+        >
+          管理 Key / 查看积分明细 (通达信商城)
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
+
       {/* 当前状态 */}
       <div className="flex items-center justify-between mb-4">
         <div className="min-w-0">
@@ -545,6 +568,18 @@ function CapabilityChips({ caps, servingSet, isTickFlow }: {
   caps: CapabilityRoute[]
   servingSet: Set<string>
   isTickFlow: boolean
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+/** 能力芯片: 三态 — 服务中(高亮+勾) / 已适配(灰) / 档位锁定(锁, 仅 TickFlow)。
+ *  paid (插件 billing="points"): 每个芯片尾标注「积分」角标 — 该能力按积分计费。 */
+function CapabilityChips({ caps, servingSet, isTickFlow, paid = false }: {
+  caps: CapabilityRoute[]
+  servingSet: Set<string>
+  isTickFlow: boolean
+  paid?: boolean
 }) {
   if (caps.length === 0) return <span className="text-[10px] text-muted/40">未声明能力</span>
   return (
@@ -562,6 +597,15 @@ function CapabilityChips({ caps, servingSet, isTickFlow }: {
           : locked
             ? `TickFlow 需 ${tierReqText(cap.tf_tier)} · 当前档位未解锁`
             : `已适配「${cap.label}」`
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+          ? `正在提供「${cap.label}」${paid ? ' · 积分计费' : ''}`
+          : locked
+            ? `TickFlow 需 ${tierReqText(cap.tf_tier)} · 当前档位未解锁`
+            : `已适配「${cap.label}」${paid ? ' · 积分计费' : ''}`
         return (
           <span
             key={cap.id}
@@ -572,6 +616,9 @@ function CapabilityChips({ caps, servingSet, isTickFlow }: {
               ? <Check className="h-2.5 w-2.5" />
               : locked ? <Lock className="h-2.5 w-2.5" /> : null}
             {DATASET_LABEL[cap.id] || cap.id}
+            {paid && (
+              <span className="ml-0.5 rounded bg-warning/15 px-1 py-px text-[9px] font-medium leading-none text-warning">积分</span>
+            )}
           </span>
         )
       })}
@@ -817,6 +864,14 @@ export function SettingsDataSourcesPanel({ highlight }: { highlight?: string } =
                 {/* 能力芯片: 服务中 / 已适配 / 档位锁定 */}
                 <div className="mt-2">
                   <CapabilityChips caps={chipCaps} servingSet={servingSet} isTickFlow={isTf} />
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                {/* 能力芯片: 服务中 / 已适配 / 档位锁定 / 积分计费角标 */}
+                <div className="mt-2">
+                  <CapabilityChips caps={chipCaps} servingSet={servingSet} isTickFlow={isTf} paid={plugin?.billing === 'points'} />
                 </div>
 
                 {/* 底部: 状态提示 + 操作 */}
@@ -826,11 +881,27 @@ export function SettingsDataSourcesPanel({ highlight }: { highlight?: string } =
                       ? `服务中 ${servingCount} 项能力`
                       : pluginUnavailable
                         ? (plugin?.runtime === 'none' ? '点击配置 Key' : (plugin?.install_hint || plugin?.status || ''))
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                        ? (plugin?.runtime === 'none' && plugin?.api_key_env
+                            ? '点击配置 Key'
+                            : (plugin?.install_hint || plugin?.status || ''))
                         : ''}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
                     {pluginUnavailable ? (
                       plugin?.runtime !== 'none' && (
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                      // 安装/卸载按钮只对"纯依赖型"插件(runtime≠none 且无 api_key_env)显示;
+                      // 带 Key 配置的插件不可用时, 卡片本身可点击进详情配 Key(如 TdxQuant 依赖已内置)。
+                      plugin?.runtime !== 'none' && !plugin?.api_key_env && (
                         installing ? (
                           <span className="inline-flex items-center gap-1 text-[10px] text-accent">
                             <RefreshCw className="h-2.5 w-2.5 animate-spin" /> 安装中...
@@ -855,6 +926,12 @@ export function SettingsDataSourcesPanel({ highlight }: { highlight?: string } =
                           套用
                         </button>
                         {plugin && plugin?.runtime !== 'none' && (
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+                        {plugin && plugin?.runtime !== 'none' && !plugin?.api_key_env && (
                           uninstalling ? (
                             <RefreshCw className="h-2.5 w-2.5 animate-spin text-muted" />
                           ) : (
@@ -1016,6 +1093,12 @@ function PluginDetail({ plugin, isActive, matrixCaps, servingSet }: {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="text-base font-semibold text-foreground">{plugin.display_name}</h3>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            <h3 className="text-[16px] leading-6 font-semibold text-foreground">{plugin.display_name}</h3>
             <span className="text-[10px] text-muted/50 uppercase tracking-wider">插件 · {plugin.runtime}</span>
             <span className="rounded bg-warning/15 px-1 py-0.5 text-[9px] font-medium leading-none text-warning">第三方</span>
             {isActive && (
@@ -1025,11 +1108,23 @@ function PluginDetail({ plugin, isActive, matrixCaps, servingSet }: {
             )}
           </div>
           {plugin.description && <p className="text-xs text-secondary leading-relaxed">{plugin.description}</p>}
+          {/* 使用要点 (manifest usage_notes): 各能力的规模/节奏, 供容量与耗时预期 */}
+          {plugin.usage_notes && plugin.usage_notes.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {plugin.usage_notes.map((note, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-[11px] leading-relaxed text-muted">
+                  <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-muted/50" />
+                  <span className="min-w-0">{note}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-2">
             <CapabilityChips
               caps={matrixCaps.filter(c => declared.has(c.id))}
               servingSet={servingSet}
               isTickFlow={false}
+              paid={plugin.billing === 'points'}
             />
           </div>
         </div>
@@ -1065,6 +1160,9 @@ function PluginDetail({ plugin, isActive, matrixCaps, servingSet }: {
                   <Icon className="h-3.5 w-3.5 text-secondary shrink-0" />
                   <div className="flex-1 min-w-0 truncate">
                     <span className="text-xs text-foreground">{cap.label}</span>
+                    {plugin.billing === 'points' && declaredCap && (
+                      <span className="ml-1.5 rounded bg-warning/15 px-1 py-px text-[9px] font-medium leading-none text-warning">积分</span>
+                    )}
                     <span className="ml-1.5 text-[10px] text-muted/60">{cap.desc}</span>
                   </div>
                   {serving ? (
@@ -1165,6 +1263,12 @@ function TickFlowDetail({ active, matrix }: { active: boolean; matrix?: Capabili
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-base font-semibold text-foreground">TickFlow</h2>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            <h2 className="text-[16px] leading-6 font-semibold text-foreground">TickFlow</h2>
             <span className="rounded bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning">第三方</span>
             <AllTiersBadge />
             {active && (

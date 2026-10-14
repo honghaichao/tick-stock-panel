@@ -586,6 +586,35 @@ function rankNav(rank?: OverviewMarket['concept_rank']): NavItem[] {
   return toNavItems(leaders)
 }
 
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowUpRight, Check, Database, Gauge, GripVertical, Info, Loader2, Play, RefreshCw, RotateCcw, Sparkles, Timer } from 'lucide-react'
+import { DatePicker } from '@/components/DatePicker'
+import { api, type AlertEvent } from '@/lib/api'
+import { QK } from '@/lib/queryKeys'
+import { DimensionMembersDialog, type DimensionMembersTarget } from '@/components/DimensionMembersDialog'
+import { useDataStatus, useCapabilities, useSettings, usePreferences } from '@/lib/useSharedQueries'
+import { StockPreviewDialog } from '@/components/StockPreviewDialog'
+import type { NavItem } from '@/lib/listNav'
+import { SettingsModal } from '@/components/data/SettingsModal'
+import { useAdjFactorSyncGate } from '@/components/AdjFactorSyncGate'
+import { STAGE_LABELS } from '@/components/data/ActiveJobCard'
+import { scoreColor, quoteAge } from '@/components/dashboard/shared'
+import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+import { AddWidgetPanel } from '@/components/dashboard/AddWidgetPanel'
+import { useDashboardLayout } from '@/components/dashboard/useDashboardLayout'
+import { DEFAULT_LAYOUT, widgetDef, type WidgetCtx } from '@/components/dashboard/registry'
+import { cloneItems, GRID_COLS, type WidgetType } from '@/components/dashboard/layout'
+
+/** 打开个股预览的来源榜 (用于行高亮与切股导航列表) */
+type PreviewSource = 'gain' | 'loss' | 'amount' | 'active' | 'concept' | 'industry' | 'alert'
+
 export function Dashboard() {
   const qc = useQueryClient()
   const [selectedDate, setSelectedDate] = useState<string | undefined>()
@@ -596,11 +625,36 @@ export function Dashboard() {
     alert?: AlertEvent
     /** 打开来源榜: 仅高亮来源榜的行 */
     source?: 'gain' | 'loss' | 'amount' | 'active' | 'concept' | 'industry' | 'alert'
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+    source?: PreviewSource
     /** 切股导航列表 (来自来源榜) */
     navList?: NavItem[]
   } | null>(null)
   // 板块成分股弹窗 (概念/行业热度卡片行点击)
   const [dimensionTarget, setDimensionTarget] = useState<DimensionMembersTarget | null>(null)
+  // 自定义网格布局(持久化 hook: 后端偏好加载 + 本地改动防抖落盘);
+  // 注意必须在早退 return 之前 — Hooks 顺序不可随数据加载状态变化。
+  const { items: dashItems, setItems: setDashItems } = useDashboardLayout()
+  // 布局编辑态: 入口与控制组(添加组件/恢复默认/完成)在头部「重载」右侧
+  const [dashEditing, setDashEditing] = useState(false)
+  const placedTypes = useMemo(() => new Set(dashItems.map(it => it.t)), [dashItems])
+  const resetDashLayout = useCallback(() => {
+    setDashItems(cloneItems(DEFAULT_LAYOUT))
+  }, [setDashItems])
+  /** 追加组件: 放到当前布局最底部; ext-link 用唯一 id 支持多实例 */
+  const addDashWidget = useCallback((t: WidgetType, props?: Record<string, string>) => {
+    const def = widgetDef(t)
+    if (!def) return
+    // 内置组件单实例: 已存在则忽略
+    if (t !== 'ext-link' && dashItems.some(it => it.t === t)) return
+    const maxY = dashItems.reduce((m, it) => Math.max(m, it.y + it.h), 0)
+    const id = t === 'ext-link' ? `ext-link-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}` : t
+    setDashItems([...dashItems, { i: id, t, x: 0, y: maxY, w: Math.min(def.defW, GRID_COLS), h: def.defH, p: props }])
+  }, [dashItems, setDashItems])
   // 首次使用(无数据 + 未完成引导)自动弹窗: 同一会话只弹一次
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const dataStatus = useDataStatus({ staleTime: 60_000 })
@@ -719,6 +773,12 @@ export function Dashboard() {
         <div className="rounded-card border border-border bg-surface p-6 text-center">
           <div className="text-sm text-danger">看板加载失败</div>
           <button onClick={() => overview.refetch()} className="mt-3 rounded-btn bg-accent px-3 py-1.5 text-xs font-medium text-base">重试</button>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+          <button onClick={() => overview.refetch()} className="mt-3 rounded-btn bg-accent px-3 py-1.5 text-xs font-medium text-white">重试</button>
         </div>
       </div>
     )
@@ -733,6 +793,22 @@ export function Dashboard() {
   // 实时模式: none / watchlist / full_market。
   // watchlist 模式仅自选 ≤5 只实时, 看板呈现的大盘数据实为盘后快照, 需提示避免误读。
   const quoteMode = data.quote_status?.mode as ('none' | 'watchlist' | 'full_market') | undefined
+
+  // 网格组件渲染上下文: 数据切片 + 交互回调统一由页面层供给
+  const widgetCtx: WidgetCtx = {
+    data,
+    score,
+    hasDepth,
+    sealedReady,
+    isSealedDegrade,
+    activeSymbol: source => (previewStock?.source === source ? previewStock.symbol : undefined),
+    openStock: (source, symbol, name, navList) =>
+      setPreviewStock({ symbol, name, navList, source: source as PreviewSource }),
+    openDimension: setDimensionTarget,
+    openAlert: (event, navList) => {
+      if (event.symbol) setPreviewStock({ symbol: event.symbol, name: event.name ?? undefined, alert: event, source: 'alert', navList })
+    },
+  }
 
   return (
     <div className="min-h-full bg-base p-1.5">
@@ -772,6 +848,12 @@ export function Dashboard() {
         <div className="flex items-center gap-2">
           <Gauge className="h-4 w-4 text-accent" />
           <h1 className="text-base font-semibold text-foreground">市场看板</h1>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+          <h1 className="text-[16px] leading-6 font-semibold text-foreground">市场看板</h1>
           <span
             className="rounded-full border px-2 py-0.5 text-[10px] font-medium"
             style={{
@@ -808,12 +890,52 @@ export function Dashboard() {
       </div>
 
       {/* 自选实时模式提示: 大盘看板为盘后数据, 仅自选股实时。避免用户误读为全市场实时。 */}
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+          {!dashEditing ? (
+            <button
+              onClick={() => setDashEditing(true)}
+              title="拖拽调整组件位置与宽高"
+              className="inline-flex items-center gap-1 rounded-btn border border-border bg-elevated px-2 py-1 text-[11px] text-secondary transition-colors hover:text-foreground hover:border-accent/40"
+            >
+              <GripVertical className="h-3 w-3" />自定义布局
+            </button>
+          ) : (
+            <>
+              <AddWidgetPanel placedTypes={placedTypes} onAdd={addDashWidget} />
+              <button
+                onClick={resetDashLayout}
+                className="inline-flex items-center gap-1 rounded-btn border border-border bg-elevated px-2 py-1 text-[11px] text-secondary transition-colors hover:text-foreground"
+              >
+                <RotateCcw className="h-3 w-3" />恢复默认
+              </button>
+              <button
+                onClick={() => setDashEditing(false)}
+                className="inline-flex items-center gap-1 rounded-btn bg-accent px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-accent/90"
+              >
+                <Check className="h-3 w-3" />完成
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* 自选实时模式提示: 大盘看板为盘后数据, 仅自选实时。避免用户误读为全市场实时。 */}
       {quoteMode === 'watchlist' && (
         <div className="mb-1.5 flex items-start gap-2 rounded-card border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 text-[11px] leading-relaxed">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
           <div className="min-w-0 flex-1 text-secondary">
             当前为「自选实时」模式,看板展示的大盘数据为<strong className="text-foreground">盘后快照</strong>(最新有数据日),并非盘中实时;
             仅自选股({data.quote_status?.watchlist_symbol_count ?? 0} 只)支持实时监控。
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            仅自选({data.quote_status?.watchlist_symbol_count ?? 0} 只)支持实时监控。
             <span className="ml-1 text-accent">全市场实时依赖数据源支持</span>
           </div>
         </div>
@@ -929,6 +1051,12 @@ export function Dashboard() {
         </aside>
       </div>
 
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+      <DashboardGrid ctx={widgetCtx} items={dashItems} onItemsChange={setDashItems} editing={dashEditing} />
+
       <StockPreviewDialog
         symbol={previewStock?.symbol ?? null}
         name={previewStock?.name}
@@ -985,6 +1113,12 @@ function FetchDataCard({
           </p>
           <p className="mt-1 text-[11px] text-warning/80 leading-relaxed">
             ⓘ 获取数据后即可进行策略定制、回测验证、选股扫描等本地分析功能。
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+            ⓘ 获取数据后即可进行策略定制、回测验证、策略扫描等本地分析功能。
           </p>
           <p className="mt-1 text-[11px] text-muted leading-relaxed">
             💡 配置 fuyao(同花顺 REST) Key 可解锁财务四表 / 龙虎榜 / 盘前风向标 / 竞价异动:
@@ -1065,6 +1199,12 @@ function WelcomeFetchModal({
           <Sparkles className="h-7 w-7 text-accent" />
         </motion.div>
         <h3 className="mt-4 text-base font-semibold text-foreground">首次使用,需先获取行情数据</h3>
+
+// === conflict-resolver: REVIEW (auto-merge kept BOTH sides) ===
+// --- OUR (HEAD) ---
+// --- THEIR (origin/main) ---
+// === end REVIEW ===
+        <h3 className="mt-4 text-[16px] leading-6 font-semibold text-foreground">首次使用,需先获取行情数据</h3>
         <p className="mt-2 text-xs text-secondary leading-relaxed">
           {isTickflowProvider
             ? '可通过 TickFlow 免费服务器拉取近 1 年全 A 股日K'
