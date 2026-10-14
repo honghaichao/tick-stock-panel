@@ -46,8 +46,6 @@ import { MessagesStream } from '@/components/live/MessagesStream'
 import { LiveSidebar, getInitialTab, type LiveTabKey } from '@/components/live/Sidebar'
 import { RiskStats } from '@/components/live/RiskStats'
 import { VerifyAndDriftSection } from '@/components/live/VerifyAndDriftSection'
-import { CodeView } from '@/components/live/CodeView'
-import { StrategySettings } from '@/components/live/StrategySettings'
 import { toNavItems } from '@/lib/listNav'
 import { boardTag } from '@/components/stock-table/primitives'
 
@@ -1173,14 +1171,6 @@ function LogsContent({ strategyId }: { strategyId?: string | null } = {}) {
   )
 }
 
-function CodeContent({ strategyId }: { strategyId: string }) {
-  return <CodeView strategyId={strategyId} />
-}
-
-function SettingsContent({ strategyId }: { strategyId: string }) {
-  return <StrategySettings strategyId={strategyId} />
-}
-
 
 // ── 主页面 (聚宽 5 tab 左侧导航) ─────────────────────
 /**
@@ -1207,8 +1197,6 @@ export function LiveTrading({ strategyId }: { strategyId: string }) {
             {tab === 'overview' && <OverviewContent strategyId={strategyId} />}
             {tab === 'stats' && <StatsContent strategyId={strategyId} />}
             {tab === 'logs' && <LogsContent strategyId={strategyId} />}
-            {tab === 'code' && <CodeContent strategyId={strategyId} />}
-            {tab === 'settings' && <SettingsContent strategyId={strategyId} />}
           </div>
         </div>
       </div>
