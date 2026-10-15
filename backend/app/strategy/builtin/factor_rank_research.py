@@ -211,9 +211,10 @@ MATRIX_STRATEGY = FactorRankResearchMatrixStrategy()
 """兼容转发: 研究模板已迁移至 ``app.strategy.research.factor_rank_research``。
 
 旧版用户策略文件 import 本路径时透明转发到新模块, 升级零改动。
+
+实现选择: 用 `from ... import *` 重新导出新模块所有公开符号 (STRATEGY 实例
+/ META / EXECUTION_BACKEND / FactorRankResearchMatrixStrategy 等), 不引入
+sys / importlib / globals() 这些被 engine._validate_safety AST 黑名单拒的
+入口, 但能完整转发 (老 builtin 策略只需 STRATEGY, 多转一些无害)。
 """
-import sys
-
-from app.strategy.research import factor_rank_research as _impl
-
-sys.modules[__name__] = _impl
+from app.strategy.research.factor_rank_research import *  # noqa: F401,F403

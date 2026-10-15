@@ -394,8 +394,6 @@ def sync_and_persist_etf_daily(
         logger.info("etf daily synced: %d/%d chunks, +%d rows", i + 1, len(chunks), raw.height)
         if on_chunk_done:
             on_chunk_done(i + 1, len(chunks))
-        del raw, enriched
-
         del raw, enriched, local, hist
         gc.collect()
     repo.refresh_index_views()
