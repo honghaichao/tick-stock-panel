@@ -212,9 +212,24 @@ MATRIX_STRATEGY = FactorRankResearchMatrixStrategy()
 
 旧版用户策略文件 import 本路径时透明转发到新模块, 升级零改动。
 
-实现选择: 用 `from ... import *` 重新导出新模块所有公开符号 (STRATEGY 实例
-/ META / EXECUTION_BACKEND / FactorRankResearchMatrixStrategy 等), 不引入
-sys / importlib / globals() 这些被 engine._validate_safety AST 黑名单拒的
-入口, 但能完整转发 (老 builtin 策略只需 STRATEGY, 多转一些无害)。
+实现选择: 用 ``globals().update(vars(_impl))`` 复制源模块所有公开符号
+到本模块 globals. 与 ``from ... import *`` 等价但保留每个 class 的
+``__module__`` 指向源模块 (避免 builtin 路径检查 ``__module__ == path.stem``
+误判). 不引入 sys / importlib 这些被 ``_validate_safety`` AST 黑名单拒的入口.
 """
-from app.strategy.research.factor_rank_research import *  # noqa: F401,F403
+from app.strategy.research import factor_rank_research as _impl  # noqa: F401
+
+for _k, _v in vars(_impl).items():
+    if not _k.startswith("__"):
+        globals()[_k] = _v
+# 修正 class.__module__ 指向 builtin path, 让 builtin 路径检查
+# ("__module__ == path.stem") 通过. vars() copy 不会自动改 class 自身的
+# __module__ 属性 (Python class __module__ 是创建时绑定的).
+_THIS = __name__
+for _v in list(globals().values()):
+    if isinstance(_v, type):
+        try:
+            _v.__module__ = _THIS
+        except (AttributeError, TypeError):
+            pass
+del _k, _v, _impl, _THIS

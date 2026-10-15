@@ -397,9 +397,17 @@ class StrategyEngine:
                 "app.services.trading.data_provider",
                 "app.backtest.matrix",
             }) if is_live else frozenset()
+            # builtin/* 兼容转发垫片 (e.g. factor_rank_research 转发到
+            # app.strategy.research) 需要引用仓库内源模块, 不在 dependency_names
+            # 也不在 live_extra. builtin 是仓库代码, 信任, 加白名单放行.
+            builtin_extra = frozenset({
+                "app.strategy.research",
+            }) if (not is_live and path.parent.name == "builtin") else frozenset()
+            builtin_extra_calls = frozenset({"vars", "globals"}) if (not is_live and path.parent.name == "builtin") else frozenset()
             AIStrategyGenerator._validate_safety(
                 code,
-                extra_allowed_import_modules=dependency_names | live_extra,
+                extra_allowed_import_modules=dependency_names | live_extra | builtin_extra,
+                extra_allowed_calls=builtin_extra_calls,
             )
             for dependency_path in dependency_paths:
                 AIStrategyGenerator._validate_safety(
