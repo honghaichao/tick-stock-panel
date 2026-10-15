@@ -39,6 +39,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 import logging
 from dataclasses import asdict
 from typing import Annotated, Any
@@ -46,10 +47,9 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
-from app.services.trading import code_store, risk_metrics
-from app.services.trading import engine as engine_mod
-from app.services.trading import preferences as prefs
-from app.services.trading.models import EngineStatus, OrderDraft
+from app.api.data import invalidate_storage_cache
+from app.services.trading import code_store, engine as engine_mod, preferences as prefs, risk_metrics, store
+from app.services.trading.models import EngineStatus, Order, OrderDraft, OrderStatus
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,101 @@ def _get_executor(request: Request):
 
 def _get_strategy_registry(request: Request):
     return getattr(request.app.state, "strategy_registry", None)
+
+
+def _strategy_to_dict(strategy: Any, request: Request) -> dict[str, Any]:
+    """把一个 LiveStrategy 实例序列化为前端 LiveStrategyApi 兼容的 dict.
+
+    历史上 `list_strategies` 直接 `s.to_dict()`, 但用户态的 LiveStrategy 子类
+    (dividend_auntie / dividend_auntie_universe) 没有显式 to_dict, 所以前端
+    列表页永远拿不到数据。这里把"序列化"从策略层上提到 router, 用 attribute
+    duck-typing + registry / scheduler / preferences 三个来源拼装字段,
+    避免给每个用户策略都加 to_dict boilerplate.
+
+    历史坑 (2026-10-14): schedules 的 `enabled` 字段直接来自 StrategySchedule
+    dataclass.to_dict() — 那个 class 定义里 enabled 永远 = False
+    (`schedules = [StrategySchedule(..., enabled=False, ...)]`),
+    所以 API 修前无论 preferences 怎么改, 列表里所有 schedule 都显示 ✗,
+    用户在前端"启"了之后 preferences 已经是 ✓, 但刷新页面看到还是 ✗,
+    误以为没生效 (其实 scheduler 已经按 preferences 触发, 仅是
+    API 没回真实状态)。修法: enabled 改读 prefs.is_strategy_schedule_enabled,
+    last_run 从 strategy_runs.jsonl 末行取, 让用户能直观看到"我刚才
+    启的那个 schedule 上次 cron 跑是什么时候 / 什么状态"。
+    """
+    raw_schedules = list(getattr(strategy, "schedules", []) or [])
+    schedules: list[dict[str, Any]] = []
+    for s in raw_schedules:
+        if hasattr(s, "to_dict"):
+            base = s.to_dict()
+        elif isinstance(s, dict):
+            base = dict(s)
+        else:
+            # 兜底: 未知类型跳过, 不阻塞整个列表
+            continue
+        # 关键修复: enabled 从 preferences 读, 不从 StrategySchedule class
+        # 默认 (False) 读. 用户在 UI 启用后, 真实状态在 preferences.
+        event_name = base.get("name") or getattr(s, "name", None)
+        if event_name:
+            with contextlib.suppress(Exception):
+                # preferences 读失败 → 保守用 class 默认值
+                base["enabled"] = bool(prefs.is_strategy_schedule_enabled(strategy.id, event_name))
+        # last_run*: 从 strategy_runs.jsonl 末行取 (同 strategy_id + event + trigger='cron')
+        base["last_run"] = None
+        base["last_run_status"] = None
+        base["last_run_error"] = ""
+        if event_name:
+            try:
+                from app.services.trading.executor import list_runs as _list_runs
+                # repo.store.data_dir 拿数据目录, 沿用 list_logs 同款
+                data_dir = request.app.state.repo.store.data_dir
+                # list_runs 已经支持按 strategy_id 过滤; 客户端再按 event
+                # 和 trigger 过滤. limit=20 是"够看几次最近", 排序按
+                # started_at 升序, 取末 1 条.
+                candidates = _list_runs(
+                    data_dir, strategy_id=strategy.id, limit=50,
+                )
+                candidates = [
+                    r for r in candidates
+                    if r.get("event") == event_name and r.get("trigger") == "cron"
+                ]
+                if candidates:
+                    last = candidates[-1]
+                    base["last_run"] = last.get("started_at")
+                    base["last_run_status"] = last.get("status")
+                    base["last_run_error"] = last.get("error") or ""
+            except Exception:  # noqa: BLE001
+                # 读不到 (jsonl 不存在/损坏) → 留 None, 不阻塞
+                pass
+        schedules.append(base)
+
+    reg = _get_strategy_registry(request)
+    started_at = reg.started_at_of(strategy.id) if reg is not None else None
+
+    sched = getattr(request.app.state, "strategy_scheduler", None)
+    next_run: str | None = None
+    if sched is not None and hasattr(sched, "next_run"):
+        try:
+            next_run = sched.next_run(strategy.id)
+        except Exception:  # noqa: BLE001
+            next_run = None
+
+    notify_wechat = False
+    try:
+        notify_wechat = bool(prefs.get_notify_wechat(strategy.id))
+    except Exception:  # noqa: BLE001
+        notify_wechat = False
+
+    return {
+        "id": strategy.id,
+        "name": getattr(strategy, "name", strategy.id),
+        "enabled_default": bool(getattr(strategy, "enabled_default", False)),
+        "schedules": schedules,
+        "next_run": next_run,
+        "started_at": started_at,
+        "notify_wechat": notify_wechat,
+        # PR-1 (live-trading-strategy-summary.md) 上线后再补 summary.
+        "summary": None,
+    }
 
 
 def _data_dir(request: Request) -> Any:
@@ -135,6 +230,106 @@ def cancel_order(request: Request, order_id: str):
     except engine_mod.TradingRejectError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     return {"order": order.model_dump(mode="json")}
+
+
+# ── PR1 (live-trading-v2-pr1): 一键救命三件套后端能力 ─────────────────
+class CancelAllBody(BaseModel):
+    strategy_id: str | None = None  # 不传 = 全账户
+
+
+@router.post("/orders/cancel-all")
+def cancel_all_orders(request: Request, body: CancelAllBody | None = None):
+    """全部撤单 (救命按钮 #1).
+
+    幂等: 重复点也安全, 已撤的不会报失败. strategy_id 不传 = 撤整个账户的
+    pending 委托 (NEW / PARTIAL). 立即同步落盘 + invalidate_storage_cache.
+    """
+    data_dir = _data_dir(request)
+    engine = _get_engine(request)
+    statuses = (OrderStatus.NEW, OrderStatus.PARTIAL)
+    pending = store.list_orders(
+        data_dir, statuses=statuses, strategy_id=(body.strategy_id if body else None),
+    )
+    cancelled: list[str] = []
+    failed: list[dict] = []
+    for order in pending:
+        try:
+            engine.cancel(data_dir, order.id)
+            cancelled.append(order.id)
+        except engine_mod.TradingRejectError as e:
+            failed.append({"id": order.id, "error": str(e)})
+    if cancelled:
+        invalidate_storage_cache()
+    return {
+        "cancelled": len(cancelled),
+        "failed": len(failed),
+        "order_ids": cancelled,
+        "errors": failed,
+    }
+
+
+class FlattenBody(BaseModel):
+    strategy_id: str | None = None  # 不传 = 全账户
+
+
+@router.post("/positions/flatten")
+def flatten_positions(request: Request, body: FlattenBody | None = None):
+    """一键平仓 (救命按钮 #3).
+
+    对当前所有 qty > 0 的持仓, 按市价卖出 (`order_type="market"`). 沿用
+    submit() 的全套风控 (单笔金额 / 资金 / 涨跌停) — 极端行情下若风控拒,
+    会写到 `errors[]` 字段, 但不影响其他持仓的市价单提交.
+
+    幂等: 重复点会得到空 result, 因为持仓已清; 不抛错.
+    """
+    data_dir = _data_dir(request)
+    engine = _get_engine(request)
+    positions = engine.positions(
+        data_dir, strategy_id=(body.strategy_id if body else None),
+    )
+    submitted: list[str] = []
+    skipped: list[dict] = []
+    for p in positions:
+        if p.qty <= 0:
+            continue
+        try:
+            order = _submit_market_sell(engine, data_dir, p)
+            submitted.append(order.id)
+        except engine_mod.TradingRejectError as e:
+            skipped.append({"symbol": p.symbol, "qty": p.qty, "error": str(e)})
+    if submitted:
+        invalidate_storage_cache()
+    return {
+        "submitted": len(submitted),
+        "skipped": len(skipped),
+        "order_ids": submitted,
+        "errors": skipped,
+    }
+
+
+def _submit_market_sell(engine, data_dir, position) -> Order:
+    """单笔市价卖: 同 submit() 路径, order_type="market", 不传 limit_price.
+
+    涨跌停价会被 broker 内部按对手价取 (paper broker 取 last_price ± tick).
+    Position 不带 strategy_id (账户级聚合), 一键平仓是账户级动作.
+
+    max_order_amount_override = trading_max_order_amount_for_strategy (默认 1000万).
+    让"一键平仓"按 1000 万单笔上限走, 不被 manual 5 万卡 (救命按钮,
+    不能被普通风控硬卡; 真要卡由人工决定).
+    """
+    draft = OrderDraft(
+        strategy_id=None,
+        symbol=position.symbol,
+        side="sell",
+        order_type="market",
+        qty=position.qty,
+        limit_price=None,  # 市价不传限价
+        note="v2 flatten (一键平仓)",
+    )
+    return engine.submit(
+        data_dir, draft,
+        max_order_amount_override=prefs.max_order_amount_for_strategy(),
+    )
 
 
 # ── 历史成交 / 日志 ─────────────────────────────────
@@ -206,7 +401,7 @@ def list_strategies(request: Request):
     reg = _get_strategy_registry(request)
     if reg is None:
         raise HTTPException(status_code=503, detail="策略注册表未初始化")
-    return {"strategies": [s.to_dict() for s in reg.list_all()]}
+    return {"strategies": [_strategy_to_dict(s, request) for s in reg.list_all()]}
 
 
 class StrategyRunNowBody(BaseModel):
@@ -475,6 +670,62 @@ def set_strategy_notify(
     return {"strategy_id": strategy_id, "notify_wechat": body.enabled}
 
 
+# ── 通知中心 (跨策略聚合, frontend MessagesStream / Monitor 用) ─────────
+class TradingNotifyIn(BaseModel):
+    kind: str = "info"
+    text: str
+    source: str = "user"
+    extra: dict | None = None
+
+
+@router.get("/notify")
+def list_notifications(
+    request: Request,
+    limit: int = Query(default=100, ge=1, le=1000),
+    kind: str | None = Query(default=None),
+):
+    """跨策略通知列表 (前端顶部通知中心 / 实时流)。"""
+    from app.services.trading import notify_store
+    items = notify_store.list_recent(_data_dir(request), limit=limit, kind=kind)
+    return {"items": items, "total": len(items)}
+
+
+@router.post("/notify")
+def post_notification(body: TradingNotifyIn, request: Request):
+    """手动追加一条通知 (测试 / 调试 / 用户操作入口)。"""
+    from app.services.trading import notify_store
+    entry = notify_store.append(
+        _data_dir(request),
+        kind=body.kind,
+        text=body.text,
+        source=body.source,
+        extra=body.extra,
+    )
+    return {"status": "ok", "entry": entry}
+
+
+# ── 跨策略聚合 PnL (无 strategy_id 时, frontend 顶栏 'all') ───────────
+@router.get("/pnl/metrics")
+def get_aggregate_pnl_metrics(request: Request):
+    """无 strategy_id 的 PnL 指标聚合 — 取账户 + 全部 fills + 全部 snapshots。"""
+    from app.services.trading import pnl as pnl_mod
+    try:
+        return pnl_mod.compute_metrics(_data_dir(request)).to_dict()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"aggregate pnl metrics 失败: {e}") from e
+
+
+@router.get("/pnl/history")
+def get_aggregate_pnl_history(
+    request: Request,
+    limit: int = Query(default=500, ge=1, le=5000),
+):
+    """跨策略 PnL 历史 (按时间正序)。"""
+    from app.services.trading import pnl as pnl_mod
+    snapshots = pnl_mod.list_history(_data_dir(request), limit=limit)
+    return {"snapshots": snapshots}
+
+
 # ── 策略删除 (trash) ──────────────────────────────
 @router.delete("/strategies/{strategy_id}")
 def delete_strategy(strategy_id: str, request: Request):
@@ -516,9 +767,9 @@ def delete_strategy(strategy_id: str, request: Request):
 def get_strategy_pnl_metrics(
     strategy_id: str, request: Request,
 ):
-    from app.services.trading.pnl import compute_strategy_metrics
+    from app.services.trading.pnl import compute_metrics
     try:
-        return compute_strategy_metrics(_data_dir(request), strategy_id).to_dict()
+        return compute_metrics(_data_dir(request), strategy_id=strategy_id).to_dict()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"pnl metrics 失败: {e}") from e
 
@@ -700,13 +951,6 @@ def promote_strategy_to_live(strategy_id: str, request: Request, body: dict):
         "target_path": str(result.target_path),
         "registered_count": registered_count,
     }
-
-
-@router.get("/strategies/{strategy_id}/code/changelog")
-def get_strategy_code_changelog(
-    strategy_id: str, request: Request, limit: int = Query(default=50, ge=1, le=500),
-):
-    return {"entries": code_store.list_changelog(_data_dir(request), strategy_id, limit=limit)}
 
 
 # ── F1-5: 快照 / diff / 回滚 (2026-10-13) ─────────────────────────────────
