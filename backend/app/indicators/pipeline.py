@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 # 增量路径每秒级执行, 若不缓存则每轮 glob + 读所有 JSON + 重编译表达式。
 _custom_signal_exprs: dict[str, pl.Expr] | None = None
 _custom_signal_exprs_today: dict[str, pl.Expr] | None = None
+_custom_prev_fields_cache: set[str] | None = None
 
 
 def _get_custom_signal_exprs() -> dict[str, pl.Expr]:
@@ -75,23 +76,29 @@ def _get_custom_signal_exprs_today() -> dict[str, pl.Expr]:
     与全量版分开缓存：盘中单日快照上 .shift 跨 symbol 语义不正确,
     build_expressions(allow_shift=False) 会跳过带偏移的信号, 结果集不同。
     """
-    global _custom_signal_exprs_today
+    global _custom_signal_exprs_today, _custom_prev_fields_cache
     if _custom_signal_exprs_today is None:
         from app.strategy import custom_signals
         try:
             sigs = custom_signals.load_all(settings.data_dir)
-            _custom_signal_exprs_today = custom_signals.build_expressions(sigs, allow_shift=False)
+            prev_fields = custom_signals.prev_day_fields(sigs)
+            _custom_prev_fields_cache = prev_fields
+            _custom_signal_exprs_today = custom_signals.build_expressions_prev(
+                sigs, prev_available=prev_fields,
+            )
         except Exception as e:
             logger.warning("custom signals load failed (today): %s", e)
             _custom_signal_exprs_today = {}
+            _custom_prev_fields_cache = set()
     return _custom_signal_exprs_today
 
 
 def invalidate_custom_signals() -> None:
     """失效自定义信号缓存（保存/删除信号后调用，下次计算重新加载）。"""
-    global _custom_signal_exprs, _custom_signal_exprs_today
+    global _custom_signal_exprs, _custom_signal_exprs_today, _custom_prev_fields_cache
     _custom_signal_exprs = None
     _custom_signal_exprs_today = None
+    _custom_prev_fields_cache = None
 
 
 # enriched parquet 仅存储的列 (14 列)
