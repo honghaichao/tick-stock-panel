@@ -302,17 +302,38 @@ def compute_metrics(
 
 
 def _equity_at_start_of_day(snapshots: list[dict], today: str, yesterday: str, *, initial_cash: float) -> float:
-    """取今日开始时的权益基准. 今日首笔快照 total_equity, 否则昨日末笔, 否则 initial_cash."""
-    for s in snapshots:
-        if s.get("trade_date", "") == today:
-            return float(s.get("total_equity", initial_cash))
-    # 没有今日快照 → 倒找昨日最后一笔
+    """取今日开始时的权益基准 (昨日末笔 → 今日首笔完整快照 → initial_cash).
+
+    优先级:
+      1. 昨日末笔 snapshot.total_equity (前一日收盘权益, 跨日 PnL 的标准基准)
+      2. 今日首笔"完整"snapshot.total_equity (market_value + cash 都已就位;
+         引擎刚启动瞬间持仓还没被估值的 snapshot 不可信, 跳过)
+      3. initial_cash (全新账户, 无任何 snapshot)
+
+    历史坑: 2026-10-14 早上 10:08-10:23 之间的 snapshot 是 engine 刚启动
+    几秒内的, market_value=0 但 cash 已经是 2603 (昨日买完股票后的余钱),
+    拿这个当"今日开盘基准"会让 today_pnl 多算 ~1M 元, pct 飙到 38560% ——
+    真实情况是持仓今早微跌 ~2.6%, today_pnl ≈ -26642 元。修法就是优先级
+    1 先看昨日, 优先级 2 才退到今日, 而今日 snapshot 必须 mv>0 才认。
+    """
+    # 1. 昨日末笔 (倒序找最晚一条)
     yesterday_last: float | None = None
     for s in snapshots:
         if s.get("trade_date", "") == yesterday:
             yesterday_last = float(s.get("total_equity", initial_cash))
     if yesterday_last is not None:
         return yesterday_last
+    # 2. 今日首笔"完整"快照 (market_value + cash 都在; 引擎刚启动的
+    #    mv=0 半态不算)
+    for s in snapshots:
+        if s.get("trade_date", "") == today:
+            mv = float(s.get("market_value", 0) or 0)
+            cash = float(s.get("cash", initial_cash) or 0)
+            # 完整态: 持仓已估值 (mv>0) 或 没有任何资金活动 (cash==initial_cash)
+            # — 否则跳过这一条, 找下一条
+            if mv > 0 or abs(cash - initial_cash) < 0.01:
+                return float(s.get("total_equity", initial_cash))
+    # 3. 都没找到, 用 initial_cash
     return initial_cash
 
 
