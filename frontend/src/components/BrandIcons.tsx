@@ -55,6 +55,16 @@ export const IconStrategy = make(
   <path d="M4 5H20L14 12.2V19.2L10 17.2V12.2Z" />,
 )
 
+/** 实盘 — K 线主体 + 向上入场箭头 (聚宽式"实盘信号") */
+export const IconLive = make(
+  <>
+    <rect x="4" y="6" width="3.5" height="12" fill="currentColor" stroke="none" />
+    <line x1="5.75" y1="6" x2="5.75" y2="18" strokeWidth="0.6" stroke="#fff" strokeOpacity="0.55" />
+    <path d="M11 14.5L16 9L21 14.5" />
+    <path d="M16 9V19.5" strokeWidth="2.2" />
+  </>,
+)
+
 /** 因子 — 散点 + 上升趋势线 */
 export const IconFactors = make(
   <>

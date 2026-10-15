@@ -1,5 +1,3 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense } from 'react'
-
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense, type ReactNode } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -23,33 +21,6 @@ import {
   useToggleRealtimeQuotes,
 } from '@/lib/useSharedMutations'
 import { QK } from '@/lib/queryKeys'
-import {
-  Siren,
-  Star,
-  ScanSearch,
-  History,
-  Sigma,
-  FileText,
-  Settings,
-  DatabaseZap,
-  Database,
-  Loader2,
-  LayoutDashboard,
-  Tags,
-  TrendingUp,
-  Flame,
-  BarChart3,
-  Gauge,
-  Sparkles,
-  Layers2,
-  Layers3,
-  Zap,
-  Landmark,
-  RadioTower,
-  Briefcase,
-  CheckCircle2,
-  BookOpenCheck,
-
 import { compareByDefaultNav, defaultNavIndex, seedHiddenForNewUser } from '@/lib/navOrder'
 import {
   Settings,
@@ -69,8 +40,6 @@ import {
   PanelLeft,
   PanelLeftClose,
   PanelLeftOpen,
-} from 'lucide-react'
-
   Download,
   HardDriveDownload,
 } from 'lucide-react'
@@ -80,6 +49,7 @@ import {
   IconStrategy,
   IconFactors,
   IconBacktest,
+  IconLive,
   IconRegime,
   IconIndices,
   IconData,
@@ -113,31 +83,12 @@ export const CORE_INDEXES = [
 type CoreIndex = (typeof CORE_INDEXES)[number]
 
 const nav = [
-  { to: '/',                label: '看板',     icon: LayoutDashboard },
-  { to: '/watchlist',  label: '自选',   icon: Star },
-  { to: '/live-trading', label: '实盘交易', icon: Briefcase },
-  { to: '/screener',   label: '策略',   icon: ScanSearch },
-  { to: '/factors',    label: '因子', icon: Sigma },
-  { to: '/backtest',   label: '回测', icon: History },
-  { to: '/stock-analysis',    label: '个股分析', icon: TrendingUp },
-  { to: '/limit-ladder', label: '连板梯队', icon: Flame },
-  { to: '/concept-analysis', label: '概念分析', icon: Layers3 },
-  { to: '/industry-analysis', label: '行业分析', icon: Landmark },
-  { to: '/financials', label: '财务分析', icon: FileText },
-  { to: '/monitor', label: '监控中心', icon: RadioTower },
-  { to: '/regime', label: '市场环境', icon: Gauge },
-  { to: '/abnormal', label: '异动监控', icon: Siren },
-  { to: '/lots',       label: '持仓提醒', icon: Layers2 },
-  { to: '/signals',    label: '信号库',   icon: Zap },
-  { to: '/review',      label: '复盘',   icon: BookOpenCheck },
-  { to: '/indices', label: '指数', icon: BarChart3 },
-  { to: '/data',       label: '数据',   icon: Database },
-
   { to: '/',                 label: '看板',     icon: IconDashboard },
   { to: '/watchlist',        label: '自选',     icon: IconWatchlist },
   { to: '/screener',         label: '策略',     icon: IconStrategy },
   { to: '/factors',          label: '因子',     icon: IconFactors },
   { to: '/backtest',         label: '回测',     icon: IconBacktest },
+  { to: '/live-trading',     label: '实盘',     icon: IconLive },
   { to: '/regime',           label: '市场环境', icon: IconRegime },
   { to: '/indices',          label: '指数',     icon: IconIndices },
   { to: '/data',             label: '数据',     icon: IconData },
@@ -203,13 +154,6 @@ function SidebarIndexQuotes({ rows, items }: { rows: IndexQuote[] | undefined; i
           <NavLink
             key={item.symbol}
             to={`/indices?symbol=${encodeURIComponent(item.symbol)}`}
-            className="block rounded bg-elevated/60 px-2 py-1.5 transition-colors hover:bg-elevated"
-            title={`${item.name} ${item.symbol}`}
-          >
-            <div className="flex items-center justify-between gap-1">
-              <span className="text-[10px] text-secondary">{item.name}</span>
-              <span className={`text-[10px] font-mono ${indexPctClass(pct)}`}>{fmtIndexPct(pct)}</span>
-
             className="block rounded bg-elevated/60 px-1.5 py-1.5 transition-colors hover:bg-elevated"
             title={`${item.name} ${item.symbol}`}
           >
@@ -315,9 +259,6 @@ function DataSourceHealthBadge({ matrix }: { matrix: CapabilityMatrix | undefine
         onKeyDown={e => { if (e.key === 'Escape') setPopPos(null) }}
         className="group relative flex items-center gap-2 overflow-hidden rounded-md py-1.5 pl-2.5 pr-2 transition-colors duration-150 hover:bg-elevated/70"
       >
-        <span className="pointer-events-none absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-accent/50 transition-colors group-hover:bg-accent" />
-        <DatabaseZap className="h-3.5 w-3.5 shrink-0 text-muted group-hover:text-accent transition-colors" />
-
         <DatabaseZap className="h-3.5 w-3.5 shrink-0 text-muted group-hover:text-foreground transition-colors" />
         {/* 能力方格 (按注册顺序: 实时/日K/分钟/除权/财务), 与悬浮卡逐格同色对应 */}
         <span className="flex items-center gap-1 shrink-0">
@@ -401,11 +342,6 @@ function AIConfigBadge({ configured, model }: { configured?: boolean; model?: st
       className="group relative flex items-center gap-2 overflow-hidden rounded-md py-1.5 pl-2.5 pr-2 transition-colors duration-150 hover:bg-elevated/70"
       title={`AI 配置 — ${descText}`}
     >
-      <span className="pointer-events-none absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-purple-400/50 transition-colors group-hover:bg-purple-400" />
-      <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted group-hover:text-purple-400 transition-colors" />
-      {configured ? (
-        <span className="truncate text-[11px] font-medium text-secondary group-hover:text-foreground transition-colors">
-
       <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted group-hover:text-foreground transition-colors" />
       {configured ? (
         <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-secondary group-hover:text-foreground transition-colors">
@@ -466,9 +402,6 @@ export function Layout() {
   // 持久化到 localStorage; 迁移旧两态键 tf-nav-collapsed (收起 → 图标条)。
   const [navState, setNavState] = useState<NavState>(() => {
     try {
-      const v = localStorage.getItem('tf-nav-state')
-      if (v === 'expanded' || v === 'rail' || v === 'hidden') return v
-
       // 两态导航: expanded(14rem) / rail(3.5rem 图标条)。历史三态版本的 'hidden' 归一为展开
       const v = localStorage.getItem('tf-nav-state')
       if (v === 'expanded' || v === 'rail') return v
@@ -520,15 +453,12 @@ export function Layout() {
     [navWatchlist, navEnriched],
   )
 
-  // 数据同步状态轮询: 有活跃 job 时「数据」菜单项显示转圈
-
   // 数据同步状态轮询: 有活跃 job 时「数据」菜单项显示转圈。
   // 标签页隐藏时 TanStack 默认暂停轮询 — 转圈提示只在页面可见时有意义, 不再强制后台轮询
   const { data: pipelineJobs } = useQuery({
     queryKey: QK.pipelineJobs,
     queryFn: () => api.pipelineJobs(1),
     refetchInterval: (query) => (query.state.data?.active_id ? 2000 : 15000),
-    refetchIntervalInBackground: true,
   })
   const isDataSyncing = !!pipelineJobs?.active_id
 
@@ -556,10 +486,6 @@ export function Layout() {
   // 开启实时行情时若存在排队中的挖掘任务 → 确认弹窗 (实时落盘会让排队任务开跑即失败)
   const [miningQueuedWarning, setMiningQueuedWarning] = useState<number | null>(null)
   const miningWarnBackdrop = useDialogBackdrop(() => setMiningQueuedWarning(null))
-  // 三态循环切换 (仅桌面): 展开 → 图标条 → 隐藏 → 展开
-  const toggleNavCollapsed = () => {
-    setNavStatePersist(navState === 'expanded' ? 'rail' : navState === 'rail' ? 'hidden' : 'expanded')
-
   // 两态切换 (仅桌面): 展开 <-> 图标条
   const toggleNavCollapsed = () => {
     setNavStatePersist(navState === 'expanded' ? 'rail' : 'expanded')
@@ -587,8 +513,6 @@ export function Layout() {
   const quoteMode = quoteStatus?.mode ?? 'none'
   const realtimeUnavailable = quoteMode === 'none'
   const isWatchlistMode = quoteMode === 'watchlist'
-  const realtimeModeLabel = isWatchlistMode ? '自选股' : '全市场'
-
   const realtimeModeLabel = isWatchlistMode ? '自选' : '全市场'
   // 当前实时行情数据源名称 (插件/自定义源显示源名, tickflow 不显示)
   const realtimeProvider = prefs?.realtime_data_provider
@@ -624,12 +548,6 @@ export function Layout() {
         ? '关闭实时行情'
         : '开启实时行情'
 
-  // 轮询触发记录总数 → 更新监控中心徽标 (每 15 秒; 后台标签页由 SSE 事件驱动, 不轮询)
-  const alertsTotalQuery = useQuery({
-    queryKey: ['alerts-total'],
-    queryFn: () => api.alertsList({ days: 7, limit: 1 }),
-    refetchInterval: 15000,
-
   // 轮询触发记录总数 → 更新监控中心徽标 (每 15 秒; 后台标签页由 SSE 事件驱动, 不轮询)。
   // 非交易时段无新告警, 降为 2 分钟兜底
   const alertsTotalQuery = useQuery({
@@ -645,11 +563,6 @@ export function Layout() {
   }, [alertsTotal])
 
   // 合并内置页面 + 可见的扩展分析菜单
-  type NavItem = { to: string; label: string; icon: typeof Gauge; badge?: string }
-  const analysisNav: NavItem[] = (analysisMenus?.items ?? [])
-    .filter(m => m.visible)
-    .map(m => ({ to: `/analysis/${m.id}`, label: m.label, icon: m.icon === 'tags' ? Tags : BarChart3 }))
-
   type NavIcon = (props: BrandIconProps) => ReactNode
   // arch: 'ext' = 扩展域页面 (官方扩展/自定义分析), 核心域 nav 常量不带标。
   // 与菜单设置 ARCH_CLASS 同口径: nav 常量 8 项全部核心, 其余两个来源全部扩展。
@@ -678,18 +591,6 @@ export function Layout() {
         const merged = [...ordered]
         for (const item of allNav) {
           if (seen.has(item.to)) continue
-          // 未保存过排序的新条目: 内置页插回默认位置(排在已保存的默认前驱之后),
-          // 分析/扩展菜单仍追加到末尾
-          const defaultIndex = nav.findIndex(n => n.to === item.to)
-          let anchor = -1
-          if (defaultIndex > 0) {
-            for (let i = defaultIndex - 1; i >= 0 && anchor < 0; i -= 1) {
-              anchor = merged.findIndex(n => n.to === nav[i].to)
-            }
-          }
-          if (anchor >= 0) merged.splice(anchor + 1, 0, item)
-          else if (defaultIndex >= 0) merged.unshift(item)
-
           // 未保存过排序的新条目: 默认基准内的路径插回默认位置(排在已出现的
           // 最近默认前驱之后), 分析菜单/未知扩展追加到末尾。基准含迁移到
           // custom/ 的扩展域页面, 保证老用户升级无感 (lib/navOrder)。
@@ -706,8 +607,6 @@ export function Layout() {
         }
         return merged
       })()
-    : allNav
-
     // 无保存排序 (新装/从未调整过菜单): 按迁移前默认基准排序, 扩展域页面
     // 不沉底 — 老用户升级侧栏顺序与迁移前一致; 未知路径稳定追加在后。
     : [...allNav].sort((a, b) => compareByDefaultNav(a.to, b.to))
@@ -780,8 +679,6 @@ export function Layout() {
 
   return (
     <div
-      className="h-screen grid bg-base text-foreground overflow-hidden transition-[grid-template-columns] duration-200 ease-smooth"
-
       className="h-full grid bg-base text-foreground overflow-hidden transition-[grid-template-columns] duration-200 ease-smooth"
       style={{ gridTemplateColumns: isDesktop && !overlayPreview ? (navState === 'expanded' ? '14rem 1fr' : navState === 'rail' ? '3.5rem 1fr' : '0 1fr') : '1fr' }}
     >
@@ -843,11 +740,6 @@ export function Layout() {
               style={{ color: BRAND }}
             />
             {!railMode && (
-              <div
-                className="font-bold text-[11px] uppercase tracking-[0.14em] text-foreground whitespace-nowrap"
-                style={{ textShadow: `0 0 10px ${BRAND}44` }}
-              >
-
               <div className="font-semibold text-[11px] uppercase tracking-[0.12em] text-foreground/90 whitespace-nowrap">
                 Tick Stock Panel
               </div>
@@ -860,8 +752,6 @@ export function Layout() {
                   'flex items-center rounded-btn text-muted hover:text-foreground hover:bg-elevated/60 transition-colors duration-150 ease-smooth',
                   railMode ? 'justify-center p-1.5' : 'ml-auto p-1.5',
                 )}
-                title={railMode ? '隐藏菜单 (再点击左缘按钮可唤出)' : '收起菜单'}
-
                 title={railMode ? '展开菜单' : '收起菜单'}
               >
                 {railMode
@@ -884,8 +774,6 @@ export function Layout() {
             {!railMode && (
               <div className="mt-2.5 border-t border-border/60 pt-1">
                 <DataSourceHealthBadge matrix={matrix} />
-              <div className="mx-2 border-t border-border/45" aria-hidden="true" />
-
               <div className="mx-2 border-t border-border/60" aria-hidden="true" />
               <AIConfigBadge
                 configured={settingsState?.ai_configured ?? settingsState?.has_ai_key}
@@ -899,9 +787,6 @@ export function Layout() {
             </div>
           )}
         </div>
-
-        <nav className="flex-1 min-h-0 overflow-y-auto px-2 py-3 space-y-0.5">
-          {visibleNavItems.map(({ to, label, icon: Icon, badge }) => {
 
         <nav className="tf-nav-scroll flex-1 min-h-0 overflow-y-auto px-2 py-3 space-y-0.5">
           {visibleNavItems.map(({ to, label, icon: Icon, badge, arch }) => {
@@ -922,9 +807,6 @@ export function Layout() {
                   >
                     <span
                       className={cn(
-                        'pointer-events-none absolute left-0 top-1/2 h-4 -translate-y-1/2 w-[2.5px] rounded-full bg-accent transition-opacity duration-150',
-                        location.pathname === '/watchlist' ? 'opacity-100 shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'opacity-0',
-
                         'pointer-events-none absolute inset-y-1 left-0 w-[2px] rounded-full bg-accent transition-opacity duration-150',
                         location.pathname === '/watchlist' ? 'opacity-100' : 'opacity-0',
                       )}
@@ -956,13 +838,6 @@ export function Layout() {
                         {/* active 左侧 accent 竖条指示 */}
                         <span
                           className={cn(
-                            'pointer-events-none absolute left-0 top-1/2 h-4 -translate-y-1/2 w-[2.5px] rounded-full bg-accent transition-opacity duration-150',
-                            isActive ? 'opacity-100 shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'opacity-0',
-                          )}
-                        />
-                        <Icon className={cn('h-4 w-4 shrink-0 transition-colors', isActive ? 'text-accent' : 'text-foreground/60 group-hover:text-foreground/85')} />
-                        {!railMode && <span className="flex-1">{label}</span>}
-
                             'pointer-events-none absolute inset-y-1 left-0 w-[2px] rounded-full bg-accent transition-opacity duration-150',
                             isActive ? 'opacity-100' : 'opacity-0',
                           )}
@@ -1194,18 +1069,6 @@ export function Layout() {
                 <>
                   <span
                     className={cn(
-                      'pointer-events-none absolute left-0 top-1/2 h-4 -translate-y-1/2 w-[2.5px] rounded-full bg-accent transition-opacity duration-150',
-                      isActive ? 'opacity-100 shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'opacity-0',
-                    )}
-                  />
-                  <Settings className={cn('h-4 w-4 shrink-0 transition-colors', isActive ? 'text-accent' : 'text-foreground/60 group-hover:text-foreground/85')} />
-                  {!railMode && <span>设置</span>}
-                  {!railMode && version && (
-                    <span className="ml-auto font-mono text-[10px] text-muted/50 select-none shrink-0">
-                      {version}
-                    </span>
-                  )}
-
                       'pointer-events-none absolute inset-y-1 left-0 w-[2px] rounded-full bg-accent transition-opacity duration-150',
                       isActive ? 'opacity-100' : 'opacity-0',
                     )}

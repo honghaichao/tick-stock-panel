@@ -1,9 +1,11 @@
 /**
  * 实盘交易页 — 概览 tab.
  *
- * 包含: PositionsTable / OrdersTable (+OrderDialog) / TradesTable / LogsList /
- * PnLPanel (+EquityCurve) / StrategiesPanel (+子组件) / StrategyRunHistoryPanel /
- * VerifyAndDriftSection 入口 / CenterTabs 4 子 view / MessagesStream.
+ * 包含: PositionsGrid (v2 PR1 卡片网格) / OrdersTable (+OrderDialog) / TradesTable /
+ * LogsList / PnLPanel (+EquityCurve) / StrategiesPanel (+子组件) /
+ * StrategyRunHistoryPanel / VerifyAndDriftSection (?view=verify 分支渲染).
+ * v2 PR1 收口: 持仓卡片化 + 删废弃 4-tab 中栏 + 删右下消息轮询 (合并到顶栏 Bell).
+ * 详见 docs/live-trading-v2-pr1-nav-and-wire.md.
  *
  * 拆分自 LiveTrading.tsx (PR2). 详见 docs/live-trading-v2-pr2-decompose-and-wire.md.
  */
@@ -11,16 +13,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Activity, AlertCircle, ChevronDown, ChevronRight, History, LineChart as LineChartIcon, ListChecks, Loader2, Play, Plus, Receipt, Trash2, TrendingDown, TrendingUp, Wallet, Zap } from 'lucide-react'
 import type { LiveStrategyApi, PnLSnapshotApi, StrategyRunReportApi } from '@/lib/api'
-import { api, type OrderApi, type OrderDraftApi, type PositionApi } from '@/lib/api'
+import { api, type OrderApi, type OrderDraftApi } from '@/lib/api'
 import { QK } from '@/lib/queryKeys'
 import { Modal } from '@/components/Modal'
 import { StockPreviewDialog } from '@/components/StockPreviewDialog'
 import { cn } from '@/lib/cn'
 import { fmtPct, fmtPrice, fmtVolume, priceColorClass } from '@/lib/format'
-import { CenterTabs } from '@/components/live/CenterTabs'
-import { MessagesStream } from '@/components/live/MessagesStream'
 import { VerifyAndDriftSection } from '@/components/live/VerifyAndDriftSection'
-import { Card, EmptyHint, Field, KindBadge, Pill, PnLCell, Section, Stat, SymbolCell } from '@/components/live/shared'
+import { PositionCard } from '@/components/live/PositionCard'
+import { Card, EmptyHint, Field, KindBadge, Pill, Section, Stat, SymbolCell } from '@/components/live/shared'
 import { strategyIsExpanded, splitStrategiesByStatus } from '@/lib/liveTradingTable'
 import { toNavItems } from '@/lib/listNav'
 
@@ -52,167 +53,42 @@ function pad(n: number): string {
 // 占位图标别名 (UI 里引用了但未在上面 import)
 const LifeLine = LineChartIcon
 
-function PositionsTable({ strategyId }: { strategyId?: string | null } = {}) {
+/**
+ * 持仓卡片网格 — v2 PR1.
+ *
+ * 取代 v1 的 10 列横排方案 (仓内 todo 旧 PR). 1 行 1 票卡片 (1/2/3/4 列自适应),
+ * hero 数字是 PnL + 5 日分时 sparkline; 卖 1/3 / 卖 1/2 / 全卖 快捷按钮接
+ * PositionCard (本轮不接 OrderDialog, PR2 才接).
+ */
+function PositionsGrid({ strategyId }: { strategyId?: string | null } = {}) {
   const positionsQ = useQuery({
     queryKey: QK.tradingPositions(strategyId ?? null),
     queryFn: () => api.tradingPositions(strategyId ? { strategy_id: strategyId } : undefined),
     refetchInterval: 6000,
   })
-  const lotsQ = useQuery({ queryKey: QK.lots, queryFn: api.lotsList, refetchInterval: 30000 })
   const positions = positionsQ.data?.positions ?? []
-  const lots = lotsQ.data?.lots ?? []
-
-  const allSymbols = useMemo(() => {
-    const s = new Set<string>()
-    positions.forEach(p => s.add(p.symbol))
-    lots.forEach(l => s.add(l.symbol))
-    return Array.from(s)
-  }, [positions, lots])
-
+  const allSymbols = useMemo(() => Array.from(new Set(positions.map(p => p.symbol))), [positions])
   const namesQ = useQuery({
-    queryKey: ['instrument-names', allSymbols.join(',')],
+    queryKey: ['instrument-names-grid', allSymbols.join(',')],
     queryFn: () => api.instrumentNames(allSymbols),
     enabled: allSymbols.length > 0,
     staleTime: 300_000,
   })
   const names = namesQ.data?.names ?? {}
-
-  // 把同一 symbol 的 lots 与实盘持仓对齐, 前端用左右两段展示
-  const lotsBySymbol = useMemo(() => {
-    const m: Record<string, typeof lots> = {}
-    for (const l of lots) (m[l.symbol] ??= []).push(l)
-    return m
-  }, [lots])
-
-  // daily kline 仅作 "lastPrices" 估计 (实盘数据走专有 API 更佳, 这里兜底用 enriched)
-  const dailyQ = useQuery({
-    queryKey: ['positions-last', allSymbols.join(',')],
-    queryFn: () => api.klineDailyBatch(allSymbols, 2),
-    enabled: allSymbols.length > 0,
-    staleTime: 60_000,
-  })
-  const lastPrices = useMemo(() => {
-    const m: Record<string, number> = {}
-    for (const [sym, rows] of Object.entries(dailyQ.data?.data ?? {})) {
-      const last = rows[rows.length - 1]
-      if (last?.close != null) m[sym] = Number(last.close)
-    }
-    return m
-  }, [dailyQ.data])
-
-  const [previewSymbol, setPreviewSymbol] = useState<string | null>(null)
-  const navItems = useMemo(
-    () => toNavItems(allSymbols.map(s => ({ symbol: s, name: names[s] }))),
-    [allSymbols, names],
-  )
-
+  if (positions.length === 0) {
+    return <EmptyHint>还没有持仓。提交一笔买入委托或新增批次提醒后, 这里会出现对应记录。</EmptyHint>
+  }
   return (
-    <Section title="当前持仓" subtitle="实盘 fills 聚合 + 持仓提醒 (lots) 批次并列" icon={Wallet}>
-      {positions.length === 0 && lots.length === 0 ? (
-        <EmptyHint>还没有持仓。提交一笔买入委托或新增批次提醒后, 这里会出现对应记录。</EmptyHint>
-      ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface/40 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-border/60 bg-surface/60 text-[10px] uppercase tracking-wide text-muted">
-                  <th className="px-3 py-2 font-medium">标的</th>
-                  <th className="px-2 py-2 font-medium text-right">数量</th>
-                  <th className="px-2 py-2 font-medium text-right">成本价</th>
-                  <th className="px-2 py-2 font-medium text-right">现价</th>
-                  <th className="px-2 py-2 font-medium text-right">市值</th>
-                  <th className="px-2 py-2 font-medium text-right">累计盈亏</th>
-                  <th className="px-2 py-2 font-medium text-right">当时盈亏</th>
-                  <th className="px-2 py-2 font-medium">起 / 末</th>
-                  <th className="px-2 py-2 font-medium text-right">持仓天数</th>
-                  <th className="px-3 py-2 font-medium">来源</th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* 1. 实盘持仓 — 优先, 完整 pnl 字段 */}
-                {positions.map(p => (
-                  <PositionRow key={`pos-${p.symbol}`} p={p}
-                    name={names[p.symbol]}
-                    lot={lotsBySymbol[p.symbol]?.[0]}   // 同 symbol 的批次, 仅展示数量/成本参考
-                    onPreview={() => setPreviewSymbol(p.symbol)} />
-                ))}
-                {/* 2. 仅存在 lots 但无实盘持仓 — 单独一行 */}
-                {lots
-                  .filter(l => !positions.find(p => p.symbol === l.symbol))
-                  .map(l => (
-                    <tr key={`lot-${l.id}`} className="border-b border-border/40 last:border-0 bg-elevated/30">
-                      <td className="px-3 py-2.5">
-                        <SymbolCell symbol={l.symbol} name={names[l.symbol]} onPreview={() => setPreviewSymbol(l.symbol)} />
-                      </td>
-                      <td className="px-2 py-2.5 text-right font-mono text-secondary">{fmtVolume(l.qty)}</td>
-                      <td className="px-2 py-2.5 text-right font-mono text-secondary">{fmtPrice(l.cost_price)}</td>
-                      <td className="px-2 py-2.5 text-right font-mono text-secondary">{lastPrices[l.symbol] != null ? fmtPrice(lastPrices[l.symbol]) : '—'}</td>
-                      <td className="px-2 py-2.5 text-right text-muted/60">—</td>
-                      <td className="px-2 py-2.5 text-right text-muted/60">—</td>
-                      <td className="px-2 py-2.5 text-right text-muted/60">—</td>
-                      <td className="px-2 py-2.5 text-muted">{l.buy_date || '—'}</td>
-                      <td className="px-2 py-2.5 text-right text-muted">—</td>
-                      <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-semibold bg-secondary/10 text-secondary border border-secondary/30">
-                          批次提醒
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      <StockPreviewDialog
-        symbol={previewSymbol}
-        name={previewSymbol ? names[previewSymbol] : undefined}
-        navList={navItems}
-        onNavigate={(s) => setPreviewSymbol(s)}
-        onClose={() => setPreviewSymbol(null)}
-      />
+    <Section title="当前持仓" subtitle={`${positions.length} 个标的 · 1 行 1 票卡片`} icon={Wallet}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+        {positions.map(p => (
+          <PositionCard key={p.symbol} position={p} name={names[p.symbol]} />
+        ))}
+      </div>
     </Section>
   )
 }
 
-function PositionRow({ p, name, lot, onPreview }: {
-  p: PositionApi; name?: string; lot?: { qty: number; cost_price: number }; onPreview: () => void
-}) {
-  return (
-    <tr className="border-b border-border/40 last:border-0 hover:bg-elevated/40">
-      <td className="px-3 py-2.5">
-        <SymbolCell symbol={p.symbol} name={name} onPreview={onPreview} />
-      </td>
-      <td className="px-2 py-2.5 text-right font-mono text-secondary">{fmtVolume(p.qty)}</td>
-      <td className="px-2 py-2.5 text-right font-mono text-foreground">{fmtPrice(p.avg_cost)}</td>
-      <td className="px-2 py-2.5 text-right font-mono text-secondary">{p.last_price != null ? fmtPrice(p.last_price) : '—'}</td>
-      <td className="px-2 py-2.5 text-right font-mono text-foreground">
-        {p.market_value != null ? fmtPrice(p.market_value) : '—'}
-      </td>
-      <td className="px-2 py-2.5 text-right">
-        <PnLCell value={p.accumulated_pnl} pct={p.accumulated_pnl_pct} />
-      </td>
-      <td className="px-2 py-2.5 text-right">
-        <PnLCell value={p.total_pnl} pct={p.total_pnl_pct} prefix="当时" />
-      </td>
-      <td className="px-2 py-2.5 text-muted">
-        {p.first_buy_date || '—'} → {p.last_buy_date || '—'}
-      </td>
-      <td className="px-2 py-2.5 text-right text-secondary">{p.holding_days != null ? `${p.holding_days}天` : '—'}</td>
-      <td className="px-3 py-2.5">
-        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-semibold bg-accent/10 text-accent border border-accent/30">
-          实盘
-        </span>
-        {lot && (
-          <span className="ml-1 text-[10px] text-muted" title="同 symbol 已有批次提醒作为参考">
-            +批次 {fmtVolume(lot.qty)}@{fmtPrice(lot.cost_price)}
-          </span>
-        )}
-      </td>
-    </tr>
-  )
-}
 
 function OrdersTable({ strategyId }: { strategyId?: string | null } = {}) {
   const ordersQ = useQuery({
@@ -942,28 +818,42 @@ function StrategyRunList({ runs, isLoading }: { runs: StrategyRunReportApi[]; is
   )
 }
 
-export function LiveTradingOverview({ strategyId }: { strategyId?: string | null } = {}) {
-  // §5.2.2 (round-3 + PR-2): 持仓独立成 row (user 上轮反馈 "持仓单独一行" 落点).
-  // 其它内容 (收益曲线 / 委托 / 下单 / 日志 / 消息流) 用 grid 12 列布局.
-  // per-strategy 视图: 所有 panel 只显示本策略.
+/**
+ * v2 PR1 重构: 持仓卡片化 + 去掉 4-tab 中栏 + 去掉右下消息轮询 (合并到顶栏 Bell),
+ * 加上 ?view=verify 分支 (见 docs/live-trading-v2-pr1-nav-and-wire.md §B).
+ *
+ * ?view=verify: 全屏只显示回测验证段, 由 Sidebar "策略配置 ▼" -> "打开回测验证"
+ * 入口触发, 其余 (持仓/委托/成交/PnL/历史/日志) 全隐.
+ *
+ * - 持仓: PositionsGrid (1 行 1 票卡片网格, 自适应 1/2/3/4 列)
+ * - 委托 + 成交: xl 2 列 split-view (无 sub-tab)
+ * - PnL 曲线: 单段
+ * - 策略运行历史: StrategyRunHistoryPanel (per-strategy) / StrategiesPanel (列表)
+ * - 日志: LogsList
+ *
+ * 不再持有 lotsQ 数据 (PR2 才整合 plan/lots 对齐展示)。
+ */
+export function LiveTradingOverview({
+  strategyId,
+  view,
+}: { strategyId?: string | null; view?: 'verify' } = {}) {
+  // ?view=verify 守卫: 只显示回测验证段. 不进主网格.
+  if (view === 'verify' && strategyId) {
+    return <VerifyAndDriftSection strategyId={strategyId} />
+  }
+
   return (
     <div className="space-y-4">
-      <PositionsTable strategyId={strategyId} />
-      {/* F1-3 + F1-4 (2026-10-13): 回测验证历史 + drift — 仅 per-strategy 显示 */}
-      {strategyId && <VerifyAndDriftSection strategyId={strategyId} />}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-9 min-w-0">
-          <CenterTabs strategyId={strategyId ?? null}>
-            {{
-              pnl: <PnLPanel strategyId={strategyId} />,
-              orders: <div className="space-y-4"><OrdersTable strategyId={strategyId} /><TradesTable strategyId={strategyId} /></div>,
-              runs: strategyId ? <StrategyRunHistoryPanel strategyId={strategyId} /> : <StrategiesPanel />,
-              logs: <LogsList strategyId={strategyId} />,
-            }}
-          </CenterTabs>
-        </div>
-        <div className="lg:col-span-3 min-w-0"><MessagesStream /></div>
+      <PositionsGrid strategyId={strategyId} />
+      <PnLPanel strategyId={strategyId} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <OrdersTable strategyId={strategyId} />
+        <TradesTable strategyId={strategyId} />
       </div>
+      {strategyId
+        ? <StrategyRunHistoryPanel strategyId={strategyId} />
+        : <StrategiesPanel />}
+      <LogsList strategyId={strategyId} />
     </div>
   )
 }

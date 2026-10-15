@@ -12,6 +12,7 @@
  */
 export const DEFAULT_NAV_PATHS = [
   '/', '/watchlist', '/screener', '/factors', '/backtest',
+  '/live-trading',
   '/stock-analysis', '/limit-ladder', '/concept-analysis', '/industry-analysis', '/financials',
   '/monitor', '/regime', '/abnormal', '/lots', '/paper', '/signals', '/review',
   '/indices', '/data',
