@@ -67,7 +67,10 @@ def _bars() -> pl.DataFrame:
 def _incremental_and_full(tmp_path) -> tuple[pl.DataFrame, pl.DataFrame]:
     bars = _bars()
     history = bars.filter(pl.col("date") < TODAY)
-    history_indicators = compute_indicators(history)
+    history_indicators = compute_indicators(history).with_columns(
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_ups"),
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_downs"),
+    )
     latest = history["date"].max()
 
     repo = KlineRepository(DataStore(tmp_path))

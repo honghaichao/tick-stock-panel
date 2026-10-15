@@ -53,7 +53,10 @@ def _bars() -> pl.DataFrame:
 def test_intraday_macd_rsi_warmup_matches_full(tmp_path, column):
     bars = _bars()
     history = bars.filter(pl.col("date") < TODAY)
-    history_indicators = compute_indicators(history)
+    history_indicators = compute_indicators(history).with_columns(
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_ups"),
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_downs"),
+    )
     latest = history["date"].max()
 
     repo = KlineRepository(DataStore(tmp_path))

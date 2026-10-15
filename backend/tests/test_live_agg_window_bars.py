@@ -68,7 +68,10 @@ def _bars() -> pl.DataFrame:
 
 
 def _incremental(repo: KlineRepository, bars: pl.DataFrame, latest: date) -> pl.DataFrame:
-    history_indicators = compute_indicators(bars.filter(pl.col("date") < TODAY))
+    history_indicators = compute_indicators(bars.filter(pl.col("date") < TODAY)).with_columns(
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_ups"),
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_downs"),
+    )
     repo._build_live_agg(latest)
     return compute_enriched_today(
         repo.get_live_agg(),
@@ -121,7 +124,10 @@ def test_live_agg_from_history_cache_matches_full(tmp_path):
     bars = _bars()
     history = bars.filter(pl.col("date") < TODAY)
     repo = KlineRepository(DataStore(tmp_path))
-    repo._enriched_history_cache = compute_indicators(history)
+    repo._enriched_history_cache = compute_indicators(history).with_columns(
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_ups"),
+        pl.lit(0, dtype=pl.UInt32).alias("consecutive_limit_downs"),
+    )
 
     incremental = _incremental(repo, bars, history["date"].max())
 
