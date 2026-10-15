@@ -304,7 +304,10 @@ __all__ = [
     "get_strategy_schedules",
     "initial_cash",
     "is_enabled",
+    "get_last_recovery_date",
     "is_strategy_schedule_enabled",
+    "last_recovery_key",
+    "mark_recovery",
     "list_all_strategy_schedules",
     "match_interval_seconds",
     "max_order_amount",
@@ -362,3 +365,41 @@ def delete_strategy_keys(strategy_id: str) -> list[str]:
         _atomic(p, _json.dumps(raw, indent=2, ensure_ascii=False))
         base._invalidate_cache()
     return deleted
+
+
+# ── 启动补跑 (cron misfire recovery; PR-1 §3.1) ──────────────────────────
+# 偏好 schema (扁平 key, 与 notify_wechat_key 等同款):
+#   trading_strategies.<strategy_id>.last_recovery.<event>.<YYYY-MM-DD> = "<ISO ts>"
+# 用于防止同日重复补跑同一个 schedule. key 是日期维度, 跨日重启会"忘记"上一天的标记,
+# 这是预期行为 (昨天的就不需要补跑了).
+
+
+def last_recovery_key(strategy_id: str, event: str, date_str: str) -> str:
+    """生成 preferences.json 中最后补跑时间记录的 key."""
+    return f"trading_strategies.{strategy_id}.last_recovery.{event}.{date_str}"
+
+
+def get_last_recovery_date(strategy_id: str, event: str) -> str | None:
+    """查今天补过没有 (日期维度). 没补过 → None; 有 → 该日期字符串.
+
+    备注: 调用方负责传 today 的 date_str (按 CN 时区). 这里不做日期推断.
+    """
+    raw = base.load()
+    prefix = f"trading_strategies.{strategy_id}.last_recovery.{event}."
+    matches: list[str] = []
+    for k in raw:
+        if k.startswith(prefix):
+            date_part = k[len(prefix):]
+            if date_part:
+                matches.append(date_part)
+    if not matches:
+        return None
+    # 取"最大"日期字符串 (ISO YYYY-MM-DD 字典序 == 时间序), 跨日容错.
+    matches.sort()
+    return matches[-1]
+
+
+def mark_recovery(strategy_id: str, event: str, when_iso: str, date_str: str) -> None:
+    """标记 (sid, event, date) 已补跑一次. 已标记则 no-op (同日内幂等)."""
+    key = last_recovery_key(strategy_id, event, date_str)
+    base.save({key: when_iso})
