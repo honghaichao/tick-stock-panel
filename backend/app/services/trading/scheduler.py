@@ -10,12 +10,22 @@
 
 不做什么:
   - 不重新实现调度 — APScheduler 已经在仓库广泛使用, 复用 + 测试矩阵.
+
+启动补跑 (recovery; 见 docs/live-trading-cron-misfire-recovery.md):
+  - 后端在盘后重启时, APScheduler 的 misfire_grace_time=3600 已过期, 9:05/9:35/13:30
+    当天不再触发. 在 apply_all() 末尾追加 _recover_missed(), 对每个 enabled 的
+    schedule 判断"今天 (hour, minute) 是否处于宽限窗口内", 在窗口 + 今日未补跑
+    → 用后台线程调 executor.run_now(trigger='recovery', event=...).
+  - 标记持久化在 preferences.trading_strategies.<sid>.last_recovery.<event>.<YYYY-MM-DD>.
+  - 不替代 cron: cron 仍按日正常到点, recovery 仅补救已错过的当日窗口.
 """
 from __future__ import annotations
 
 import asyncio
 import contextlib
 import logging
+import threading
+from datetime import datetime, timedelta, timezone
 from functools import partial
 from typing import Any
 
@@ -23,6 +33,22 @@ from app.services.trading import preferences as prefs
 from app.services.trading.live_strategy import LiveStrategy
 
 logger = logging.getLogger(__name__)
+
+# ── 启动补跑宽限窗口 (PR-1 §5) ──────────────────────────────
+# grace 是从 schedule.hour:minute 起算的分钟数. 在窗口内启动 → 自动补跑一次;
+# 超出窗口 → 等下一个交易日.
+RECOVERY_GRACE_MINUTES: dict[str, int] = {
+    "pre_market": 90,    # 9:05 + 90min → 10:35
+    "rebalance": 180,    # 9:35 + 180min → 12:35 (覆盖早盘调仓窗口)
+    "limit_check": 120,  # 13:30 + 120min → 15:30 (收盘前)
+}
+
+_CN_TZ = timezone(timedelta(hours=8))
+
+
+def _now_cn() -> datetime:
+    """返回带 Asia/Shanghai tzinfo 的当前时间. 与 executor 内部 helper 同款."""
+    return datetime.now(_CN_TZ)
 
 
 class StrategyScheduler:
@@ -111,6 +137,113 @@ class StrategyScheduler:
                 self._safe_remove(jid)
                 del self._job_ids[key]
                 logger.info("已移除: %s", jid)
+
+        # ── 启动补跑 (recovery) ──
+        # 在 self._scheduler is not None 时才有意义, 此时 cron 已 ready;
+        # 同步扫一遍"今日已过 + 仍在 grace 窗口" 的 schedule 触发一次.
+        if self._scheduler is not None:
+            self._recover_missed(strategies)
+
+    # ── 启动补跑实施 ─────────────────────────────
+    def _recover_missed(
+        self,
+        strategies: list[LiveStrategy],
+        *,
+        now: datetime | None = None,
+    ) -> None:
+        """对每个 enabled 的 schedule 判断"今日已过 + 仍在 grace 窗口"
+        → 用后台线程调 executor.run_now(trigger='recovery', event=...).
+
+        设计依据:
+          - 不阻塞 apply_all 本身 — 补跑是 fire-and-forget, 由 executor 自身
+            in_flight 锁与 wait_for_quote_data 处理并发与一致性.
+          - 先 mark 后 fire: 同日内幂等, reload 风暴不会重复补跑同一天.
+          - 没有外部 scheduler 时不补跑 (与原 apply_all 行为对齐).
+          - 失败隔离: 每个策略独立 try/except, 一个坏掉不影响其他.
+          - now 参数: 测试可注入固定时间; 生产默认 _now_cn().
+        """
+        if not strategies:
+            return
+        if now is None:
+            now = _now_cn()
+        today_str = now.strftime("%Y-%m-%d")
+        for s_obj in strategies:
+            try:
+                self._recover_one(s_obj, now=now, today_str=today_str)
+            except Exception as e:
+                logger.warning(
+                    "[recovery] %s :: 扫补跑失败, 跳过: %s", s_obj.id, e,
+                )
+
+    def _recover_one(self, s: LiveStrategy, *, now: datetime, today_str: str) -> None:
+        schedules = s.schedules or []
+        for sch in schedules:
+            try:
+                if not prefs.is_strategy_schedule_enabled(s.id, sch.name):
+                    continue
+                grace_min = RECOVERY_GRACE_MINUTES.get(sch.name)
+                if grace_min is None:
+                    logger.info(
+                        "[recovery] %s :: %s skip (未知 event, 无 grace 配置)",
+                        s.id, sch.name,
+                    )
+                    continue
+                target = now.replace(
+                    hour=sch.hour, minute=sch.minute,
+                    second=0, microsecond=0,
+                )
+                grace_end = target + timedelta(minutes=grace_min)
+                if now < target:
+                    logger.info(
+                        "[recovery] %s :: %s skip (尚未到时点 target=%s, now=%s)",
+                        s.id, sch.name, target.isoformat(), now.isoformat(),
+                    )
+                    continue
+                if now > grace_end:
+                    logger.info(
+                        "[recovery] %s :: %s skip (已过宽限 target=%s grace_end=%s now=%s)",
+                        s.id, sch.name, target.isoformat(),
+                        grace_end.isoformat(), now.isoformat(),
+                    )
+                    continue
+                last_recovery_date = prefs.get_last_recovery_date(s.id, sch.name)
+                if last_recovery_date is not None and last_recovery_date >= today_str:
+                    logger.info(
+                        "[recovery] %s :: %s skip (同 date=%s 已补跑 last=%s)",
+                        s.id, sch.name, today_str, last_recovery_date,
+                    )
+                    continue
+                # 在窗口内 + 今日未补跑 → 先持久化标记, 再后台线程触发.
+                when_iso = now.isoformat()
+                prefs.mark_recovery(s.id, sch.name, when_iso, today_str)
+                logger.info(
+                    "[recovery] %s :: %s fired (target=%s grace_end=%s now=%s)",
+                    s.id, sch.name, target.isoformat(),
+                    grace_end.isoformat(), now.isoformat(),
+                )
+                threading.Thread(
+                    target=self._fire_recovery,
+                    args=(s.id, sch.name),
+                    daemon=True,
+                    name=f"recovery-{s.id}-{sch.name}",
+                ).start()
+            except Exception as e:
+                logger.warning(
+                    "[recovery] %s :: %s skip (异常: %s)", s.id, sch.name, e,
+                )
+
+    def _fire_recovery(self, strategy_id: str, event: str) -> None:
+        """后台线程入口: 调 executor.run_now(trigger='recovery').
+        executor 内部已 try/except, 这里再裹一层防止 daemon 静默退出."""
+        try:
+            self._executor.run_now(
+                strategy_id, trigger="recovery", event=event,
+            )
+        except Exception as e:
+            logger.exception(
+                "[recovery] 后台触发 %s :: %s 失败: %s",
+                strategy_id, event, e,
+            )
 
     def _safe_remove(self, job_id: str) -> None:
         with contextlib.suppress(Exception):
