@@ -865,13 +865,18 @@ def compute_limit_signals(
     # raw_close >= 0.05 永远 True → 每个 stock 的 consecutive_limit_ups 单调
     # 累加若干年, 最大可达 1300+ 板 (用户报告 S2 决策: 仅修新算, 历史不动).
     # 注: `close` 列已是后复权价格 (远小于 raw_close), 不应用作 prev_raw.
+    # shift(1).over("symbol") 必须先按 symbol 分组再按 date 排序;
+    # sort_by 在 over 表达式内执行, 保证每个 symbol 分组内 row 已按 date 升序,
+    # shift(1) 才取到「上一交易日 raw_close」, 而不是上一个 group 的最后一行.
     df = df.with_columns(
-        pl.col("raw_close").shift(1).over("symbol").alias("_prev_raw_close")
+        pl.col("raw_close").shift(1).sort_by("date").over("symbol").alias("_prev_raw_close")
     )
-    # 新股上市首日 / 停牌日后首日的 shift(1) 是 NaN, 兜底: forward-fill (同 symbol) -> 0
+    # 首日 (新股上市) shift(1) 是 NaN, 兜底填 0; 不用 forward-fill, 因为
+    # forward-fill 按 polars row order (跨 symbol) 错位, 会用上一个 group
+    # 的最后一行填当前 group 的首行, 导致 prev_raw_close 跨 symbol 污染.
     # 含 limit_signals 链路里的 polars_limit_price 在 cast Int64 时 NaN 会抛错
     df = df.with_columns(
-        pl.col("_prev_raw_close").fill_null(strategy="forward").fill_null(0).alias("_prev_raw_close")
+        pl.col("_prev_raw_close").fill_null(0).alias("_prev_raw_close")
     )
 
     is_risk_warning = pl.col("_is_st") if "_is_st" in df.columns else pl.lit(False)

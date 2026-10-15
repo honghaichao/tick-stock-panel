@@ -48,12 +48,14 @@ def invalidate_cache() -> None:
 
 
 def _latest_enriched_date(repo) -> date | None:
-    """取 enriched 缓存里的最新交易日(矩阵的右端=最新日期)。"""
+    """取 enriched 缓存里的最新交易日(矩阵的右端=最新日期)。
+
+    历史缓存可能停在某个交易日 (比如前一天), 盘中实时缓存可能已进入新
+    交易日, 取 max 两者保证矩阵右端永远跟最新行情对齐.
+    """
     cache = repo._enriched_history_cache  # noqa: SLF001 —— 缓存字段无公开 getter
     if cache is None or cache.is_empty() or "date" not in cache.columns:
         return None
-    return cache["date"].max()
-
     latest = cache["date"].max()
     # 盘中实时缓存可能已进入新交易日, 而历史缓存还停在上次重建时
     live_date = getattr(repo, "_enriched_cache_date", None)
