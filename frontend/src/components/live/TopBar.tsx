@@ -1,42 +1,48 @@
-import type { ReactNode } from 'react'
-import { Briefcase, CircleSlash2, ListChecks, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
+import { Briefcase, CircleSlash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { QK } from '@/lib/queryKeys'
 import { cn } from '@/lib/cn'
 import { fmtPrice, priceColorClass } from '@/lib/format'
+import { EmergencyControls } from './EmergencyControls'
+import { BellNotifications } from './BellNotifications'
 
 interface Kpi {
   label: string
   primary: string
   sub?: string
   primaryClass?: string
-  icon: ReactNode
+  icon: React.ReactNode
+  /** hero 数字用 text-3xl/4xl, sub 指标用 text-sm */
+  size?: 'hero' | 'sm'
 }
 
-function KpiCard({ label, primary, sub, primaryClass, icon }: Kpi) {
+function KpiCard({ label, primary, sub, primaryClass, icon, size = 'sm' }: Kpi) {
   return (
-    <div className="rounded-xl border border-border bg-surface/40 p-3 shadow-sm">
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-muted">
+    <div className="rounded-xl border border-border bg-surface/40 px-3 py-2 shadow-sm">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-muted">
         <span>{label}</span>
-        <span className="h-3.5 w-3.5">{icon}</span>
+        <span className="h-3 w-3">{icon}</span>
       </div>
-      <div className={cn('mt-1 font-mono text-lg font-semibold', primaryClass ?? 'text-foreground')}>
+      <div
+        className={cn(
+          'mt-0.5 font-mono font-semibold tabular-nums',
+          size === 'hero' ? 'text-3xl leading-tight' : 'text-sm leading-tight',
+          primaryClass ?? 'text-foreground',
+        )}
+      >
         {primary}
       </div>
-      {sub && <div className="mt-0.5 text-[11px] text-secondary">{sub}</div>}
+      {sub && <div className="mt-0.5 text-[10px] text-secondary">{sub}</div>}
     </div>
   )
 }
 
 interface Props {
-  /** 当前策略 id (URL /live-trading/:strategyId). null 表示全局账户视图 (LiveTradingList). */
   strategyId?: string | null
 }
 
 export function LiveTopBar({ strategyId = null }: Props = {}) {
-  // per-strategy 视图: PnL 由 strategyPnlMetrics 算 (该 strategy 的 fills)
-  // 全局账户视图: account 直接读 (跨所有 strategy)
   const metricsQ = useQuery({
     queryKey: QK.tradingPnlMetrics(strategyId),
     queryFn: () => api.tradingPnlMetrics(strategyId ? { strategy_id: strategyId } : undefined),
@@ -51,40 +57,50 @@ export function LiveTopBar({ strategyId = null }: Props = {}) {
   const m = metricsQ.data
   const s = statusQ.data
   const positions = positionsQ.data?.positions ?? []
-  // 持仓市值 = sum(qty * last_price), 与账户 account.market_value 同口径
   const marketValue = positions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
   const equity = m ? m.current_equity : null
-  // 现金等值 (推算): 总资产 - 持仓市值; 跟 account.cash 一致口径
-  // 注: 这是显示给用户的"占用资金"提示, 实际口径由后端 account.cash 决定
-  const cashProxy = equity != null ? equity - marketValue : null
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div
+      data-testid="topbar"
+      className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]"
+    >
+      {/* 顶栏布局: hero (今日盈亏) + 3 个 sub-metric + 救命三件套
+       *  - xl+ (≥1280px): 1 行 5 列, hero 2fr 占两列宽
+       *  - sm-lg (640-1279px): 4 列, 救命按钮换行到下一行 (auto 让其单独占位)
+       *  - <640px: 2 列, 全部换行
+       */}
+      <KpiCard
+        label="今日盈亏"
+        size="hero"
+        icon={m && m.today_pnl >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+        primary={m ? `${m.today_pnl >= 0 ? '+' : ''}${fmtPrice(m.today_pnl)}` : '—'}
+        primaryClass={m ? priceColorClass(m.today_pnl) : ''}
+        sub={m ? `${m.today_pnl_pct >= 0 ? '+' : ''}${(m.today_pnl_pct * 100).toFixed(2)}% · 较开盘` : ''}
+      />
       <KpiCard
         label={strategyId ? '策略总资产' : '总资产'}
-        icon={<Wallet className="h-3.5 w-3.5" />}
+        icon={<Wallet className="h-3 w-3" />}
         primary={equity != null ? fmtPrice(equity) : '—'}
-        sub={m ? `持仓 ¥${fmtPrice(marketValue)} · 占用 ¥${fmtPrice(cashProxy ?? 0)} · 初始 ¥${fmtPrice(m.initial_cash)}` : ''}
+        sub={m ? `持仓 ¥${fmtPrice(marketValue)}` : ''}
       />
       <KpiCard
         label="累计盈亏"
-        icon={m && m.total_pnl >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+        icon={m && m.total_pnl >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
         primary={m ? `${m.total_pnl >= 0 ? '+' : ''}${fmtPrice(m.total_pnl)}` : '—'}
         primaryClass={m ? priceColorClass(m.total_pnl) : ''}
-        sub={m ? `未实现 ${fmtPrice(m.unrealized_pnl)} · 已实现 ${fmtPrice(m.realized_pnl)}` : ''}
+        sub={m ? `${(m.total_pnl_pct * 100).toFixed(2)}% · 初始 ¥${fmtPrice(m.initial_cash)}` : ''}
       />
       <KpiCard
-        label="运行状态"
-        icon={s?.running ? <Briefcase className="h-3.5 w-3.5" /> : <CircleSlash2 className="h-3.5 w-3.5" />}
-        primary={s ? (s.running ? '撮合中' : '已停止') : '—'}
-        primaryClass={s?.running ? 'text-bull' : 'text-muted'}
-        sub={s ? `${s.broker} · ${s.matcher_interval_seconds}s/轮 · 待撮合 ${s.pending_order_count}` : ''}
-      />
-      <KpiCard
-        label="委托概览"
-        icon={<ListChecks className="h-3.5 w-3.5" />}
+        label={s?.running ? '撮合中' : '已停止'}
+        icon={s?.running ? <Briefcase className="h-3 w-3" /> : <CircleSlash2 className="h-3 w-3" />}
         primary={s ? `${s.filled_order_count} / ${s.filled_order_count + s.pending_order_count}` : '—'}
-        sub={s ? '已成交 / 全部 (含 NEW)' : ''}
+        primaryClass={s?.running ? 'text-bull' : 'text-muted'}
+        sub={s ? `${s.broker} · ${s.matcher_interval_seconds}s/轮` : ''}
       />
+      <div className="col-span-2 flex items-center justify-end gap-2 sm:col-span-1 xl:col-span-1">
+        <BellNotifications />
+        <EmergencyControls strategyId={strategyId} />
+      </div>
     </div>
   )
 }

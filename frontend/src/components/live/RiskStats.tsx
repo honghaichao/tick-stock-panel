@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/cn'
+import { usePersistedState } from '@/lib/usePersistedState'
 
 const METRICS = [
   { key: 'alpha', label: 'Alpha', color: '#3b82f6' },
@@ -14,22 +15,72 @@ const METRICS = [
 
 type MetricKey = (typeof METRICS)[number]['key']
 
+const STORAGE_KEY = 'liveRiskScope'
+type Scope = 'today' | 'history'
+
 export function RiskStats({ strategyId: _strategyId }: { strategyId?: string | null } = {}) {
-  // 风险指标暂时保留账户级 (per-strategy 风险指标需要单独算收益序列, 待 PR-2 落地).
-  const { data, isLoading } = useQuery({
+  // v2 (live-trading-v2-pr2): "今日 / 历史" toggle, 默认 "今日" (trader 4 小时盯盘主要看今天).
+  // 今日: pnl-metrics 端点的 today_pnl / max_drawdown / current_equity
+  // 历史: risk-metrics 端点的 60 天 Alpha / Beta / Sharpe 等
+  // v2-pr3: usePersistedState 替代手写 localStorage (跨 tab 同步)
+  const [scope, setScope] = usePersistedState<Scope>(STORAGE_KEY, 'today')
+
+  const pnlQ = useQuery({
+    queryKey: ['trading', 'pnl-metrics'],
+    queryFn: () => api.tradingPnlMetrics(),
+    refetchInterval: 8000,
+  })
+  const riskQ = useQuery({
     queryKey: ['trading', 'risk_metrics'],
     queryFn: () => api.tradingRiskMetrics({ window: 60 }),
-    refetchInterval: 60000,
+    refetchInterval: 60_000,
+    enabled: scope === 'history',
   })
+  // "今日" 模式: 复用 riskQ.data schema 包装, 让下方 SummaryCard 不报错
+  // summary 用 pnlQ 字段 (today_pnl/current_equity/max_drawdown); series 空 (今日 sparkline 单独有)
+  const data = scope === 'today'
+    ? (pnlQ.data
+        ? { summary: pnlQ.data, series: [] as { date: string }[] }
+        : undefined)
+    : riskQ.data
+  const isLoading = scope === 'today' ? pnlQ.isLoading : riskQ.isLoading
 
   return (
     <div className="rounded-xl border border-border bg-surface/30 p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">风险指标 (滚动 60 天, 基准 沪深 300)</h3>
-        {data && <div className="text-[11px] text-muted">{data.series.length} 个数据点</div>}
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">
+          {scope === 'today' ? '今日风险指标' : '风险指标 (滚动 60 天, 基准 沪深 300)'}
+        </h3>
+        <div className="flex rounded border border-border bg-surface/40 text-[10px]">
+          <button
+            onClick={() => setScope('today')}
+            className={cn(
+              'px-2 py-0.5 transition-colors cursor-pointer',
+              scope === 'today' ? 'bg-accent/15 text-accent font-medium' : 'text-muted hover:text-foreground',
+            )}
+          >
+            今日
+          </button>
+          <button
+            onClick={() => setScope('history')}
+            className={cn(
+              'px-2 py-0.5 transition-colors cursor-pointer border-l border-border',
+              scope === 'history' ? 'bg-accent/15 text-accent font-medium' : 'text-muted hover:text-foreground',
+            )}
+          >
+            历史
+          </button>
+        </div>
       </div>
       {isLoading || !data ? (
         <div className="py-12 text-center text-xs text-muted">加载中…</div>
+      ) : scope === 'today' && pnlQ.data ? (
+        // 今日: 简化卡片 (今日盈亏 / 当前权益 / 最大回撤) — trader 4h 盯盘最关心的 3 个数
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SummaryCard label="今日盈亏" value={pnlQ.data.today_pnl_pct != null ? pnlQ.data.today_pnl_pct * 100 : null} color="#10b981" suffix="%" digits={2} />
+          <SummaryCard label="当前权益" value={pnlQ.data.current_equity} color="#3b82f6" prefix="¥" digits={0} />
+          <SummaryCard label="最大回撤" value={pnlQ.data.max_drawdown != null ? pnlQ.data.max_drawdown * 100 : null} color="#ef4444" suffix="%" digits={2} />
+        </div>
       ) : data.series.length === 0 ? (
         <div className="py-12 text-center text-xs text-muted">
           数据不足 — 需要至少 5 个 pnl_snapshots 交易日 + 沪深 300 收盘价
@@ -38,7 +89,7 @@ export function RiskStats({ strategyId: _strategyId }: { strategyId?: string | n
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {METRICS.map(m => (
-              <SummaryCard key={m.key} label={m.label} value={data.summary[m.key]} color={m.color} />
+              <SummaryCard key={m.key} label={m.label} value={((data.summary as any) || {})[m.key]} color={m.color} />
             ))}
           </div>
           <div className="space-y-3">
@@ -52,7 +103,21 @@ export function RiskStats({ strategyId: _strategyId }: { strategyId?: string | n
   )
 }
 
-function SummaryCard({ label, value, color }: { label: string; value: number | null; color: string }) {
+function SummaryCard({
+  label,
+  value,
+  color,
+  prefix = '',
+  suffix = '',
+  digits = 3,
+}: {
+  label: string
+  value: number | null
+  color: string
+  prefix?: string
+  suffix?: string
+  digits?: number
+}) {
   return (
     <div className="rounded-lg border border-border bg-surface/40 p-3">
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted">
@@ -60,7 +125,7 @@ function SummaryCard({ label, value, color }: { label: string; value: number | n
         {label}
       </div>
       <div className={cn('mt-1 font-mono text-base font-semibold', value == null ? 'text-muted/60' : 'text-foreground')}>
-        {value == null ? '—' : value.toFixed(3)}
+        {value == null ? '—' : `${prefix}${value.toFixed(digits)}${suffix}`}
       </div>
     </div>
   )
