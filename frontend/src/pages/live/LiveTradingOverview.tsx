@@ -13,9 +13,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Activity, AlertCircle, ChevronDown, ChevronRight, History, LineChart as LineChartIcon, ListChecks, Loader2, Play, Plus, Receipt, Trash2, TrendingDown, TrendingUp, Wallet, Zap } from 'lucide-react'
 import type { LiveStrategyApi, PnLSnapshotApi, StrategyRunReportApi } from '@/lib/api'
-import { api, type OrderApi, type OrderDraftApi } from '@/lib/api'
+import { api, type OrderApi, type OrderDraftApi, type PositionApi } from '@/lib/api'
 import { QK } from '@/lib/queryKeys'
 import { Modal } from '@/components/Modal'
+import { toast } from '@/components/Toast'
 import { StockPreviewDialog } from '@/components/StockPreviewDialog'
 import { cn } from '@/lib/cn'
 import { fmtPct, fmtPrice, fmtVolume, priceColorClass } from '@/lib/format'
@@ -60,7 +61,13 @@ const LifeLine = LineChartIcon
  * hero 数字是 PnL + 5 日分时 sparkline; 卖 1/3 / 卖 1/2 / 全卖 快捷按钮接
  * PositionCard (本轮不接 OrderDialog, PR2 才接).
  */
-function PositionsGrid({ strategyId }: { strategyId?: string | null } = {}) {
+function PositionsGrid({
+  strategyId,
+  onQuickTrade,
+}: {
+  strategyId?: string | null
+  onQuickTrade: (side: 'sell', ratio: 1 | 2 | 'all', symbol: string) => void
+}) {
   const positionsQ = useQuery({
     queryKey: QK.tradingPositions(strategyId ?? null),
     queryFn: () => api.tradingPositions(strategyId ? { strategy_id: strategyId } : undefined),
@@ -82,7 +89,12 @@ function PositionsGrid({ strategyId }: { strategyId?: string | null } = {}) {
     <Section title="当前持仓" subtitle={`${positions.length} 个标的 · 1 行 1 票卡片`} icon={Wallet}>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
         {positions.map(p => (
-          <PositionCard key={p.symbol} position={p} name={names[p.symbol]} />
+          <PositionCard
+            key={p.symbol}
+            position={p}
+            name={names[p.symbol]}
+            onQuickTrade={onQuickTrade}
+          />
         ))}
       </div>
     </Section>
@@ -90,21 +102,41 @@ function PositionsGrid({ strategyId }: { strategyId?: string | null } = {}) {
 }
 
 
-function OrdersTable({ strategyId }: { strategyId?: string | null } = {}) {
+function OrdersTable({
+  strategyId,
+  onOpenBuy,
+  onOpenSell,
+}: {
+  strategyId?: string | null
+  onOpenBuy: () => void
+  onOpenSell: () => void
+}) {
   const ordersQ = useQuery({
     queryKey: QK.tradingOrders(strategyId ?? null),
     queryFn: () => api.tradingOrders({ strategy_id: strategyId ?? undefined, limit: 200 }),
     refetchInterval: 6000,
   })
   const orders = ordersQ.data?.orders ?? []
-  const [editing, setEditing] = useState<null | 'buy' | 'sell'>(null)
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
   const [previewSymbol, setPreviewSymbol] = useState<string | null>(null)
 
+  // 4 秒 timeout 兜底 (v2 PR3): 避免网络 hang 时按钮粘住.
+  // 用户在 4 秒内点 trash 切换其它单时, onClick 里先 clearTimeout 避免状态被旧 timer 清.
+  const cancelTimerRef = useRef<number | undefined>(undefined)
   const cancelMut = useMutation({
     mutationFn: (id: string) => api.tradingOrderCancel(id),
-    onSuccess: () => setConfirmCancelId(null),
+    onSettled: () => {
+      if (typeof window === 'undefined') return
+      window.clearTimeout(cancelTimerRef.current)
+      cancelTimerRef.current = window.setTimeout(() => {
+        setConfirmCancelId(null)
+        cancelMut.reset()
+      }, 4000)
+    },
   })
+  useEffect(() => () => {
+    if (typeof window !== 'undefined') window.clearTimeout(cancelTimerRef.current)
+  }, [])
 
   // 用一个简短 reset 定时器: 3 秒后自动复位确认按钮
   const pending = orders.filter(o => o.status === 'new' || o.status === 'partial')
@@ -125,11 +157,11 @@ function OrdersTable({ strategyId }: { strategyId?: string | null } = {}) {
     <Section title="委托" subtitle={`${pending.length} 个未完成 / 共 ${orders.length} 个`} icon={ListChecks}
       actions={
         <>
-          <button onClick={() => setEditing('buy')}
+          <button onClick={onOpenBuy}
             className="inline-flex h-9 items-center gap-1.5 rounded-btn border border-bull/30 bg-bull/10 px-3 text-xs font-medium text-bull transition-colors hover:bg-bull/15 cursor-pointer">
             <Plus className="h-3.5 w-3.5" />买入
           </button>
-          <button onClick={() => setEditing('sell')}
+          <button onClick={onOpenSell}
             className="inline-flex h-9 items-center gap-1.5 rounded-btn border border-bear/30 bg-bear/10 px-3 text-xs font-medium text-bear transition-colors hover:bg-bear/15 cursor-pointer">
             <Plus className="h-3.5 w-3.5" />卖出
           </button>
@@ -202,7 +234,10 @@ function OrdersTable({ strategyId }: { strategyId?: string | null } = {}) {
                             <Trash2 className="h-2.5 w-2.5" />确认撤单
                           </button>
                         ) : (
-                          <button onClick={() => setConfirmCancelId(o.id)}
+                          <button onClick={() => {
+                            if (typeof window !== 'undefined') window.clearTimeout(cancelTimerRef.current)
+                            setConfirmCancelId(o.id)
+                          }}
                             title="撤单"
                             className="p-1.5 rounded-md text-secondary transition-all hover:bg-danger/10 hover:text-danger cursor-pointer">
                             <Trash2 className="h-3.5 w-3.5" />
@@ -218,10 +253,6 @@ function OrdersTable({ strategyId }: { strategyId?: string | null } = {}) {
         </div>
       )}
 
-      {editing && (
-        <OrderDialog side={editing} onClose={() => setEditing(null)} />
-      )}
-
       <StockPreviewDialog
         symbol={previewSymbol}
         name={previewSymbol ? names[previewSymbol] : undefined}
@@ -233,12 +264,24 @@ function OrdersTable({ strategyId }: { strategyId?: string | null } = {}) {
   )
 }
 
-function OrderDialog({ side, onClose }: { side: 'buy' | 'sell'; onClose: () => void }) {
+function OrderDialog({
+  side,
+  onClose,
+  initial,
+  feeRate,
+  lastPrice,
+}: {
+  side: 'buy' | 'sell'
+  onClose: () => void
+  initial?: { symbol?: string; qty?: number }
+  feeRate?: number | null
+  lastPrice?: number | null
+}) {
   const qc = useQueryClient()
   const [symbolQuery, setSymbolQuery] = useState('')
-  const [symbol, setSymbol] = useState('')
+  const [symbol, setSymbol] = useState(initial?.symbol ?? '')
   const [orderType, setOrderType] = useState<'limit' | 'market'>('limit')
-  const [qtyText, setQtyText] = useState('100')
+  const [qtyText, setQtyText] = useState(initial?.qty != null ? String(initial.qty) : '100')
   const [priceText, setPriceText] = useState('')
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -349,6 +392,37 @@ function OrderDialog({ side, onClose }: { side: 'buy' | 'sell'; onClose: () => v
             placeholder="例: 突破后追单"
             className="w-full rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-accent/40" />
         </Field>
+
+        {/* 资金占用 / 手续费 预览 (v2 PR2): 跟随 qty × price 实时重算. 后端风控会精确算, 这里只是估算. */}
+        <div className="rounded-md border border-border bg-surface/40 px-2.5 py-1.5 space-y-0.5">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-muted">资金占用</span>
+            <span className="font-mono tabular-nums text-foreground">
+              {(() => {
+                const q = Math.max(Number(qtyText) || 0, 0)
+                const p = orderType === 'limit'
+                  ? (priceText ? Number(priceText) : 0)
+                  : (lastPrice ?? 0)
+                if (q <= 0 || p <= 0) return '—'
+                return `¥${(q * p).toLocaleString('zh-CN', { maximumFractionDigits: 2 })}`
+              })()}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-muted">手续费 (估算)</span>
+            <span className="font-mono tabular-nums text-secondary">
+              {(() => {
+                if (feeRate == null || feeRate <= 0) return '—'
+                const q = Math.max(Number(qtyText) || 0, 0)
+                const p = orderType === 'limit'
+                  ? (priceText ? Number(priceText) : 0)
+                  : (lastPrice ?? 0)
+                if (q <= 0 || p <= 0) return '—'
+                return `¥${(q * p * feeRate).toLocaleString('zh-CN', { maximumFractionDigits: 2 })}`
+              })()}
+            </span>
+          </div>
+        </div>
 
         {submitMut.isError && (
           <div className="flex items-start gap-1.5 rounded-md border border-danger/30 bg-danger/5 px-2.5 py-1.5 text-[11px] text-danger">
@@ -842,18 +916,79 @@ export function LiveTradingOverview({
     return <VerifyAndDriftSection strategyId={strategyId} />
   }
 
+  // 顶层 OrderDialog 状态 (v2 PR2 状态提升):
+  //   - OrdersTable 的 买入/卖出 按钮: 只传 side
+  //   - PositionCard 的 卖 1/3 / 1/2 / 全卖: 传 side='sell' + symbol + qty
+  // 一份 dialog 实例, 多个触发源.
+  const [dialog, setDialog] = useState<null | { side: 'buy' | 'sell'; symbol?: string; qty?: number }>(null)
+
+  // 共享查询 (TanStack dedupe by key):
+  //   - tradingPositions 喂 PositionsGrid, 同时作 last_price 查表 + quick-trade 算 qty
+  //   - tradingPreferences 喂 fee_rate
+  const positionsQ = useQuery({
+    queryKey: QK.tradingPositions(strategyId ?? null),
+    queryFn: () => api.tradingPositions(strategyId ? { strategy_id: strategyId } : undefined),
+    refetchInterval: 6000,
+  })
+  const positionsBySymbol = useMemo(() => {
+    const m: Record<string, PositionApi> = {}
+    for (const p of positionsQ.data?.positions ?? []) m[p.symbol] = p
+    return m
+  }, [positionsQ.data])
+  const prefsQ = useQuery({
+    queryKey: QK.tradingPreferences,
+    queryFn: api.tradingPreferences,
+    staleTime: 300_000,
+  })
+  const feeRate = prefsQ.data?.trading_fee_rate ?? null
+
+  const openBuy = () => setDialog({ side: 'buy' })
+  const openSell = () => setDialog({ side: 'sell' })
+  const onQuickTrade = (
+    side: 'sell',
+    ratio: 1 | 2 | 'all',
+    symbol: string,
+  ) => {
+    const pos = positionsBySymbol[symbol]
+    if (!pos) return
+    const qty = ratio === 'all'
+      ? pos.qty
+      : ratio === 1 ? Math.floor(pos.qty / 3) : Math.floor(pos.qty / 2)
+    if (qty <= 0) {
+      toast('无可卖数量', 'error')
+      return
+    }
+    setDialog({ side, symbol, qty })
+  }
+  const closeDialog = () => setDialog(null)
+
   return (
     <div className="space-y-4">
-      <PositionsGrid strategyId={strategyId} />
+      <PositionsGrid strategyId={strategyId} onQuickTrade={onQuickTrade} />
       <PnLPanel strategyId={strategyId} />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <OrdersTable strategyId={strategyId} />
+        <OrdersTable
+          strategyId={strategyId}
+          onOpenBuy={openBuy}
+          onOpenSell={openSell}
+        />
         <TradesTable strategyId={strategyId} />
       </div>
       {strategyId
         ? <StrategyRunHistoryPanel strategyId={strategyId} />
         : <StrategiesPanel />}
       <LogsList strategyId={strategyId} />
+
+      {/* OrderDialog 顶层实例 (v2 PR2 状态提升): 多个触发源共用一个 dialog */}
+      {dialog && (
+        <OrderDialog
+          side={dialog.side}
+          onClose={closeDialog}
+          initial={{ symbol: dialog.symbol, qty: dialog.qty }}
+          feeRate={feeRate}
+          lastPrice={dialog.symbol ? positionsBySymbol[dialog.symbol]?.last_price ?? null : null}
+        />
+      )}
     </div>
   )
 }

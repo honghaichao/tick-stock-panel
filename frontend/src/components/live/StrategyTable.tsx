@@ -86,20 +86,15 @@ export function StrategyTable({
                 <th className="px-3 py-2 font-medium">名称</th>
                 <th className="px-2 py-2 font-medium">频率</th>
                 <th className="px-2 py-2 font-medium">状态</th>
-                <th className="px-2 py-2 font-medium" title="开始时间 (等待 live-trading-strategy-summary.md PR-1 落地)">开始时间</th>
-                <th className="px-2 py-2 font-medium text-right" title="等待 PR-1 落地">累计</th>
-                <th className="px-2 py-2 font-medium text-right" title="等待 PR-1 落地">年化</th>
-                <th className="px-2 py-2 font-medium text-right" title="等待 PR-1 落地">今日</th>
-                <th className="px-2 py-2 font-medium text-right" title="等待 PR-1 落地">最大回撤</th>
-                <th className="px-2 py-2 font-medium" title="等待 PR-1 落地">通知</th>
-                <th className="px-2 py-2 font-medium">时限</th>
+                <th className="px-2 py-2 font-medium text-right">今日 PnL</th>
+                <th className="px-2 py-2 font-medium">开始时间</th>
                 <th className="w-6 px-2 py-2" aria-label="进入详情" />
               </tr>
             </thead>
             <tbody>
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-3 py-8 text-center text-xs text-muted">
+                  <td colSpan={6} className="px-3 py-8 text-center text-xs text-muted">
                     当前 tab 无策略.
                   </td>
                 </tr>
@@ -199,32 +194,24 @@ function StrategyRow({
           enabledCount={enabledCount}
           total={strategy.schedules.length} />
       </td>
-      <td className="px-2 py-2.5 text-muted" title="等待 PR-1 — 字段派生自 registry.remember_started_at">
-        {strategy.started_at ? formatDate(strategy.started_at) : '—'}
-      </td>
-      <td className="px-2 py-2.5 text-right text-muted" title="等待 PR-1 — pnl_strategy_snapshots.jsonl">
-        {strategy.summary ? `${(strategy.summary.total_pnl_pct ?? 0).toFixed(2)}%` : '—'}
-      </td>
-      <td className="px-2 py-2.5 text-right text-muted" title="等待 ≥30 天历史数据 (PR-1)">
-        {strategy.summary?.annual_return == null ? '—' : `${strategy.summary.annual_return.toFixed(2)}%`}
-      </td>
-      <td className="px-2 py-2.5 text-right text-muted" title="等待 PR-1">
-        {strategy.summary ? `${(strategy.summary.today_pnl_pct ?? 0).toFixed(2)}%` : '—'}
-      </td>
-      <td className="px-2 py-2.5 text-right text-muted" title="等待 PR-1">
-        {strategy.summary ? `${(strategy.summary.max_drawdown ?? 0).toFixed(2)}%` : '—'}
-      </td>
-      <td className="px-2 py-2.5" title="等待 PR-1 — prefs.trading_strategies.<id>.notify_wechat">
-        <NotifyBadge
-          readOnly
-          value={Boolean(strategy.notify_wechat)}
-        />
+      <td className={cn(
+        'px-2 py-2.5 text-right font-mono tabular-nums',
+        strategy.summary && (strategy.summary.today_pnl ?? 0) >= 0 ? 'text-bull' : 'text-bear',
+        !strategy.summary && 'text-muted',
+      )}>
+        {strategy.summary
+          ? `${(strategy.summary.today_pnl ?? 0) >= 0 ? '+' : ''}${(strategy.summary.today_pnl ?? 0).toFixed(2)}`
+          : '—'}
       </td>
       <td className="px-2 py-2.5 text-secondary">
-        {(() => {
-          const days = deriveRunDays(strategy.started_at ?? null)
-          return days == null ? '—' : `${days} 天`
-        })()}
+        {strategy.started_at
+          ? (() => {
+              const days = deriveRunDays(strategy.started_at)
+              return days == null
+                ? formatDate(strategy.started_at!)
+                : `${formatDate(strategy.started_at!)} · ${days}天`
+            })()
+          : '—'}
       </td>
       <td className="px-2 py-2.5 text-right text-muted">
         <ChevronRight className="inline h-3.5 w-3.5" />
@@ -259,21 +246,6 @@ function StatusBadge({ kind, enabledCount, total }: {
   )
 }
 
-function NotifyBadge({ readOnly, value }: { readOnly: boolean; value: boolean }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border',
-        value
-          ? 'text-accent border-accent/30 bg-accent/10'
-          : 'text-muted border-border bg-elevated/40',
-      )}
-      title={readOnly ? '当前 read-only — 后端 PR-1 上线后可用' : undefined}
-    >
-      {value ? 'ON' : 'OFF'}
-    </span>
-  )
-}
 
 function EmptyHint() {
   return (
