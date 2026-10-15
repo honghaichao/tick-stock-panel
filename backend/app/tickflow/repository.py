@@ -824,7 +824,19 @@ class KlineRepository:
                     "raw_close", "raw_high", "raw_low",
                     "consecutive_limit_ups", "consecutive_limit_downs",
                 ]
-                needed = [c for c in base_cols if c in hist_all.columns]
+                # 缓存完整性校验: cache 路径只走 in-memory, 不 silent fallback
+                # 到 parquet (line 950 那一段是降级路径残留, cache 路径下不应再
+                # 访问磁盘). 测试 fixture 给 cache 时如果缺 base_cols 任意一个,
+                # 直接 raise 让错信息指向 fixture 而不是 ColumnNotFoundError.
+                _missing_base = [c for c in base_cols if c not in hist_all.columns]
+                if _missing_base:
+                    raise RuntimeError(
+                        "enriched history cache incomplete, missing base cols: "
+                        f"{_missing_base}. cache 路径只走 in-memory; "
+                        "调用方需保证 _enriched_history_cache 含完整 base_cols "
+                        "(用 compute_indicators(bars) 喂全列)."
+                    )
+                needed = base_cols
                 step = time.perf_counter()
                 logger.info("live agg step start: slice history cache")
                 window_start = _live_agg_window_start(hist_all["date"], latest, start_60d)
